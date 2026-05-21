@@ -235,7 +235,7 @@ jobs:
           fi
 
           git commit -m "Record APK from GitHub Actions run $GITHUB_RUN_NUMBER"
-          if ! git pull --rebase origin "$GITHUB_REF_NAME"; then
+          if ! git pull --rebase --autostash origin "$GITHUB_REF_NAME"; then
             echo "Metadata rebase failed after APK release upload. APK is already available in the release: $release_url"
             exit 0
           fi
