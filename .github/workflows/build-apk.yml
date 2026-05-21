@@ -43,7 +43,7 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     permissions:
       contents: write
     steps:
@@ -89,7 +89,7 @@ jobs:
 
       - name: Build APK
         uses: game-ci/unity-builder@v4
-        timeout-minutes: 35
+        timeout-minutes: 105
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
