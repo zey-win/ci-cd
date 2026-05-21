@@ -11,7 +11,6 @@ Set these repository secrets before running `Build Android APK`:
 - `UNITY_LICENSE`
 - `UNITY_EMAIL`
 - `UNITY_PASSWORD`
-- `UNITY_SERIAL` only for Unity Pro/Plus
 - `ANDROID_KEYSTORE_BASE64`
 - `ANDROID_KEYSTORE_PASS`
 - `ANDROID_KEYALIAS_NAME`
