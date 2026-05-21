@@ -162,7 +162,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Plinko_ZeyWin_v6_apk
+          name: APK_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}
           path: build/android/*.apk
           if-no-files-found: error
 
@@ -170,6 +170,9 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          PACKAGE_NAME: ${{ inputs.package_name || 'com.playsocialgames.plinko' }}
+          VERSION_NAME: ${{ inputs.version_name || '1.0.6' }}
+          VERSION_CODE: ${{ inputs.version_code || '6' }}
         run: |
           set -euo pipefail
           apk_path="$(find build/android -maxdepth 1 -type f -name '*.apk' | head -n 1)"
@@ -178,15 +181,18 @@ jobs:
             exit 1
           fi
 
-          mkdir -p builds
+          version_dir="builds/$PACKAGE_NAME/v$VERSION_CODE"
+          latest_dir="builds/$PACKAGE_NAME"
+          mkdir -p "$version_dir" "$latest_dir"
           apk_name="$(basename "$apk_path")"
           release_tag="apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
           release_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$release_tag"
 
-          shasum -a 256 "$apk_path" | sed "s#  .*#  $apk_name#" > "builds/$apk_name.sha256"
+          cp "$apk_path" "$version_dir/$apk_name"
+          shasum -a 256 "$apk_path" | sed "s#  .*#  $apk_name#" > "$version_dir/$apk_name.sha256"
           gh release create "$release_tag" "$apk_path#$apk_name" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "APK $apk_name" \
+            --title "APK $PACKAGE_NAME v$VERSION_CODE" \
             --notes "APK built by GitHub Actions run $GITHUB_RUN_NUMBER attempt $GITHUB_RUN_ATTEMPT."
 
           {
@@ -195,16 +201,21 @@ jobs:
             echo "run_attempt=$GITHUB_RUN_ATTEMPT"
             echo "commit_sha=$GITHUB_SHA"
             echo "ref=$GITHUB_REF_NAME"
-            echo "apk_artifact=Plinko_ZeyWin_v6_apk"
+            echo "package_name=$PACKAGE_NAME"
+            echo "version_name=$VERSION_NAME"
+            echo "version_code=$VERSION_CODE"
+            echo "apk_artifact=APK_${PACKAGE_NAME}_v${VERSION_CODE}"
             echo "apk_release=$release_url"
             echo "apk_asset=$apk_name"
+            echo "apk_path=$version_dir/$apk_name"
             echo "built_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             echo "run_url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          } > builds/latest-build.txt
+          } > "$version_dir/build.txt"
+          cp "$version_dir/build.txt" "$latest_dir/latest-build.txt"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f "builds/$apk_name.sha256" builds/latest-build.txt
+          git add -f "$version_dir/$apk_name" "$version_dir/$apk_name.sha256" "$version_dir/build.txt" "$latest_dir/latest-build.txt"
 
           if git diff --cached --quiet; then
             echo "APK metadata in repository is already up to date: builds/latest-build.txt"
