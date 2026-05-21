@@ -58,8 +58,8 @@ jobs:
           df -h
 
       - name: Build APK
-        uses: game-ci/unity-builder@v4
         env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/keystore/user.keystore
@@ -72,12 +72,51 @@ jobs:
           ANDROID_VERSION_CODE: ${{ inputs.version_code || '6' }}
           ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0' }}
           APK_OUTPUT_PATH: build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk
-        with:
-          unityVersion: 6000.0.71f1
-          targetPlatform: Android
-          buildMethod: BuildGithubActionsApk.BuildAndroid
-          buildsPath: build
-          allowDirtyBuild: true
+        shell: bash
+        run: |
+          mkdir -p build/android
+          docker run --rm \
+            --workdir /github/workspace \
+            --volume "$PWD:/github/workspace" \
+            --volume "$RUNNER_TEMP/keystore:$RUNNER_TEMP/keystore" \
+            --env UNITY_LICENSE \
+            --env UNITY_EMAIL \
+            --env UNITY_PASSWORD \
+            --env ANDROID_KEYSTORE_PATH \
+            --env ANDROID_KEYSTORE_PASS \
+            --env ANDROID_KEYALIAS_NAME \
+            --env ANDROID_KEYALIAS_PASS \
+            --env ANDROID_PACKAGE_NAME \
+            --env ANDROID_PRODUCT_NAME \
+            --env ANDROID_VERSION_NAME \
+            --env ANDROID_VERSION_CODE \
+            --env ZEYWIN_API_KEY \
+            --env APK_OUTPUT_PATH \
+            unityci/editor:ubuntu-6000.0.71f1-android-3 \
+            /bin/bash -lc '
+              set -euo pipefail
+              mkdir -p /root/.local/share/unity3d/Unity/licenses
+              mkdir -p /root/.local/share/unity3d/Unity
+              if [ -n "${UNITY_LICENSE:-}" ]; then
+                if printf "%s" "$UNITY_LICENSE" | grep -q "EntitlementGroup"; then
+                  printf "%s" "$UNITY_LICENSE" > /root/.local/share/unity3d/Unity/licenses/UnityEntitlementLicense.xml
+                else
+                  printf "%s" "$UNITY_LICENSE" > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+                fi
+              fi
+              LOGIN_ARGS=()
+              if [ -n "${UNITY_EMAIL:-}" ] && [ -n "${UNITY_PASSWORD:-}" ]; then
+                LOGIN_ARGS=(-username "$UNITY_EMAIL" -password "$UNITY_PASSWORD")
+              fi
+              /opt/unity/Editor/Unity \
+                -batchmode \
+                -nographics \
+                -quit \
+                "${LOGIN_ARGS[@]}" \
+                -projectPath /github/workspace \
+                -executeMethod BuildGithubActionsApk.BuildAndroid \
+                -logFile /github/workspace/build/unity-build.log
+            '
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
