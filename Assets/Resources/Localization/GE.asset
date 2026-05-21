@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b51c43c556fd4c43ac6c2631d30907f, type: 3}
+  m_Name: GE
+  m_EditorClassIdentifier: 
+  entries:
+  - key: balance
+    value: Guthaben
+  - key: manual
+    value: Manuell
+  - key: auto
+    value: Auto
+  - key: bet_amount
+    value: Einsatzbetrag
+  - key: risk
+    value: Risiko
+  - key: rows
+    value: Reihen
+  - key: number_of_bets
+    value: "Anzahl der Eins\xE4tze"
+  - key: bet
+    value: Einsatz
+  - key: stop
+    value: Stopp
+  - key: allow_notifications
+    value: Benachrichtigungen zulassen
+  - key: about_notifications
+    value: zu Boni und Aktionen
+  - key: stay_tuned
+    value: "Bleib \xFCber Angebote\nunserer App auf dem Laufenden"
+  - key: skip
+    value: "\xDCberspringen"
+  - key: confirm
+    value: "Best\xE4tigen"
+  - key: free_spin_will_be_ready
+    value: Der Freispiele-Dreh ist bereit in
+  - key: wallet
+    value: Wallet
+  - key: add_payment_method
+    value: "Zahlungsmethode hinzuf\xFCgen"
+  - key: wallet_collect_coins_desc
+    value: "Wenn die gesammelten M\xFCnzen das Ziel erreichen, bevor der Timer endet,
+      \Lwerden die M\xFCnzen in einl\xF6sbare Belohnungen umgewandelt."
+  - key: your_balance
+    value: Dein Guthaben
+  - key: redeem
+    value: "Einl\xF6sen"
+  - key: save
+    value: Speichern
+  - key: get_3_to_redeem
+    value: "Erhalte 3$ zum Einl\xF6sen"
+  - key: visa_number_correct
+    value: "Bitte stelle sicher, dass deine Visa-Nummer g\xFCltig ist und korrekt
+      eingegeben wurde"
+  - key: crypto_number_correct
+    value: "Bitte stelle sicher, dass dein Crypto-Konto verf\xFCgbar ist und korrekt
+      eingegeben wurde"
+  - key: paypal_number_correct
+    value: "Bitte stelle sicher, dass dein PayPal-Konto verf\xFCgbar ist und korrekt
+      eingegeben wurde"
+  - key: first_to_add_withdrawal_method
+    value: "Zuerst musst du eine Auszahlungsmethode hinzuf\xFCgen."
+  - key: select_withdrawal_method_text
+    value: "W\xE4hle eine Auszahlungsmethode aus und f\xFCge deine Daten hinzu."
+  - key: got_it
+    value: Verstanden!
+  - key: are_you_sure_you_want_to_delete_payment
+    value: "M\xF6chtest du diese Zahlungsmethode wirklich l\xF6schen?"
+  - key: no
+    value: Nein
+  - key: yes
+    value: Ja
+  - key: delete_method
+    value: "Methode l\xF6schen?"
+  - key: please_make_sure_your_data_accurate
+    value: Bitte stelle sicher, dass deine Daten korrekt sind
+  - key: remove_ads
+    value: WERBUNG ENTFERNEN
+  - key: remove_ads_description
+    value: Keine Banner oder Videoanzeigen — nur das Spiel. Für immer.
+  - key: try_3_days_trial
+    value: 3-tägige Testversion
+  - key: payment_in_progress
+    value: Zahlung wird verarbeitet
+  - key: within_24_hours_the_payment_will_be_sent
+    value: Innerhalb von 24 Stunden wird die Zahlung an die von dir angegebenen Daten gesendet

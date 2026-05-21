@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "351113499916",
+    "project_id": "playsocialgames-plinko",
+    "storage_bucket": "playsocialgames-plinko.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:351113499916:android:61e8e354ba7c60f84ea529",
+        "android_client_info": {
+          "package_name": "com.playsocialgames.plinko"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA26jf3rRdgoZimPvHFkPldxIaf2oThg-w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

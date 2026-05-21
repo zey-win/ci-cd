@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b51c43c556fd4c43ac6c2631d30907f, type: 3}
+  m_Name: PT
+  m_EditorClassIdentifier: 
+  entries:
+  - key: balance
+    value: Saldo
+  - key: manual
+    value: Manual
+  - key: auto
+    value: "Autom\xE1tico"
+  - key: bet_amount
+    value: Valor da aposta
+  - key: risk
+    value: Risco
+  - key: rows
+    value: Linhas
+  - key: number_of_bets
+    value: "N\xFAmero de apostas"
+  - key: bet
+    value: Aposta
+  - key: stop
+    value: Parar
+  - key: allow_notifications
+    value: "Permitir notifica\xE7\xF5es"
+  - key: about_notifications
+    value: "sobre b\xF4nus e promo\xE7\xF5es"
+  - key: stay_tuned
+    value: 'Fique por dentro das ofertas
+
+      do nosso app'
+  - key: skip
+    value: Pular
+  - key: confirm
+    value: Confirmar
+  - key: free_spin_will_be_ready
+    value: "A rodada gr\xE1tis estar\xE1 pronta em"
+  - key: wallet
+    value: Carteira
+  - key: add_payment_method
+    value: "Adicionar m\xE9todo de pagamento"
+  - key: wallet_collect_coins_desc
+    value: "Se as moedas coletadas atingirem a meta antes do temporizador terminar,
+      \Las moedas ser\xE3o convertidas em recompensas resgat\xE1veis."
+  - key: your_balance
+    value: Seu saldo
+  - key: redeem
+    value: Resgatar
+  - key: save
+    value: Salvar
+  - key: get_3_to_redeem
+    value: Ganhe 3$ para resgatar
+  - key: visa_number_correct
+    value: "Certifique-se de que seu n\xFAmero do Visa \xE9 v\xE1lido e foi inserido
+      corretamente"
+  - key: crypto_number_correct
+    value: "Certifique-se de que sua conta do Crypto est\xE1 dispon\xEDvel e foi
+      inserida corretamente"
+  - key: paypal_number_correct
+    value: "Certifique-se de que sua conta do PayPal est\xE1 dispon\xEDvel e foi
+      inserida corretamente"
+  - key: first_to_add_withdrawal_method
+    value: "Primeiro, voc\xEA precisa adicionar um m\xE9todo de saque."
+  - key: select_withdrawal_method_text
+    value: "Selecione um m\xE9todo de saque e adicione seus dados."
+  - key: got_it
+    value: Entendi!
+  - key: are_you_sure_you_want_to_delete_payment
+    value: "Tem certeza de que deseja excluir este m\xE9todo de pagamento?"
+  - key: no
+    value: "N\xE3o"
+  - key: yes
+    value: Sim
+  - key: delete_method
+    value: "Excluir m\xE9todo?"
+  - key: please_make_sure_your_data_accurate
+    value: "Certifique-se de que seus dados est\xE3o corretos"
+  - key: remove_ads
+    value: REMOVER ANÚNCIOS
+  - key: remove_ads_description
+    value: Sem banners ou anúncios em vídeo — apenas o jogo. Para sempre.
+  - key: try_3_days_trial
+    value: Teste gratuito de 3 dias
+  - key: payment_in_progress
+    value: Pagamento em andamento
+  - key: within_24_hours_the_payment_will_be_sent
+    value: Em até 24 horas, o pagamento será enviado para os dados que você forneceu

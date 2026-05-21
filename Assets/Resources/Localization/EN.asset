@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b51c43c556fd4c43ac6c2631d30907f, type: 3}
+  m_Name: EN
+  m_EditorClassIdentifier: 
+  entries:
+  - key: balance
+    value: Balance
+  - key: manual
+    value: Manual
+  - key: auto
+    value: Auto
+  - key: bet_amount
+    value: Bet amount
+  - key: risk
+    value: Risk
+  - key: rows
+    value: Rows
+  - key: number_of_bets
+    value: Number of bets
+  - key: bet
+    value: Bet
+  - key: stop
+    value: Stop
+  - key: allow_notifications
+    value: Allow notifications
+  - key: about_notifications
+    value: about bonuses and promos
+  - key: stay_tuned
+    value: 'Stay tuned with offers
+
+      from our app'
+  - key: skip
+    value: Skip
+  - key: confirm
+    value: Confirm
+  - key: free_spin_will_be_ready
+    value: Free spin will be ready in
+  - key: wallet
+    value: Wallet
+  - key: add_payment_method
+    value: Add payment method
+  - key: wallet_collect_coins_desc
+    value: "If the collected Coins reach the goal before the timer ends, \Lthe coins
+      will be converted into redeemable rewards."
+  - key: your_balance
+    value: Your balance
+  - key: redeem
+    value: Redeem
+  - key: save
+    value: Save
+  - key: get_3_to_redeem
+    value: Get 3$ to redeem
+  - key: visa_number_correct
+    value: Please make sure your Visa number is available and entered correctly
+  - key: crypto_number_correct
+    value: Please make sure your PayPal account is available and enterred correctly
+  - key: paypal_number_correct
+    value: Please make sure your PayPal account is available and enterred correctly
+  - key: first_to_add_withdrawal_method
+    value: First, you need to add a withdrawal method.
+  - key: select_withdrawal_method_text
+    value: Select a withdrawal method and add your data.
+  - key: got_it
+    value: Got it!
+  - key: are_you_sure_you_want_to_delete_payment
+    value: Are you sure you want to delete this payment method?
+  - key: no
+    value: No
+  - key: yes
+    value: Yes
+  - key: delete_method
+    value: Delete mehod?
+  - key: please_make_sure_your_data_accurate
+    value: Please make sure your data is accurate
+  - key: remove_ads
+    value: REMOVE ADS
+  - key: remove_ads_description
+    value: No banners or video ads - just the game. Forever.
+  - key: try_3_days_trial
+    value: Try 3-days Trial
+  - key: payment_in_progress
+    value: Payment in progress
+  - key: within_24_hours_the_payment_will_be_sent
+    value: Within 24 hours the payment will be sent to the details you specified

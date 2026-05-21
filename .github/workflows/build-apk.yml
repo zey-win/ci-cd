@@ -1,0 +1,75 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: Android package name for this APK
+        required: true
+        default: com.playsocialgames.plinko
+      zeywin_api_key:
+        description: ZeyWin API key for this package
+        required: true
+        default: zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0
+      version_name:
+        description: APK version name
+        required: true
+        default: 1.0.6
+      version_code:
+        description: APK version code
+        required: true
+        default: "6"
+  push:
+    branches:
+      - main
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore Android keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/keystore"
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/keystore/user.keystore"
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Packages/manifest.json', 'Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-Android-
+
+      - name: Build APK
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/keystore/user.keystore
+          ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          ANDROID_KEYALIAS_NAME: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+          ANDROID_KEYALIAS_PASS: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+          ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playsocialgames.plinko' }}
+          ANDROID_VERSION_NAME: ${{ inputs.version_name || '1.0.6' }}
+          ANDROID_VERSION_CODE: ${{ inputs.version_code || '6' }}
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0' }}
+          APK_OUTPUT_PATH: build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk
+        with:
+          unityVersion: 6000.0.71f1
+          targetPlatform: Android
+          buildMethod: BuildGithubActionsApk.BuildAndroid
+          buildsPath: build
+          allowDirtyBuild: true
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Plinko_ZeyWin_v6_apk
+          path: build/android/*.apk
+          if-no-files-found: error

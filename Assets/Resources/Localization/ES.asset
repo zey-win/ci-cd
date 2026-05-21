@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b51c43c556fd4c43ac6c2631d30907f, type: 3}
+  m_Name: ES
+  m_EditorClassIdentifier: 
+  entries:
+  - key: balance
+    value: Saldo
+  - key: manual
+    value: Manual
+  - key: auto
+    value: Auto
+  - key: bet_amount
+    value: Monto de apuesta
+  - key: risk
+    value: Riesgo
+  - key: rows
+    value: Filas
+  - key: number_of_bets
+    value: "N\xFAmero de apuestas"
+  - key: bet
+    value: Apuesta
+  - key: stop
+    value: Parar
+  - key: allow_notifications
+    value: Permitir notificaciones
+  - key: about_notifications
+    value: sobre bonos y promociones
+  - key: stay_tuned
+    value: 'Mantente al tanto de las ofertas
+
+      de nuestra app'
+  - key: skip
+    value: Omitir
+  - key: confirm
+    value: Confirmar
+  - key: free_spin_will_be_ready
+    value: "El giro gratis estar\xE1 listo en"
+  - key: wallet
+    value: Billetera
+  - key: add_payment_method
+    value: "A\xF1adir m\xE9todo de pago"
+  - key: wallet_collect_coins_desc
+    value: "Si las monedas recolectadas alcanzan el objetivo antes de que termine
+      el temporizador, \Llas monedas se convertir\xE1n en recompensas canjeables."
+  - key: your_balance
+    value: Tu saldo
+  - key: redeem
+    value: Canjear
+  - key: save
+    value: Guardar
+  - key: get_3_to_redeem
+    value: Consigue 3$ para canjear
+  - key: visa_number_correct
+    value: "Por favor, aseg\xFArate de que tu n\xFAmero de Visa sea v\xE1lido y est\xE9
+      ingresado correctamente"
+  - key: crypto_number_correct
+    value: "Por favor, aseg\xFArate de que tu cuenta de Crypto est\xE9 disponible
+      y est\xE9 ingresada correctamente"
+  - key: paypal_number_correct
+    value: "Por favor, aseg\xFArate de que tu cuenta de PayPal est\xE9 disponible
+      y est\xE9 ingresada correctamente"
+  - key: first_to_add_withdrawal_method
+    value: "Primero, debes a\xF1adir un m\xE9todo de retiro."
+  - key: select_withdrawal_method_text
+    value: "Selecciona un m\xE9todo de retiro y a\xF1ade tus datos."
+  - key: got_it
+    value: "\xA1Entendido!"
+  - key: are_you_sure_you_want_to_delete_payment
+    value: "\xBFSeguro que quieres eliminar este m\xE9todo de pago?"
+  - key: no
+    value: No
+  - key: yes
+    value: "S\xED"
+  - key: delete_method
+    value: "\xBFEliminar m\xE9todo?"
+  - key: please_make_sure_your_data_accurate
+    value: "Por favor, aseg\xFArate de que tus datos sean correctos"
+  - key: remove_ads
+    value: ELIMINAR ANUNCIOS
+  - key: remove_ads_description
+    value: Sin banners ni anuncios de video: solo el juego. Para siempre.
+  - key: try_3_days_trial
+    value: Prueba de 3 días
+  - key: payment_in_progress
+    value: Pago en curso
+  - key: within_24_hours_the_payment_will_be_sent
+    value: En un plazo de 24 horas, el pago se enviará a los datos que proporcionaste

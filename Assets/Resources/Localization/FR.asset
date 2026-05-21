@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b51c43c556fd4c43ac6c2631d30907f, type: 3}
+  m_Name: FR
+  m_EditorClassIdentifier: 
+  entries:
+  - key: balance
+    value: Solde
+  - key: manual
+    value: Manuel
+  - key: auto
+    value: Auto
+  - key: bet_amount
+    value: Montant de mise
+  - key: risk
+    value: Risque
+  - key: rows
+    value: Lignes
+  - key: number_of_bets
+    value: Nombre de mises
+  - key: bet
+    value: Pari
+  - key: stop
+    value: "Arr\xEAter"
+  - key: allow_notifications
+    value: Autoriser les notifications
+  - key: about_notifications
+    value: concernant les bonus et les promos
+  - key: stay_tuned
+    value: "Restez inform\xE9 des offres\nde notre application"
+  - key: skip
+    value: Ignorer
+  - key: confirm
+    value: Confirmer
+  - key: free_spin_will_be_ready
+    value: "Le tour gratuit sera pr\xEAt dans"
+  - key: wallet
+    value: Portefeuille
+  - key: add_payment_method
+    value: Ajouter un moyen de paiement
+  - key: wallet_collect_coins_desc
+    value: "Si les pi\xE8ces collect\xE9es atteignent l\u2019objectif avant la fin
+      du minuteur, \Lelles seront converties en r\xE9compenses \xE9changeables."
+  - key: your_balance
+    value: Votre solde
+  - key: redeem
+    value: "\xC9changer"
+  - key: save
+    value: Enregistrer
+  - key: get_3_to_redeem
+    value: "Obtenez 3$ \xE0 \xE9changer"
+  - key: visa_number_correct
+    value: "Veuillez vous assurer que votre num\xE9ro de Visa est valide et correctement
+      saisi"
+  - key: crypto_number_correct
+    value: Veuillez vous assurer que votre compte Crypto est disponible et correctement
+      saisi
+  - key: paypal_number_correct
+    value: Veuillez vous assurer que votre compte PayPal est disponible et correctement
+      saisi
+  - key: first_to_add_withdrawal_method
+    value: "D\u2019abord, vous devez ajouter une m\xE9thode de retrait."
+  - key: select_withdrawal_method_text
+    value: "S\xE9lectionnez une m\xE9thode de retrait et ajoutez vos informations."
+  - key: got_it
+    value: Compris !
+  - key: are_you_sure_you_want_to_delete_payment
+    value: "\xCAtes-vous s\xFBr de vouloir supprimer ce moyen de paiement ?"
+  - key: no
+    value: Non
+  - key: yes
+    value: Oui
+  - key: delete_method
+    value: "Supprimer la m\xE9thode ?"
+  - key: please_make_sure_your_data_accurate
+    value: Veuillez vous assurer que vos informations sont exactes
+  - key: remove_ads
+    value: SUPPRIMER LES PUBLICITÉS
+  - key: remove_ads_description
+    value: Aucun bandeau ni publicité vidéo — juste le jeu. Pour toujours.
+  - key: try_3_days_trial
+    value: Essai de 3 jours
+  - key: payment_in_progress
+    value: Paiement en cours
+  - key: within_24_hours_the_payment_will_be_sent
+    value: Sous 24 heures, le paiement sera envoyé aux informations que vous avez indiquées
