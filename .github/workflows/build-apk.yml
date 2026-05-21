@@ -33,7 +33,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Restore Android keystore
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/keystore"
