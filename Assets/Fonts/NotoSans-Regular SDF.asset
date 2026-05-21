@@ -174,8 +174,8 @@ MonoBehaviour:
   m_Version: 1.1.0
   m_SourceFontFileGUID: 4b7b1300a9732460e9ce99f36319aee8
   m_SourceFontFile_EditorRef: {fileID: 12800000, guid: 4b7b1300a9732460e9ce99f36319aee8, type: 3}
-  m_SourceFontFile: {fileID: 0}
-  m_AtlasPopulationMode: 0
+  m_SourceFontFile: {fileID: 12800000, guid: 4b7b1300a9732460e9ce99f36319aee8, type: 3}
+  m_AtlasPopulationMode: 1
   m_FaceInfo:
     m_FaceIndex: 0
     m_FamilyName: Noto Sans
@@ -2772,8 +2772,8 @@ MonoBehaviour:
     AtlasWidth: 0
     AtlasHeight: 0
   atlas: {fileID: 0}
-  m_AtlasWidth: 512
-  m_AtlasHeight: 512
+  m_AtlasWidth: 2048
+  m_AtlasHeight: 2048
   m_AtlasPadding: 6
   m_AtlasRenderMode: 4165
   m_glyphInfoList: []
@@ -2790,9 +2790,9 @@ MonoBehaviour:
     pointSize: 67
     padding: 6
     packingMode: 0
-    atlasWidth: 512
-    atlasHeight: 512
-    characterSetSelectionMode: 0
+    atlasWidth: 2048
+    atlasHeight: 2048
+    characterSetSelectionMode: 1
     characterSequence: 32 - 126, 160, 8203, 8230, 9633
     referencedFontAssetGUID: 0f9d01d72bcce4e21a5fd35697f0d865
     referencedTextAssetGUID: 
