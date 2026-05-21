@@ -45,7 +45,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 60
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -119,3 +119,30 @@ jobs:
           name: Plinko_ZeyWin_v6_apk
           path: build/android/*.apk
           if-no-files-found: error
+
+      - name: Commit APK to repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk_path="$(find build/android -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+          if [ -z "$apk_path" ]; then
+            echo "No APK found in build/android"
+            exit 1
+          fi
+
+          mkdir -p builds
+          apk_name="$(basename "$apk_path")"
+          cp "$apk_path" "builds/$apk_name"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "builds/$apk_name"
+
+          if git diff --cached --quiet; then
+            echo "APK in repository is already up to date: builds/$apk_name"
+            exit 0
+          fi
+
+          git commit -m "Add APK from GitHub Actions run $GITHUB_RUN_NUMBER"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
