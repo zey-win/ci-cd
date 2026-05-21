@@ -164,8 +164,10 @@ jobs:
           path: build/android/*.apk
           if-no-files-found: error
 
-      - name: Commit APK to repository
+      - name: Publish APK release and metadata
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           apk_path="$(find build/android -maxdepth 1 -type f -name '*.apk' | head -n 1)"
@@ -176,28 +178,37 @@ jobs:
 
           mkdir -p builds
           apk_name="$(basename "$apk_path")"
-          cp "$apk_path" "builds/$apk_name"
-          shasum -a 256 "builds/$apk_name" > "builds/$apk_name.sha256"
+          release_tag="apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          release_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$release_tag"
+
+          shasum -a 256 "$apk_path" | sed "s#  .*#  $apk_name#" > "builds/$apk_name.sha256"
+          gh release create "$release_tag" "$apk_path#$apk_name" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "APK $apk_name" \
+            --notes "APK built by GitHub Actions run $GITHUB_RUN_NUMBER attempt $GITHUB_RUN_ATTEMPT."
+
           {
             echo "run_id=$GITHUB_RUN_ID"
             echo "run_number=$GITHUB_RUN_NUMBER"
             echo "run_attempt=$GITHUB_RUN_ATTEMPT"
             echo "commit_sha=$GITHUB_SHA"
             echo "ref=$GITHUB_REF_NAME"
-            echo "apk=builds/$apk_name"
+            echo "apk_artifact=Plinko_ZeyWin_v6_apk"
+            echo "apk_release=$release_url"
+            echo "apk_asset=$apk_name"
             echo "built_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             echo "run_url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           } > builds/latest-build.txt
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f "builds/$apk_name" "builds/$apk_name.sha256" builds/latest-build.txt
+          git add -f "builds/$apk_name.sha256" builds/latest-build.txt
 
           if git diff --cached --quiet; then
-            echo "APK metadata in repository is already up to date: builds/$apk_name"
+            echo "APK metadata in repository is already up to date: builds/latest-build.txt"
             exit 0
           fi
 
-          git commit -m "Add APK from GitHub Actions run $GITHUB_RUN_NUMBER"
+          git commit -m "Record APK from GitHub Actions run $GITHUB_RUN_NUMBER"
           git pull --rebase origin "$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
