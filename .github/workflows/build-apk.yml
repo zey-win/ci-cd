@@ -23,9 +23,6 @@ on:
         description: APK version code
         required: true
         default: "6"
-  push:
-    branches:
-      - main
 
 jobs:
   build-apk:
