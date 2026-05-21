@@ -52,6 +52,7 @@ public static class BuildGithubActionsApk
         if (string.IsNullOrEmpty(productName))
             productName = DefaultProductName;
 
+        productName = productName.Replace('_', ' ');
         PlayerSettings.productName = productName;
         var versionName = GetConfig("ANDROID_VERSION_NAME", "androidVersionName", null);
         if (string.IsNullOrEmpty(versionName))
