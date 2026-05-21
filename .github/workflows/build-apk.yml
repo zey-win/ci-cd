@@ -79,6 +79,8 @@ jobs:
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/keystore/user.keystore
           ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
           ANDROID_KEYALIAS_NAME: ${{ secrets.ANDROID_KEYALIAS_NAME }}
@@ -98,6 +100,14 @@ jobs:
           targetPlatform: Android
           buildMethod: BuildGithubActionsApk.BuildAndroid
           customParameters: -logFile build/unity-build.log
+
+      - name: Upload Unity build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-build-log
+          path: build/unity-build.log
+          if-no-files-found: ignore
 
       - name: Verify APK output
         shell: bash
