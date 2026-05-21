@@ -23,6 +23,22 @@ on:
         description: APK version code
         required: true
         default: "6"
+      admob_android_app_id:
+        description: AdMob Android app id
+        required: false
+        default: ca-app-pub-6988952582458184~2578339758
+      admob_android_banner_id:
+        description: AdMob Android banner unit id
+        required: false
+        default: ca-app-pub-6988952582458184/7966397807
+      admob_android_interstitial_id:
+        description: AdMob Android interstitial unit id
+        required: false
+        default: ca-app-pub-6988952582458184/6653316139
+      admob_android_rewarded_id:
+        description: AdMob Android rewarded unit id
+        required: false
+        default: ca-app-pub-6988952582458184/3302497559
 
 jobs:
   build-apk:
@@ -67,6 +83,10 @@ jobs:
           ANDROID_VERSION_NAME: ${{ inputs.version_name || '1.0.6' }}
           ANDROID_VERSION_CODE: ${{ inputs.version_code || '6' }}
           ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0' }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || 'ca-app-pub-6988952582458184~2578339758' }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || 'ca-app-pub-6988952582458184/7966397807' }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || 'ca-app-pub-6988952582458184/6653316139' }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || 'ca-app-pub-6988952582458184/3302497559' }}
           APK_OUTPUT_PATH: build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk
         shell: bash
         run: |

@@ -13,10 +13,10 @@ public static class BuildGithubActionsApk
     private const string DefaultPackageName = "com.playsocialgames.plinko";
     private const string DefaultProductName = "Plinko";
     private const string DefaultApiKey = "zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0";
-    private const string AdMobAppId = "ca-app-pub-6988952582458184~2578339758";
-    private const string AdMobBanner = "ca-app-pub-6988952582458184/7966397807";
-    private const string AdMobInterstitial = "ca-app-pub-6988952582458184/6653316139";
-    private const string AdMobRewarded = "ca-app-pub-6988952582458184/3302497559";
+    private const string DefaultAdMobAppId = "ca-app-pub-6988952582458184~2578339758";
+    private const string DefaultAdMobBanner = "ca-app-pub-6988952582458184/7966397807";
+    private const string DefaultAdMobInterstitial = "ca-app-pub-6988952582458184/6653316139";
+    private const string DefaultAdMobRewarded = "ca-app-pub-6988952582458184/3302497559";
 
     public static void BuildAndroid()
     {
@@ -141,12 +141,18 @@ public static class BuildGithubActionsApk
         settings.enableAdMob = true;
         settings.enableUmpConsent = false;
         settings.tagForUnderAgeOfConsent = false;
-        settings.admobAppIdAndroid = AdMobAppId;
-        settings.admobBannerAndroid = AdMobBanner;
-        settings.admobInterstitialAndroid = AdMobInterstitial;
-        settings.admobRewardedAndroid = AdMobRewarded;
+        settings.admobAppIdAndroid = GetEnv("ADMOB_ANDROID_APP_ID", DefaultAdMobAppId);
+        settings.admobBannerAndroid = GetEnv("ADMOB_ANDROID_BANNER_ID", DefaultAdMobBanner);
+        settings.admobInterstitialAndroid = GetEnv("ADMOB_ANDROID_INTERSTITIAL_ID", DefaultAdMobInterstitial);
+        settings.admobRewardedAndroid = GetEnv("ADMOB_ANDROID_REWARDED_ID", DefaultAdMobRewarded);
         EditorUtility.SetDirty(settings);
 
         Debug.Log("[ZeyWinActions] ZeyWin auto-start enabled before splash screen; Unity splash disabled.");
+    }
+
+    private static string GetEnv(string name, string fallback)
+    {
+        var value = Environment.GetEnvironmentVariable(name);
+        return string.IsNullOrEmpty(value) ? fallback : value;
     }
 }
