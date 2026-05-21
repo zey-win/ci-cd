@@ -2,7 +2,7 @@
 
 Unity project for building Plinko APKs with ZeyWin Ads SDK and CrashGuard SDK through GitHub Actions.
 
-The workflow is reusable for new apps: run `Build Android APK` manually and enter a new Android package name plus the matching ZeyWin API key. AdMob IDs stay the same.
+The workflow is reusable for new apps: run `Build Android APK` manually and enter a new Android package name, app name, version, and the matching ZeyWin API key. AdMob IDs stay the same.
 
 ## GitHub Actions secrets
 

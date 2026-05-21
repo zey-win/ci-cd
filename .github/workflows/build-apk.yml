@@ -7,6 +7,10 @@ on:
         description: Android package name for this APK
         required: true
         default: com.playsocialgames.plinko
+      app_name:
+        description: App display name
+        required: true
+        default: Plinko
       zeywin_api_key:
         description: ZeyWin API key for this package
         required: true
@@ -46,6 +50,16 @@ jobs:
           restore-keys: |
             Library-Android-
 
+      - name: Free disk space
+        shell: bash
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          docker system prune -af || true
+          df -h
+
       - name: Build APK
         uses: game-ci/unity-builder@v4
         env:
@@ -55,6 +69,7 @@ jobs:
           ANDROID_KEYALIAS_NAME: ${{ secrets.ANDROID_KEYALIAS_NAME }}
           ANDROID_KEYALIAS_PASS: ${{ secrets.ANDROID_KEYALIAS_PASS }}
           ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playsocialgames.plinko' }}
+          ANDROID_PRODUCT_NAME: ${{ inputs.app_name || 'Plinko' }}
           ANDROID_VERSION_NAME: ${{ inputs.version_name || '1.0.6' }}
           ANDROID_VERSION_CODE: ${{ inputs.version_code || '6' }}
           ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0' }}
