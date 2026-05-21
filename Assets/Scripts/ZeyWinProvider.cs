@@ -15,6 +15,7 @@ public class ZeyWinProvider : MonoBehaviour
     public void ShowBannerBottom() { }
     public void HideBanner() { }
     public void HideSdkBannerInternal() { }
+    public void SetAdsDisabled(bool disabled) { }
     public void ShowInterstitial(Action onClose = null) => onClose?.Invoke();
     public void ShowRewarded(Action onReward = null, Action onClose = null)
     {

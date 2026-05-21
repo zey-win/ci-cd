@@ -103,6 +103,15 @@ jobs:
               cat build/unity-build.log || true
               exit "$code"
             }
+          if [ ! -f "$APK_OUTPUT_PATH" ]; then
+            echo "APK was not created at $APK_OUTPUT_PATH"
+            echo "----- build files -----"
+            find build -maxdepth 4 -type f -print || true
+            echo "----- important Unity log lines -----"
+            grep -E "ZeyWinActions|Build result|error CS|Script Compilation Error|Exception|Android APK build failed" build/unity-build.log || true
+            exit 1
+          fi
+          ls -lh "$APK_OUTPUT_PATH"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

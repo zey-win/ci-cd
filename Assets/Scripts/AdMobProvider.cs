@@ -17,6 +17,7 @@ public class AdMobProvider : MonoBehaviour
     public void ShowBanner() { }
     public void HideBanner() { }
     public void DestroyBanner() { }
+    public void SetAdsDisabled(bool disabled) { }
     public void ShowInterstitialAd(Action onClose = null) => onClose?.Invoke();
     public void ShowRewardedAd(Action onReward = null, Action onClose = null)
     {
