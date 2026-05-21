@@ -24,7 +24,7 @@ public static class BuildGithubActionsApk
 
         var outputPath = Environment.GetEnvironmentVariable("APK_OUTPUT_PATH");
         if (string.IsNullOrEmpty(outputPath))
-            outputPath = Path.GetFullPath("Builds/Plinko_ZeyWin_v6.apk");
+            outputPath = Path.GetFullPath("build/android/Plinko_com.playsocialgames.plinko_v6.apk");
 
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 

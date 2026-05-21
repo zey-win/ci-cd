@@ -127,11 +127,26 @@ jobs:
         env:
           APK_OUTPUT_PATH: build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk
         run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$APK_OUTPUT_PATH")"
+
           if [ ! -f "$APK_OUTPUT_PATH" ]; then
-            echo "APK was not created at $APK_OUTPUT_PATH"
+            echo "APK was not created at expected path: $APK_OUTPUT_PATH"
+            echo "Searching for APK files in workspace..."
+            found_apk="$(find . -type f -name '*.apk' -print | head -n 1 || true)"
+            if [ -n "$found_apk" ]; then
+              echo "Found APK at $found_apk"
+              cp "$found_apk" "$APK_OUTPUT_PATH"
+            fi
+          fi
+
+          if [ ! -f "$APK_OUTPUT_PATH" ]; then
+            echo "APK was not created and no fallback APK was found."
+            echo "----- apk files -----"
+            find . -type f -name '*.apk' -print || true
             echo "----- build files -----"
-            find build -maxdepth 4 -type f -print || true
-            echo "----- important Unity log lines -----"
+            find build Builds -maxdepth 5 -type f -print 2>/dev/null || true
+            echo "----- important Unity log lines from console log -----"
             if [ -f build/unity-build.log ]; then
               grep -E "ZeyWinActions|Build result|error CS|Script Compilation Error|Exception|Android APK build failed" build/unity-build.log || true
             else
@@ -139,6 +154,7 @@ jobs:
             fi
             exit 1
           fi
+
           ls -lh "$APK_OUTPUT_PATH"
 
       - name: Upload APK
