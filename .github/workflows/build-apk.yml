@@ -93,7 +93,6 @@ jobs:
           mkdir -p build/android
           UNITY="/Applications/Unity/Hub/Editor/6000.0.71f1/Unity.app/Contents/MacOS/Unity"
           "$UNITY" \
-            -batchmode \
             -quit \
             -projectPath "$PWD" \
             -executeMethod BuildGithubActionsApk.BuildAndroid \
