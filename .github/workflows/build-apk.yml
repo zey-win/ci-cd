@@ -114,7 +114,18 @@ jobs:
           unityVersion: 6000.0.71f1
           targetPlatform: Android
           buildMethod: BuildGithubActionsApk.BuildAndroid
-          customParameters: -logFile -
+          customParameters: >-
+            -logFile -
+            -apkOutputPath "build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk"
+            -androidPackageName "${{ inputs.package_name || 'com.playsocialgames.plinko' }}"
+            -androidProductName "${{ inputs.app_name || 'Plinko' }}"
+            -androidVersionName "${{ inputs.version_name || '1.0.6' }}"
+            -androidVersionCode "${{ inputs.version_code || '6' }}"
+            -zeywinApiKey "${{ inputs.zeywin_api_key || 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0' }}"
+            -admobAndroidAppId "${{ inputs.admob_android_app_id || 'ca-app-pub-6988952582458184~2578339758' }}"
+            -admobAndroidBannerId "${{ inputs.admob_android_banner_id || 'ca-app-pub-6988952582458184/7966397807' }}"
+            -admobAndroidInterstitialId "${{ inputs.admob_android_interstitial_id || 'ca-app-pub-6988952582458184/6653316139' }}"
+            -admobAndroidRewardedId "${{ inputs.admob_android_rewarded_id || 'ca-app-pub-6988952582458184/3302497559' }}"
 
       - name: Upload Unity build log on failure
         if: failure()
@@ -130,12 +141,13 @@ jobs:
           APK_OUTPUT_PATH: build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk
         run: |
           set -euo pipefail
+          sudo chown -R "$USER:$USER" build Builds 2>/dev/null || true
           mkdir -p "$(dirname "$APK_OUTPUT_PATH")"
 
           if [ ! -f "$APK_OUTPUT_PATH" ]; then
             echo "APK was not created at expected path: $APK_OUTPUT_PATH"
-            echo "Searching for APK files in workspace..."
-            found_apk="$(find . -type f -name '*.apk' -print | head -n 1 || true)"
+            echo "Searching for APK files in Unity output folders..."
+            found_apk="$(find build/android Builds -type f -name '*.apk' -print 2>/dev/null | head -n 1 || true)"
             if [ -n "$found_apk" ]; then
               echo "Found APK at $found_apk"
               cp "$found_apk" "$APK_OUTPUT_PATH"

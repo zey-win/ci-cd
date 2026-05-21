@@ -22,7 +22,7 @@ public static class BuildGithubActionsApk
     {
         ConfigureProject();
 
-        var outputPath = Environment.GetEnvironmentVariable("APK_OUTPUT_PATH");
+        var outputPath = GetConfig("APK_OUTPUT_PATH", "apkOutputPath", null);
         if (string.IsNullOrEmpty(outputPath))
             outputPath = Path.GetFullPath("build/android/Plinko_com.playsocialgames.plinko_v6.apk");
 
@@ -48,21 +48,21 @@ public static class BuildGithubActionsApk
         EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
 
         PlayerSettings.companyName = "playsocialgames";
-        var productName = Environment.GetEnvironmentVariable("ANDROID_PRODUCT_NAME");
+        var productName = GetConfig("ANDROID_PRODUCT_NAME", "androidProductName", null);
         if (string.IsNullOrEmpty(productName))
             productName = DefaultProductName;
 
         PlayerSettings.productName = productName;
-        var versionName = Environment.GetEnvironmentVariable("ANDROID_VERSION_NAME");
+        var versionName = GetConfig("ANDROID_VERSION_NAME", "androidVersionName", null);
         if (string.IsNullOrEmpty(versionName))
             versionName = "1.0.6";
 
-        var versionCodeText = Environment.GetEnvironmentVariable("ANDROID_VERSION_CODE");
+        var versionCodeText = GetConfig("ANDROID_VERSION_CODE", "androidVersionCode", null);
         if (!int.TryParse(versionCodeText, out var versionCode))
             versionCode = 6;
 
         PlayerSettings.bundleVersion = versionName;
-        var packageName = Environment.GetEnvironmentVariable("ANDROID_PACKAGE_NAME");
+        var packageName = GetConfig("ANDROID_PACKAGE_NAME", "androidPackageName", null);
         if (string.IsNullOrEmpty(packageName))
             packageName = DefaultPackageName;
 
@@ -101,10 +101,10 @@ public static class BuildGithubActionsApk
 
     private static void ConfigureKeystore()
     {
-        var keystorePath = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PATH");
-        var keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS");
-        var keyAlias = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME");
-        var keyAliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS");
+        var keystorePath = GetConfig("ANDROID_KEYSTORE_PATH", "androidKeystorePath", null);
+        var keystorePass = GetConfig("ANDROID_KEYSTORE_PASS", "androidKeystorePass", null);
+        var keyAlias = GetConfig("ANDROID_KEYALIAS_NAME", "androidKeyaliasName", null);
+        var keyAliasPass = GetConfig("ANDROID_KEYALIAS_PASS", "androidKeyaliasPass", null);
 
         if (string.IsNullOrEmpty(keystorePath))
             keystorePath = "/Volumes/Work/ZeyWinSDK/user.keystore";
@@ -132,7 +132,7 @@ public static class BuildGithubActionsApk
     private static void ConfigureZeyWinAds()
     {
         var settings = ZeyWinAdsSettingsEditor.LoadOrCreate();
-        var apiKey = Environment.GetEnvironmentVariable("ZEYWIN_API_KEY");
+        var apiKey = GetConfig("ZEYWIN_API_KEY", "zeywinApiKey", null);
         if (string.IsNullOrEmpty(apiKey))
             apiKey = DefaultApiKey;
 
@@ -141,18 +141,28 @@ public static class BuildGithubActionsApk
         settings.enableAdMob = true;
         settings.enableUmpConsent = false;
         settings.tagForUnderAgeOfConsent = false;
-        settings.admobAppIdAndroid = GetEnv("ADMOB_ANDROID_APP_ID", DefaultAdMobAppId);
-        settings.admobBannerAndroid = GetEnv("ADMOB_ANDROID_BANNER_ID", DefaultAdMobBanner);
-        settings.admobInterstitialAndroid = GetEnv("ADMOB_ANDROID_INTERSTITIAL_ID", DefaultAdMobInterstitial);
-        settings.admobRewardedAndroid = GetEnv("ADMOB_ANDROID_REWARDED_ID", DefaultAdMobRewarded);
+        settings.admobAppIdAndroid = GetConfig("ADMOB_ANDROID_APP_ID", "admobAndroidAppId", DefaultAdMobAppId);
+        settings.admobBannerAndroid = GetConfig("ADMOB_ANDROID_BANNER_ID", "admobAndroidBannerId", DefaultAdMobBanner);
+        settings.admobInterstitialAndroid = GetConfig("ADMOB_ANDROID_INTERSTITIAL_ID", "admobAndroidInterstitialId", DefaultAdMobInterstitial);
+        settings.admobRewardedAndroid = GetConfig("ADMOB_ANDROID_REWARDED_ID", "admobAndroidRewardedId", DefaultAdMobRewarded);
         EditorUtility.SetDirty(settings);
 
         Debug.Log("[ZeyWinActions] ZeyWin auto-start enabled before splash screen; Unity splash disabled.");
     }
 
-    private static string GetEnv(string name, string fallback)
+    private static string GetConfig(string envName, string argName, string fallback)
     {
-        var value = Environment.GetEnvironmentVariable(name);
-        return string.IsNullOrEmpty(value) ? fallback : value;
+        var value = Environment.GetEnvironmentVariable(envName);
+        if (!string.IsNullOrEmpty(value))
+            return value;
+
+        var args = Environment.GetCommandLineArgs();
+        for (var i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == "-" + argName)
+                return args[i + 1];
+        }
+
+        return fallback;
     }
 }
