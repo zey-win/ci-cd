@@ -7,15 +7,36 @@ jobs:
   request-activation-file:
     runs-on: ubuntu-latest
     steps:
-      - name: Request activation file
-        uses: game-ci/unity-request-activation-file@v2
-        id: getManualLicenseFile
-        with:
-          unityVersion: 6000.0.71f1
+      - name: Free disk space
+        shell: bash
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          docker system prune -af || true
+          df -h
+
+      - name: Create Unity manual activation file
+        shell: bash
+        run: |
+          mkdir -p activation
+          docker run --rm \
+            --workdir /github/workspace \
+            --volume "$PWD:/github/workspace" \
+            unityci/editor:ubuntu-6000.0.71f1-android-3 \
+            /opt/unity/Editor/Unity \
+              -batchmode \
+              -nographics \
+              -quit \
+              -createManualActivationFile \
+              -logFile /github/workspace/activation/unity-activation.log || true
+          find . -name '*.alf' -print -exec cp {} activation/Unity_v6000.0.71f1.alf \;
+          test -f activation/Unity_v6000.0.71f1.alf
 
       - name: Upload activation file
         uses: actions/upload-artifact@v4
         with:
-          name: Unity_v6000.0.71f1.alf
-          path: ${{ steps.getManualLicenseFile.outputs.filePath }}
+          name: Unity_v6000.0.71f1_alf
+          path: activation/*
           if-no-files-found: error
