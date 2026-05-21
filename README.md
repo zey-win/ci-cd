@@ -8,7 +8,6 @@ The workflow is reusable for new apps: run `Build Android APK` manually and ente
 
 Set these repository secrets before running `Build Android APK`:
 
-- `UNITY_LICENSE`
 - `UNITY_EMAIL`
 - `UNITY_PASSWORD`
 - `ANDROID_KEYSTORE_BASE64`
