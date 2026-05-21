@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
+using UnityEngine.Rendering;
 using ZeyWinAds;
 using ZeyWinAds.Editor;
 
@@ -70,11 +71,32 @@ public static class BuildGithubActionsApk
         PlayerSettings.SplashScreen.show = false;
         PlayerSettings.SplashScreen.showUnityLogo = false;
 
+        ConfigureAndroidCompatibility();
+
         ConfigureKeystore();
         ConfigureZeyWinAds();
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    private static void ConfigureAndroidCompatibility()
+    {
+        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
+        PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+        PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
+        PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARMv7 | AndroidArchitecture.ARM64;
+        PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Low);
+
+        PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+        PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.OpenGLES3 });
+
+        PlayerSettings.MTRendering = false;
+        PlayerSettings.stripEngineCode = true;
+        PlayerSettings.Android.optimizedFramePacing = false;
+        QualitySettings.vSyncCount = 0;
+
+        Debug.Log("[ZeyWinActions] Android compatibility profile: minSdk=23, IL2CPP ARMv7+ARM64, OpenGLES3 only, Vulkan disabled.");
     }
 
     private static void ConfigureKeystore()
