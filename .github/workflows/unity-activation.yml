@@ -24,19 +24,19 @@ jobs:
           docker run --rm \
             --workdir /github/workspace \
             --volume "$PWD:/github/workspace" \
-            unityci/editor:ubuntu-6000.0.71f1-android-3 \
+            unityci/editor:ubuntu-2022.3.62f2-android-3 \
             /opt/unity/Editor/Unity \
               -batchmode \
               -nographics \
               -quit \
               -createManualActivationFile \
               -logFile /github/workspace/activation/unity-activation.log || true
-          find . -name '*.alf' -print -exec cp {} activation/Unity_v6000.0.71f1.alf \;
-          test -f activation/Unity_v6000.0.71f1.alf
+          find . -name '*.alf' -print -exec cp {} activation/Unity_v2022.3.62f2.alf \;
+          test -f activation/Unity_v2022.3.62f2.alf
 
       - name: Upload activation file
         uses: actions/upload-artifact@v4
         with:
-          name: Unity_v6000.0.71f1_alf
+          name: Unity_v2022.3.62f2_alf
           path: activation/*
           if-no-files-found: error

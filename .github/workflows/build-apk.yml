@@ -92,7 +92,7 @@ jobs:
             --env ANDROID_VERSION_CODE \
             --env ZEYWIN_API_KEY \
             --env APK_OUTPUT_PATH \
-            unityci/editor:ubuntu-6000.0.71f1-android-3 \
+            unityci/editor:ubuntu-2022.3.62f2-android-3 \
             /bin/bash -lc '
               set -euo pipefail
               mkdir -p /root/.local/share/unity3d/Unity/licenses
