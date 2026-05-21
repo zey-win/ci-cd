@@ -40,6 +40,10 @@ on:
         required: false
         default: ca-app-pub-6988952582458184/3302497559
 
+concurrency:
+  group: apk-build-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest

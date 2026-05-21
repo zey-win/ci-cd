@@ -1,0 +1,109 @@
+name: Publish Existing APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: GitHub Actions run id that already uploaded the APK artifact
+        required: true
+        default: "26238519840"
+      artifact_name:
+        description: APK artifact name
+        required: true
+        default: Plinko_ZeyWin_v6_apk
+      package_name:
+        description: Android package name
+        required: true
+        default: com.playsocialgames.plinko
+      version_name:
+        description: APK version name
+        required: true
+        default: 1.0.6
+      version_code:
+        description: APK version code
+        required: true
+        default: "6"
+
+jobs:
+  publish-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download APK artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/android
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$ARTIFACT_NAME" \
+            --dir build/android
+          find build/android -maxdepth 2 -type f -name '*.apk' -print -exec ls -lh {} \;
+
+      - name: Publish APK release and metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          set -euo pipefail
+          apk_path="$(find build/android -type f -name '*.apk' | head -n 1)"
+          if [ -z "$apk_path" ]; then
+            echo "No APK found in downloaded artifact."
+            exit 1
+          fi
+
+          mkdir -p builds
+          apk_name="$(basename "$apk_path")"
+          release_tag="apk-run-$SOURCE_RUN_ID"
+          release_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$release_tag"
+
+          if gh release view "$release_tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$release_tag" "$apk_path#$apk_name" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$release_tag" "$apk_path#$apk_name" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "APK $PACKAGE_NAME v$VERSION_CODE" \
+              --notes "APK from GitHub Actions artifact $ARTIFACT_NAME in run $SOURCE_RUN_ID."
+          fi
+
+          sha256="$(shasum -a 256 "$apk_path" | awk '{print $1}')"
+          printf '%s  %s\n' "$sha256" "$apk_name" > "builds/$apk_name.sha256"
+          {
+            echo "source_run_id=$SOURCE_RUN_ID"
+            echo "package_name=$PACKAGE_NAME"
+            echo "version_name=$VERSION_NAME"
+            echo "version_code=$VERSION_CODE"
+            echo "apk_artifact=$ARTIFACT_NAME"
+            echo "apk_release=$release_url"
+            echo "apk_asset=$apk_name"
+            echo "sha256=$sha256"
+            echo "published_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          } > builds/latest-build.txt
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "builds/$apk_name.sha256" builds/latest-build.txt
+
+          if git diff --cached --quiet; then
+            echo "APK metadata is already up to date."
+            exit 0
+          fi
+
+          git commit -m "Record published APK from run $SOURCE_RUN_ID"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
