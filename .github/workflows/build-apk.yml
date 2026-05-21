@@ -27,6 +27,7 @@ on:
 jobs:
   build-apk:
     runs-on: self-hosted
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:
@@ -73,7 +74,6 @@ jobs:
           UNITY="/Applications/Unity/Hub/Editor/6000.0.71f1/Unity.app/Contents/MacOS/Unity"
           "$UNITY" \
             -batchmode \
-            -nographics \
             -quit \
             -projectPath "$PWD" \
             -executeMethod BuildGithubActionsApk.BuildAndroid \
