@@ -4,4 +4,4 @@ Use this table before workflow runs. For a new release, use the next manual valu
 
 | Package | Latest version name | Latest version code | Next manual version name | Next manual version code | APK |
 | --- | --- | ---: | --- | ---: | --- |
-| `com.playsocialgames.plinko` | `1.0.18` | `18` | `1.0.19` | `19` | [builds/com.playsocialgames.plinko/v18/APK_com.playsocialgames.plinko_v18.apk](builds/com.playsocialgames.plinko/v18/APK_com.playsocialgames.plinko_v18.apk) |
+| `com.playsocialgames.plinko` | `1.0.19` | `19` | `1.0.20` | `20` | [builds/com.playsocialgames.plinko/v19/APK_com.playsocialgames.plinko_v19.apk](builds/com.playsocialgames.plinko/v19/APK_com.playsocialgames.plinko_v19.apk) |

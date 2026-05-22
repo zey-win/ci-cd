@@ -1,0 +1,14 @@
+run_id=26307309972
+run_number=67
+run_attempt=1
+commit_sha=2e183de2f250b7cebf3ffe948591f5ced704b7ba
+ref=main
+package_name=com.playsocialgames.plinko
+version_name=1.0.19
+version_code=19
+apk_artifact=APK_com.playsocialgames.plinko_v19
+apk_release=https://github.com/zey-win/ci-cd/releases/tag/apk-67-1
+apk_asset=APK_com.playsocialgames.plinko_v19.apk
+apk_path=builds/com.playsocialgames.plinko/v19/APK_com.playsocialgames.plinko_v19.apk
+built_at_utc=2026-05-22T19:38:13Z
+run_url=https://github.com/zey-win/ci-cd/actions/runs/26307309972
