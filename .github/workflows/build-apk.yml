@@ -61,24 +61,19 @@ jobs:
           PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
           PACKAGE_NAME: ${{ inputs.package_name }}
           APP_NAME: ${{ inputs.app_name }}
-          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key }}
           VERSION_NAME: ${{ inputs.version_name }}
           VERSION_CODE: ${{ inputs.version_code }}
-          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
-          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
-          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
-          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
         run: |
           set -euo pipefail
-          echo "::add-mask::$ZEYWIN_API_KEY"
-          echo "::add-mask::$ADMOB_ANDROID_APP_ID"
-          echo "::add-mask::$ADMOB_ANDROID_BANNER_ID"
-          echo "::add-mask::$ADMOB_ANDROID_INTERSTITIAL_ID"
-          echo "::add-mask::$ADMOB_ANDROID_REWARDED_ID"
+          echo "::add-mask::${{ inputs.zeywin_api_key }}"
+          echo "::add-mask::${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}"
           test -n "$PRIVATE_REPO_TOKEN" || { echo "Missing PRIVATE_REPO_TOKEN secret for private game/SDK checkout."; exit 1; }
           test -n "$PACKAGE_NAME" || { echo "package_name is required."; exit 1; }
           test -n "$APP_NAME" || { echo "app_name is required."; exit 1; }
-          test -n "$ZEYWIN_API_KEY" || { echo "zeywin_api_key is required."; exit 1; }
+          test -n "${{ inputs.zeywin_api_key }}" || { echo "zeywin_api_key is required."; exit 1; }
           test -n "$VERSION_NAME" || { echo "version_name is required."; exit 1; }
           test -n "$VERSION_CODE" || { echo "version_code is required."; exit 1; }
 
@@ -193,13 +188,13 @@ jobs:
           APK_OUTPUT_PATH: ${{ github.workspace }}/build/android/APK_${{ inputs.package_name }}_v${{ inputs.version_code }}.apk
         run: |
           set -euo pipefail
-          sudo chown -R "$USER:$USER" build Builds game/build game/Builds 2>/dev/null || true
+          sudo chown -R "$USER:$USER" build Builds game/build game/Builds game/Library/Bee/Android 2>/dev/null || true
           mkdir -p "$(dirname "$APK_OUTPUT_PATH")"
 
           if [ ! -f "$APK_OUTPUT_PATH" ]; then
             echo "APK was not created at expected path: $APK_OUTPUT_PATH"
             echo "Searching for APK files in Unity output folders..."
-            found_apk="$(find build/android Builds game/build game/Builds -type f -name '*.apk' -print 2>/dev/null | head -n 1 || true)"
+            found_apk="$(find build/android Builds game/build game/Builds game/Library/Bee/Android -type f -name '*.apk' -print 2>/dev/null | head -n 1 || true)"
             if [ -n "$found_apk" ]; then
               echo "Found APK at $found_apk"
               cp "$found_apk" "$APK_OUTPUT_PATH"
@@ -211,7 +206,7 @@ jobs:
             echo "----- apk files -----"
             find . -type f -name '*.apk' -print || true
             echo "----- build files -----"
-            find build Builds game/build game/Builds -maxdepth 5 -type f -print 2>/dev/null || true
+            find build Builds game/build game/Builds game/Library/Bee/Android -maxdepth 8 -type f -print 2>/dev/null || true
             echo "----- important Unity log lines from console log -----"
             if [ -f build/unity-build.log ]; then
               grep -E "ZeyWinActions|Build result|error CS|Script Compilation Error|Exception|Android APK build failed" build/unity-build.log || true
