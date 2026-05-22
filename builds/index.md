@@ -1,6 +1,6 @@
 # Latest APK Builds
 
-Use this table before manual workflow runs. For manual mode, set version_code to at least previous code + 1.
+Use this table before workflow runs. For a new release, use the next manual values. For an old-version rebuild, enter the old version manually.
 
 | Package | Latest version name | Latest version code | Next manual version name | Next manual version code | APK |
 | --- | --- | ---: | --- | ---: | --- |
