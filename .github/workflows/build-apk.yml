@@ -31,11 +31,11 @@ on:
           - auto_next
           - manual
       version_name:
-        description: Manual only. Use 1.0.<next code>. See builds/index.md. Empty in auto_next.
+        description: Manual only. For old rebuilds you may enter 1, for normal releases see builds/index.md.
         required: false
         default: ''
       version_code:
-        description: Manual only. Must be previous code + 1 or higher. See builds/index.md.
+        description: Manual only. Positive integer. For old rebuilds you may enter 1.
         required: false
         default: ''
       admob_android_app_id:
@@ -175,8 +175,8 @@ jobs:
             exit 1
           fi
 
-          if [ "$VERSION_MODE" = "manual" ] && [ "$version_code" -le "$max_code" ]; then
-            echo "version_code must be greater than previous highest code $max_code. Use $((max_code + 1)) or higher."
+          if [ "$version_code" -lt 1 ]; then
+            echo "version_code must be a positive integer, got: $version_code"
             exit 1
           fi
 
@@ -198,6 +198,9 @@ jobs:
             echo "- Next manual version name/code: \`1.0.$((max_code + 1))\` / \`$((max_code + 1))\`"
             echo "- Version name: \`$version_name\`"
             echo "- Version code: \`$version_code\`"
+            if [ "$VERSION_MODE" = "manual" ] && [ "$version_code" -le "$max_code" ]; then
+              echo "- Note: this is an old-version rebuild, so it will not replace the latest-build pointer."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Free disk space
@@ -365,12 +368,24 @@ jobs:
             echo "built_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             echo "run_url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           } > "$version_dir/build.txt"
-          cp "$version_dir/build.txt" "$latest_dir/latest-build.txt"
+
+          current_latest_code="$(sed -n 's/^version_code=//p' "$latest_dir/latest-build.txt" 2>/dev/null | tail -n 1 || true)"
+          if ! [[ "$current_latest_code" =~ ^[0-9]+$ ]]; then
+            current_latest_code=0
+          fi
+
+          latest_files=("$version_dir/build.txt")
+          if [ "$VERSION_CODE" -ge "$current_latest_code" ]; then
+            cp "$version_dir/build.txt" "$latest_dir/latest-build.txt"
+            latest_files+=("$latest_dir/latest-build.txt")
+          else
+            echo "Built old version code $VERSION_CODE. Keeping latest-build.txt at version code $current_latest_code."
+          fi
 
           {
             echo "# Latest APK Builds"
             echo
-            echo "Use this table before manual workflow runs. For manual mode, set version_code to at least previous code + 1."
+            echo "Use this table before workflow runs. For a new release, use the next manual values. For an old-version rebuild, enter the old version manually."
             echo
             echo "| Package | Latest version name | Latest version code | Next manual version name | Next manual version code | APK |"
             echo "| --- | --- | ---: | --- | ---: | --- |"
@@ -390,7 +405,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f "$version_dir/$apk_name" "$version_dir/$apk_name.sha256" "$version_dir/build.txt" "$latest_dir/latest-build.txt" builds/index.md
+          git add -f "$version_dir/$apk_name" "$version_dir/$apk_name.sha256" "${latest_files[@]}" builds/index.md
 
           if git diff --cached --quiet; then
             echo "APK metadata in repository is already up to date: builds/latest-build.txt"
