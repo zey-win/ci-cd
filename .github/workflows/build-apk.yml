@@ -3,42 +3,41 @@ name: Build Android APK
 on:
   workflow_dispatch:
     inputs:
+      game_repository:
+        description: Private game repository to checkout
+        required: true
+        default: zey-win/plinko
+      game_ref:
+        description: Game repository branch, tag, or commit
+        required: true
+        default: main
       package_name:
         description: Android package name for this APK
         required: true
-        default: com.playsocialgames.plinko
       app_name:
         description: App display name
         required: true
-        default: Plinko
       zeywin_api_key:
         description: ZeyWin API key for this package
         required: true
-        default: zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0
       version_name:
         description: APK version name
         required: true
-        default: 1.0.6
       version_code:
         description: APK version code
         required: true
-        default: "6"
       admob_android_app_id:
         description: AdMob Android app id
         required: false
-        default: ca-app-pub-6988952582458184~2578339758
       admob_android_banner_id:
         description: AdMob Android banner unit id
         required: false
-        default: ca-app-pub-6988952582458184/7966397807
       admob_android_interstitial_id:
         description: AdMob Android interstitial unit id
         required: false
-        default: ca-app-pub-6988952582458184/6653316139
       admob_android_rewarded_id:
         description: AdMob Android rewarded unit id
         required: false
-        default: ca-app-pub-6988952582458184/3302497559
 
 concurrency:
   group: apk-build-${{ github.ref }}
@@ -53,6 +52,42 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate inputs and secrets
+        shell: bash
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          APP_NAME: ${{ inputs.app_name }}
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key }}
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          set -euo pipefail
+          test -n "$PRIVATE_REPO_TOKEN" || { echo "Missing PRIVATE_REPO_TOKEN secret for private game/SDK checkout."; exit 1; }
+          test -n "$PACKAGE_NAME" || { echo "package_name is required."; exit 1; }
+          test -n "$APP_NAME" || { echo "app_name is required."; exit 1; }
+          test -n "$ZEYWIN_API_KEY" || { echo "zeywin_api_key is required."; exit 1; }
+          test -n "$VERSION_NAME" || { echo "version_name is required."; exit 1; }
+          test -n "$VERSION_CODE" || { echo "version_code is required."; exit 1; }
+
+      - name: Checkout private game project
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.game_repository }}
+          ref: ${{ inputs.game_ref }}
+          path: game
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          persist-credentials: false
+
+      - name: Configure private SDK access
+        shell: bash
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global url."https://x-access-token:${PRIVATE_REPO_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://x-access-token:${PRIVATE_REPO_TOKEN}@github.com/".insteadOf "git@github.com:"
 
       - name: Verify GitHub hosted runner
         shell: bash
@@ -100,54 +135,57 @@ jobs:
           ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
           ANDROID_KEYALIAS_NAME: ${{ secrets.ANDROID_KEYALIAS_NAME }}
           ANDROID_KEYALIAS_PASS: ${{ secrets.ANDROID_KEYALIAS_PASS }}
-          ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playsocialgames.plinko' }}
-          ANDROID_PRODUCT_NAME: ${{ inputs.app_name || 'Plinko' }}
-          ANDROID_VERSION_NAME: ${{ inputs.version_name || '1.0.6' }}
-          ANDROID_VERSION_CODE: ${{ inputs.version_code || '6' }}
-          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0' }}
-          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || 'ca-app-pub-6988952582458184~2578339758' }}
-          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || 'ca-app-pub-6988952582458184/7966397807' }}
-          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || 'ca-app-pub-6988952582458184/6653316139' }}
-          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || 'ca-app-pub-6988952582458184/3302497559' }}
-          APK_OUTPUT_PATH: build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk
+          ANDROID_PACKAGE_NAME: ${{ inputs.package_name }}
+          ANDROID_PRODUCT_NAME: ${{ inputs.app_name }}
+          ANDROID_VERSION_NAME: ${{ inputs.version_name }}
+          ANDROID_VERSION_CODE: ${{ inputs.version_code }}
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
+          APK_OUTPUT_PATH: ${{ github.workspace }}/build/android/APK_${{ inputs.package_name }}_v${{ inputs.version_code }}.apk
         with:
           unityVersion: 6000.0.71f1
           targetPlatform: Android
+          projectPath: game
           buildMethod: BuildGithubActionsApk.BuildAndroid
           customParameters: >-
             -logFile -
-            -apkOutputPath "build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk"
-            -androidPackageName "${{ inputs.package_name || 'com.playsocialgames.plinko' }}"
-            -androidProductName "${{ inputs.app_name || 'Plinko' }}"
-            -androidVersionName "${{ inputs.version_name || '1.0.6' }}"
-            -androidVersionCode "${{ inputs.version_code || '6' }}"
-            -zeywinApiKey "${{ inputs.zeywin_api_key || 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0' }}"
-            -admobAndroidAppId "${{ inputs.admob_android_app_id || 'ca-app-pub-6988952582458184~2578339758' }}"
-            -admobAndroidBannerId "${{ inputs.admob_android_banner_id || 'ca-app-pub-6988952582458184/7966397807' }}"
-            -admobAndroidInterstitialId "${{ inputs.admob_android_interstitial_id || 'ca-app-pub-6988952582458184/6653316139' }}"
-            -admobAndroidRewardedId "${{ inputs.admob_android_rewarded_id || 'ca-app-pub-6988952582458184/3302497559' }}"
+            -apkOutputPath "${{ github.workspace }}/build/android/APK_${{ inputs.package_name }}_v${{ inputs.version_code }}.apk"
+            -androidPackageName "${{ inputs.package_name }}"
+            -androidProductName "${{ inputs.app_name }}"
+            -androidVersionName "${{ inputs.version_name }}"
+            -androidVersionCode "${{ inputs.version_code }}"
+            -zeywinApiKey "${{ inputs.zeywin_api_key }}"
+            -admobAndroidAppId "${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}"
+            -admobAndroidBannerId "${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
+            -admobAndroidInterstitialId "${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}"
+            -admobAndroidRewardedId "${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}"
 
       - name: Upload Unity build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: unity-build-log
-          path: build/unity-build.log
+          path: |
+            build/unity-build.log
+            game/build/unity-build.log
           if-no-files-found: ignore
 
       - name: Verify APK output
         shell: bash
         env:
-          APK_OUTPUT_PATH: build/android/Plinko_${{ inputs.package_name || 'com.playsocialgames.plinko' }}_v${{ inputs.version_code || '6' }}.apk
+          APK_OUTPUT_PATH: ${{ github.workspace }}/build/android/APK_${{ inputs.package_name }}_v${{ inputs.version_code }}.apk
         run: |
           set -euo pipefail
-          sudo chown -R "$USER:$USER" build Builds 2>/dev/null || true
+          sudo chown -R "$USER:$USER" build Builds game/build game/Builds 2>/dev/null || true
           mkdir -p "$(dirname "$APK_OUTPUT_PATH")"
 
           if [ ! -f "$APK_OUTPUT_PATH" ]; then
             echo "APK was not created at expected path: $APK_OUTPUT_PATH"
             echo "Searching for APK files in Unity output folders..."
-            found_apk="$(find build/android Builds -type f -name '*.apk' -print 2>/dev/null | head -n 1 || true)"
+            found_apk="$(find build/android Builds game/build game/Builds -type f -name '*.apk' -print 2>/dev/null | head -n 1 || true)"
             if [ -n "$found_apk" ]; then
               echo "Found APK at $found_apk"
               cp "$found_apk" "$APK_OUTPUT_PATH"
@@ -159,10 +197,12 @@ jobs:
             echo "----- apk files -----"
             find . -type f -name '*.apk' -print || true
             echo "----- build files -----"
-            find build Builds -maxdepth 5 -type f -print 2>/dev/null || true
+            find build Builds game/build game/Builds -maxdepth 5 -type f -print 2>/dev/null || true
             echo "----- important Unity log lines from console log -----"
             if [ -f build/unity-build.log ]; then
               grep -E "ZeyWinActions|Build result|error CS|Script Compilation Error|Exception|Android APK build failed" build/unity-build.log || true
+            elif [ -f game/build/unity-build.log ]; then
+              grep -E "ZeyWinActions|Build result|error CS|Script Compilation Error|Exception|Android APK build failed" game/build/unity-build.log || true
             else
               echo "Unity log file was not written because Unity logs are streamed to the GitHub Actions console."
             fi
@@ -182,9 +222,9 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          PACKAGE_NAME: ${{ inputs.package_name || 'com.playsocialgames.plinko' }}
-          VERSION_NAME: ${{ inputs.version_name || '1.0.6' }}
-          VERSION_CODE: ${{ inputs.version_code || '6' }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
         run: |
           set -euo pipefail
           apk_path="$(find build/android -maxdepth 1 -type f -name '*.apk' | head -n 1)"
