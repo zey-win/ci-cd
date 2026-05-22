@@ -19,7 +19,7 @@
     "com.unity.render-pipelines.universal": "14.0.12",
     "com.unity.textmeshpro": "3.0.9",
     "com.unity.ugui": "1.0.0",
-    "com.zeywin.ads": "https://github.com/zey-win/ZeyWinAdsSDK-Unity.git#6158322b9a066c2d69883547ee4a50fc3a890e5a",
+    "com.zeywin.ads": "https://github.com/zey-win/ZeyWinAdsSDK-Unity.git#bb923b1840c2f60e96674f24f85630e845dca486",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
