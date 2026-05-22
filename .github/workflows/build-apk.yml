@@ -52,7 +52,7 @@ on:
         required: false
 
 concurrency:
-  group: apk-build-${{ github.ref }}
+  group: apk-build-${{ github.ref }}-${{ inputs.package_name || 'unknown-package' }}
   cancel-in-progress: false
 
 jobs:
