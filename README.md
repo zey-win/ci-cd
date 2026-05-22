@@ -3,3 +3,5 @@
 ZeyWin releaser, Ubuntu Actions builder.
 
 This public repository contains only GitHub Actions release automation. Game and SDK sources are fetched at build time from private source repositories.
+
+Latest APK versions and next manual version values are listed in [builds/index.md](builds/index.md).

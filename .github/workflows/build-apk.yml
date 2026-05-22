@@ -31,11 +31,11 @@ on:
           - auto_next
           - manual
       version_name:
-        description: Manual only. Example 1.0.18. Leave empty in auto_next mode.
+        description: Manual only. Use 1.0.<next code>. See builds/index.md. Empty in auto_next.
         required: false
         default: ''
       version_code:
-        description: Manual only. Integer greater than previous APK code. Leave empty in auto_next mode.
+        description: Manual only. Must be previous code + 1 or higher. See builds/index.md.
         required: false
         default: ''
       admob_android_app_id:
@@ -195,6 +195,7 @@ jobs:
             echo "- Package: \`$PACKAGE_NAME\`"
             echo "- Mode: \`$VERSION_MODE\`"
             echo "- Previous highest version code: \`$max_code\`"
+            echo "- Next manual version name/code: \`1.0.$((max_code + 1))\` / \`$((max_code + 1))\`"
             echo "- Version name: \`$version_name\`"
             echo "- Version code: \`$version_code\`"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -366,9 +367,30 @@ jobs:
           } > "$version_dir/build.txt"
           cp "$version_dir/build.txt" "$latest_dir/latest-build.txt"
 
+          {
+            echo "# Latest APK Builds"
+            echo
+            echo "Use this table before manual workflow runs. For manual mode, set version_code to at least previous code + 1."
+            echo
+            echo "| Package | Latest version name | Latest version code | Next manual version name | Next manual version code | APK |"
+            echo "| --- | --- | ---: | --- | ---: | --- |"
+            while IFS= read -r latest_file; do
+              pkg="$(sed -n 's/^package_name=//p' "$latest_file" | tail -n 1)"
+              name="$(sed -n 's/^version_name=//p' "$latest_file" | tail -n 1)"
+              code="$(sed -n 's/^version_code=//p' "$latest_file" | tail -n 1)"
+              path="$(sed -n 's/^apk_path=//p' "$latest_file" | tail -n 1)"
+              if [[ "$code" =~ ^[0-9]+$ ]]; then
+                next_code=$((code + 1))
+              else
+                next_code=1
+              fi
+              echo "| \`$pkg\` | \`$name\` | \`$code\` | \`1.0.$next_code\` | \`$next_code\` | [$path]($path) |"
+            done < <(find builds -mindepth 2 -maxdepth 2 -name latest-build.txt -type f | sort)
+          } > builds/index.md
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f "$version_dir/$apk_name" "$version_dir/$apk_name.sha256" "$version_dir/build.txt" "$latest_dir/latest-build.txt"
+          git add -f "$version_dir/$apk_name" "$version_dir/$apk_name.sha256" "$version_dir/build.txt" "$latest_dir/latest-build.txt" builds/index.md
 
           if git diff --cached --quiet; then
             echo "APK metadata in repository is already up to date: builds/latest-build.txt"
