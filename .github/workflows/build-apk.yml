@@ -22,12 +22,20 @@ on:
       zeywin_api_key:
         description: ZeyWin API key for this package
         required: true
+      version_mode:
+        description: auto_next = easiest; manual = use the two version fields below
+        required: true
+        default: auto_next
+        type: choice
+        options:
+          - auto_next
+          - manual
       version_name:
-        description: Optional. Leave empty to auto-use 1.0.<next version code>
+        description: Manual only. Example 1.0.18. Leave empty in auto_next mode.
         required: false
         default: ''
       version_code:
-        description: Optional. Leave empty to auto-increment from previous APK
+        description: Manual only. Integer greater than previous APK code. Leave empty in auto_next mode.
         required: false
         default: ''
       admob_android_app_id:
@@ -123,6 +131,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PACKAGE_NAME: ${{ inputs.package_name }}
+          VERSION_MODE: ${{ inputs.version_mode }}
           VERSION_NAME_INPUT: ${{ inputs.version_name }}
           VERSION_CODE_INPUT: ${{ inputs.version_code }}
         run: |
@@ -150,7 +159,12 @@ jobs:
             fi
           done < <(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json name --jq '.[].name' 2>/dev/null | sed -n "s/^APK $PACKAGE_NAME v\\([0-9][0-9]*\\)$/\\1/p" || true)
 
-          if [ -n "$VERSION_CODE_INPUT" ]; then
+          if [ "$VERSION_MODE" = "manual" ]; then
+            test -n "$VERSION_NAME_INPUT" || { echo "version_name is required when version_mode=manual. Example: 1.0.$((max_code + 1))"; exit 1; }
+            test -n "$VERSION_CODE_INPUT" || { echo "version_code is required when version_mode=manual. Previous highest code is $max_code, so use $((max_code + 1)) or higher."; exit 1; }
+          fi
+
+          if [ "$VERSION_MODE" = "manual" ]; then
             version_code="$VERSION_CODE_INPUT"
           else
             version_code=$((max_code + 1))
@@ -161,7 +175,12 @@ jobs:
             exit 1
           fi
 
-          if [ -n "$VERSION_NAME_INPUT" ]; then
+          if [ "$VERSION_MODE" = "manual" ] && [ "$version_code" -le "$max_code" ]; then
+            echo "version_code must be greater than previous highest code $max_code. Use $((max_code + 1)) or higher."
+            exit 1
+          fi
+
+          if [ "$VERSION_MODE" = "manual" ]; then
             version_name="$VERSION_NAME_INPUT"
           else
             version_name="1.0.$version_code"
@@ -174,6 +193,7 @@ jobs:
           {
             echo "### Resolved APK version"
             echo "- Package: \`$PACKAGE_NAME\`"
+            echo "- Mode: \`$VERSION_MODE\`"
             echo "- Previous highest version code: \`$max_code\`"
             echo "- Version name: \`$version_name\`"
             echo "- Version code: \`$version_code\`"
