@@ -1,5 +1,5 @@
-# Plinko SDK APK Build
+# ZeyWin CI/CD
 
-Unity project for building Plinko APKs with ZeyWin Ads SDK and CrashGuard SDK through GitHub Actions.
+ZeyWin releaser, Ubuntu Actions builder.
 
 Operational credentials and build-time values are managed outside this public repository.
