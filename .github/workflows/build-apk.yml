@@ -52,6 +52,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Validate inputs and secrets
         shell: bash
@@ -62,8 +64,17 @@ jobs:
           ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key }}
           VERSION_NAME: ${{ inputs.version_name }}
           VERSION_CODE: ${{ inputs.version_code }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
         run: |
           set -euo pipefail
+          echo "::add-mask::$ZEYWIN_API_KEY"
+          echo "::add-mask::$ADMOB_ANDROID_APP_ID"
+          echo "::add-mask::$ADMOB_ANDROID_BANNER_ID"
+          echo "::add-mask::$ADMOB_ANDROID_INTERSTITIAL_ID"
+          echo "::add-mask::$ADMOB_ANDROID_REWARDED_ID"
           test -n "$PRIVATE_REPO_TOKEN" || { echo "Missing PRIVATE_REPO_TOKEN secret for private game/SDK checkout."; exit 1; }
           test -n "$PACKAGE_NAME" || { echo "package_name is required."; exit 1; }
           test -n "$APP_NAME" || { echo "app_name is required."; exit 1; }
@@ -79,6 +90,7 @@ jobs:
           path: game
           token: ${{ secrets.PRIVATE_REPO_TOKEN }}
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Configure private SDK access
         shell: bash
@@ -149,6 +161,7 @@ jobs:
           unityVersion: 6000.0.71f1
           targetPlatform: Android
           projectPath: game
+          versioning: None
           buildMethod: BuildGithubActionsApk.BuildAndroid
           customParameters: >-
             -logFile -
