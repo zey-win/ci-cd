@@ -111,8 +111,9 @@ jobs:
       - name: Restore Android keystore
         shell: bash
         run: |
-          mkdir -p "$RUNNER_TEMP/keystore"
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/keystore/user.keystore"
+          mkdir -p "$GITHUB_WORKSPACE/.ci/keystore"
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$GITHUB_WORKSPACE/.ci/keystore/user.keystore"
+          test -s "$GITHUB_WORKSPACE/.ci/keystore/user.keystore" || { echo "Decoded Android keystore is empty."; exit 1; }
 
       - name: Free disk space
         timeout-minutes: 8
@@ -139,7 +140,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
-          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/keystore/user.keystore
+          ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/.ci/keystore/user.keystore
           ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
           ANDROID_KEYALIAS_NAME: ${{ secrets.ANDROID_KEYALIAS_NAME }}
           ANDROID_KEYALIAS_PASS: ${{ secrets.ANDROID_KEYALIAS_PASS }}
@@ -255,6 +256,12 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --title "APK $PACKAGE_NAME v$VERSION_CODE" \
             --notes "APK built by GitHub Actions run $GITHUB_RUN_NUMBER attempt $GITHUB_RUN_ATTEMPT."
+
+          git fetch origin "$GITHUB_REF_NAME"
+          git reset --hard "origin/$GITHUB_REF_NAME"
+          mkdir -p "$version_dir" "$latest_dir"
+          cp "$apk_path" "$version_dir/$apk_name"
+          shasum -a 256 "$apk_path" | sed "s#  .*#  $apk_name#" > "$version_dir/$apk_name.sha256"
 
           {
             echo "run_id=$GITHUB_RUN_ID"
