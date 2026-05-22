@@ -140,7 +140,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
-          ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/.ci/keystore/user.keystore
+          ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
           ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
           ANDROID_KEYALIAS_NAME: ${{ secrets.ANDROID_KEYALIAS_NAME }}
           ANDROID_KEYALIAS_PASS: ${{ secrets.ANDROID_KEYALIAS_PASS }}
@@ -167,6 +167,7 @@ jobs:
             -androidProductName "${{ inputs.app_name }}"
             -androidVersionName "${{ inputs.version_name }}"
             -androidVersionCode "${{ inputs.version_code }}"
+            -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
             -zeywinApiKey "${{ inputs.zeywin_api_key }}"
             -admobAndroidAppId "${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}"
             -admobAndroidBannerId "${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
