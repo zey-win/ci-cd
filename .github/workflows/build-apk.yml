@@ -252,7 +252,6 @@ jobs:
             -logFile -
             -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path }}"
             -androidPackageName "${{ inputs.package_name }}"
-            -androidProductName "${{ inputs.app_name }}"
             -androidVersionName "${{ steps.resolve_version.outputs.version_name }}"
             -androidVersionCode "${{ steps.resolve_version.outputs.version_code }}"
             -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
