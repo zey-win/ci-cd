@@ -1,0 +1,11 @@
+GitHub release asset:
+https://github.com/zey-win/ci-cd/releases/tag/apk-80-1
+
+Asset name:
+AAB_com.socialapps.plinko_v2.aab
+
+Actions run:
+https://github.com/zey-win/ci-cd/actions/runs/26340011231
+
+Note:
+The AAB is stored as a GitHub Release asset because the file is larger than GitHub's 100 MB git blob limit.

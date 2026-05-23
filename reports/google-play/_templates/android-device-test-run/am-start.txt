@@ -1,0 +1,7 @@
+Starting: Intent { cmp=com.playsocialgames.plinko/com.unity3d.player.UnityPlayerActivity }
+Status: ok
+LaunchState: COLD
+Activity: com.playsocialgames.plinko/com.unity3d.player.UnityPlayerActivity
+TotalTime: 1733
+WaitTime: 1736
+Complete
