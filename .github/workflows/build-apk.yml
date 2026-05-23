@@ -282,6 +282,33 @@ jobs:
             game/build/unity-build.log
           if-no-files-found: ignore
 
+      - name: Sign Android App Bundle
+        if: ${{ inputs.build_format == 'aab' }}
+        shell: bash
+        env:
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+          ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          ANDROID_KEYALIAS_NAME: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+          ANDROID_KEYALIAS_PASS: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+        run: |
+          set -euo pipefail
+          test -f "$AAB_OUTPUT_PATH" || { echo "AAB not found before signing: $AAB_OUTPUT_PATH"; exit 1; }
+          unsigned_path="${AAB_OUTPUT_PATH%.aab}-unsigned.aab"
+          cp "$AAB_OUTPUT_PATH" "$unsigned_path"
+          jarsigner \
+            -sigalg SHA256withRSA \
+            -digestalg SHA-256 \
+            -keystore "$GITHUB_WORKSPACE/.ci/keystore/user.keystore" \
+            -storepass "$ANDROID_KEYSTORE_PASS" \
+            -keypass "$ANDROID_KEYALIAS_PASS" \
+            "$AAB_OUTPUT_PATH" \
+            "$ANDROID_KEYALIAS_NAME"
+          jarsigner -verify -verbose -certs "$AAB_OUTPUT_PATH" | tee /tmp/aab-signature-verify.txt
+          if grep -q "jar is unsigned" /tmp/aab-signature-verify.txt; then
+            echo "AAB is still unsigned after jarsigner."
+            exit 1
+          fi
+
       - name: Verify Android build output
         shell: bash
         env:
