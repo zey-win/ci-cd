@@ -38,6 +38,14 @@ on:
         description: Manual only. Positive integer. For old rebuilds you may enter 1.
         required: false
         default: ''
+      build_format:
+        description: apk = install/test file; aab = Google Play production upload
+        required: true
+        default: apk
+        type: choice
+        options:
+          - apk
+          - aab
       admob_android_app_id:
         description: AdMob Android app id
         required: false
@@ -189,6 +197,7 @@ jobs:
           echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
           echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
           echo "apk_output_path=$GITHUB_WORKSPACE/build/android/APK_${PACKAGE_NAME}_v${version_code}.apk" >> "$GITHUB_OUTPUT"
+          echo "aab_output_path=$GITHUB_WORKSPACE/build/android/AAB_${PACKAGE_NAME}_v${version_code}.aab" >> "$GITHUB_OUTPUT"
 
           {
             echo "### Resolved APK version"
@@ -242,15 +251,17 @@ jobs:
           ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
           ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
           APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
         with:
           unityVersion: 6000.0.71f1
           targetPlatform: Android
           projectPath: game
           versioning: None
-          buildMethod: BuildGithubActionsApk.BuildAndroid
+          buildMethod: ${{ inputs.build_format == 'aab' && 'BuildGithubActionsApk.BuildAndroidAppBundle' || 'BuildGithubActionsApk.BuildAndroid' }}
           customParameters: >-
             -logFile -
             -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path }}"
+            -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
             -androidPackageName "${{ inputs.package_name }}"
             -androidVersionName "${{ steps.resolve_version.outputs.version_name }}"
             -androidVersionCode "${{ steps.resolve_version.outputs.version_code }}"
@@ -271,29 +282,38 @@ jobs:
             game/build/unity-build.log
           if-no-files-found: ignore
 
-      - name: Verify APK output
+      - name: Verify Android build output
         shell: bash
         env:
+          BUILD_FORMAT: ${{ inputs.build_format }}
           APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
         run: |
           set -euo pipefail
           sudo chown -R "$USER:$USER" build Builds game/build game/Builds game/Library/Bee/Android 2>/dev/null || true
-          mkdir -p "$(dirname "$APK_OUTPUT_PATH")"
+          if [ "$BUILD_FORMAT" = "aab" ]; then
+            OUTPUT_PATH="$AAB_OUTPUT_PATH"
+            EXT="aab"
+          else
+            OUTPUT_PATH="$APK_OUTPUT_PATH"
+            EXT="apk"
+          fi
+          mkdir -p "$(dirname "$OUTPUT_PATH")"
 
-          if [ ! -f "$APK_OUTPUT_PATH" ]; then
-            echo "APK was not created at expected path: $APK_OUTPUT_PATH"
-            echo "Searching for APK files in Unity output folders..."
-            found_apk="$(find build/android Builds game/build game/Builds game/Library/Bee/Android -type f -name '*.apk' -print 2>/dev/null | head -n 1 || true)"
-            if [ -n "$found_apk" ]; then
-              echo "Found APK at $found_apk"
-              cp "$found_apk" "$APK_OUTPUT_PATH"
+          if [ ! -f "$OUTPUT_PATH" ]; then
+            echo "Android $EXT was not created at expected path: $OUTPUT_PATH"
+            echo "Searching for .$EXT files in Unity output folders..."
+            found_output="$(find build/android Builds game/build game/Builds game/Library/Bee/Android -type f -name "*.$EXT" -print 2>/dev/null | head -n 1 || true)"
+            if [ -n "$found_output" ]; then
+              echo "Found .$EXT at $found_output"
+              cp "$found_output" "$OUTPUT_PATH"
             fi
           fi
 
-          if [ ! -f "$APK_OUTPUT_PATH" ]; then
-            echo "APK was not created and no fallback APK was found."
-            echo "----- apk files -----"
-            find . -type f -name '*.apk' -print || true
+          if [ ! -f "$OUTPUT_PATH" ]; then
+            echo "Android $EXT was not created and no fallback .$EXT was found."
+            echo "----- android package files -----"
+            find . -type f \( -name '*.apk' -o -name '*.aab' \) -print || true
             echo "----- build files -----"
             find build Builds game/build game/Builds game/Library/Bee/Android -maxdepth 8 -type f -print 2>/dev/null || true
             echo "----- important Unity log lines from console log -----"
@@ -307,49 +327,52 @@ jobs:
             exit 1
           fi
 
-          ls -lh "$APK_OUTPUT_PATH"
+          ls -lh "$OUTPUT_PATH"
 
-      - name: Upload APK
+      - name: Upload Android package
         uses: actions/upload-artifact@v4
         with:
-          name: APK_${{ inputs.package_name }}_v${{ steps.resolve_version.outputs.version_code }}
-          path: build/android/*.apk
+          name: ${{ inputs.build_format == 'aab' && 'AAB' || 'APK' }}_${{ inputs.package_name }}_v${{ steps.resolve_version.outputs.version_code }}
+          path: |
+            build/android/*.apk
+            build/android/*.aab
           if-no-files-found: error
 
-      - name: Publish APK release and metadata
+      - name: Publish Android package release and metadata
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          BUILD_FORMAT: ${{ inputs.build_format }}
           PACKAGE_NAME: ${{ inputs.package_name }}
           VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
           VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
         run: |
           set -euo pipefail
-          apk_path="$(find build/android -maxdepth 1 -type f -name '*.apk' | head -n 1)"
-          if [ -z "$apk_path" ]; then
-            echo "No APK found in build/android"
+          package_path="$(find build/android -maxdepth 1 -type f -name "*.$BUILD_FORMAT" | head -n 1)"
+          if [ -z "$package_path" ]; then
+            echo "No $BUILD_FORMAT found in build/android"
             exit 1
           fi
 
           version_dir="builds/$PACKAGE_NAME/v$VERSION_CODE"
           latest_dir="builds/$PACKAGE_NAME"
           mkdir -p "$version_dir" "$latest_dir"
-          apk_name="$(basename "$apk_path")"
+          package_name="$(basename "$package_path")"
           release_tag="apk-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
           release_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$release_tag"
 
-          cp "$apk_path" "$version_dir/$apk_name"
-          shasum -a 256 "$apk_path" | sed "s#  .*#  $apk_name#" > "$version_dir/$apk_name.sha256"
-          gh release create "$release_tag" "$apk_path#$apk_name" \
+          cp "$package_path" "$version_dir/$package_name"
+          shasum -a 256 "$package_path" | sed "s#  .*#  $package_name#" > "$version_dir/$package_name.sha256"
+          gh release create "$release_tag" "$package_path#$package_name" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "APK $PACKAGE_NAME v$VERSION_CODE" \
-            --notes "APK built by GitHub Actions run $GITHUB_RUN_NUMBER attempt $GITHUB_RUN_ATTEMPT."
+            --title "${BUILD_FORMAT^^} $PACKAGE_NAME v$VERSION_CODE" \
+            --notes "${BUILD_FORMAT^^} built by GitHub Actions run $GITHUB_RUN_NUMBER attempt $GITHUB_RUN_ATTEMPT."
 
           git fetch origin "$GITHUB_REF_NAME"
           git reset --hard "origin/$GITHUB_REF_NAME"
           mkdir -p "$version_dir" "$latest_dir"
-          cp "$apk_path" "$version_dir/$apk_name"
-          shasum -a 256 "$apk_path" | sed "s#  .*#  $apk_name#" > "$version_dir/$apk_name.sha256"
+          cp "$package_path" "$version_dir/$package_name"
+          shasum -a 256 "$package_path" | sed "s#  .*#  $package_name#" > "$version_dir/$package_name.sha256"
 
           {
             echo "run_id=$GITHUB_RUN_ID"
@@ -360,10 +383,11 @@ jobs:
             echo "package_name=$PACKAGE_NAME"
             echo "version_name=$VERSION_NAME"
             echo "version_code=$VERSION_CODE"
-            echo "apk_artifact=APK_${PACKAGE_NAME}_v${VERSION_CODE}"
+            echo "build_format=$BUILD_FORMAT"
+            echo "apk_artifact=${BUILD_FORMAT^^}_${PACKAGE_NAME}_v${VERSION_CODE}"
             echo "apk_release=$release_url"
-            echo "apk_asset=$apk_name"
-            echo "apk_path=$version_dir/$apk_name"
+            echo "apk_asset=$package_name"
+            echo "apk_path=$version_dir/$package_name"
             echo "built_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             echo "run_url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           } > "$version_dir/build.txt"
@@ -404,7 +428,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f "$version_dir/$apk_name" "$version_dir/$apk_name.sha256" "${latest_files[@]}" builds/index.md
+          git add -f "$version_dir/$package_name" "$version_dir/$package_name.sha256" "${latest_files[@]}" builds/index.md
 
           if git diff --cached --quiet; then
             echo "APK metadata in repository is already up to date: builds/latest-build.txt"
