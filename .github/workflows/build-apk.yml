@@ -46,6 +46,32 @@ on:
         options:
           - apk
           - aab
+      publish_to_google_play:
+        description: Upload AAB to Google Play after build. Requires GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret.
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      google_play_track:
+        description: Google Play track for automatic upload
+        required: true
+        default: production
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+      google_play_status:
+        description: Google Play release status
+        required: true
+        default: completed
+        type: choice
+        options:
+          - draft
+          - completed
       admob_android_app_id:
         description: AdMob Android app id
         required: false
@@ -94,6 +120,10 @@ jobs:
           test -n "$PACKAGE_NAME" || { echo "package_name is required."; exit 1; }
           test -n "$APP_NAME" || { echo "app_name is required."; exit 1; }
           test -n "${{ inputs.zeywin_api_key }}" || { echo "zeywin_api_key is required."; exit 1; }
+          if [ "${{ inputs.publish_to_google_play }}" = "true" ]; then
+            test "${{ inputs.build_format }}" = "aab" || { echo "Google Play publishing requires build_format=aab."; exit 1; }
+            test -n "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" || { echo "Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret for Google Play publishing."; exit 1; }
+          fi
 
       - name: Checkout private game project
         uses: actions/checkout@v4
@@ -362,6 +392,28 @@ jobs:
             exit 1
           fi
 
+      - name: Prepare Google Play release notes
+        if: ${{ inputs.publish_to_google_play == 'true' }}
+        shell: bash
+        env:
+          VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p whatsnew
+          printf 'Bug fixes and SDK updates for version %s.\n' "$VERSION_NAME" > whatsnew/whatsnew-en-US
+
+      - name: Upload AAB to Google Play
+        if: ${{ inputs.publish_to_google_play == 'true' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ inputs.package_name }}
+          releaseFiles: ${{ steps.resolve_version.outputs.aab_output_path }}
+          track: ${{ inputs.google_play_track }}
+          status: ${{ inputs.google_play_status }}
+          releaseName: ${{ steps.resolve_version.outputs.version_name }}
+          whatsNewDirectory: whatsnew
+
       - name: Upload Android package
         uses: actions/upload-artifact@v4
         with:
@@ -404,7 +456,14 @@ jobs:
           git fetch origin "$GITHUB_REF_NAME"
           git reset --hard "origin/$GITHUB_REF_NAME"
           mkdir -p "$version_dir" "$latest_dir"
-          cp "$package_path" "$version_dir/$package_name"
+          package_size="$(wc -c < "$package_path")"
+          if [ "$package_size" -lt 90000000 ]; then
+            cp "$package_path" "$version_dir/$package_name"
+            package_repo_path="$version_dir/$package_name"
+          else
+            package_repo_path="$version_dir/$package_name.url"
+            printf '%s\n' "$release_url" > "$package_repo_path"
+          fi
           shasum -a 256 "$package_path" | sed "s#  .*#  $package_name#" > "$version_dir/$package_name.sha256"
 
           {
@@ -421,8 +480,13 @@ jobs:
             echo "apk_release=$release_url"
             echo "apk_asset=$package_name"
             echo "apk_path=$version_dir/$package_name"
+            echo "package_repo_path=$package_repo_path"
             echo "built_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             echo "run_url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            if [ "${{ inputs.publish_to_google_play }}" = "true" ]; then
+              echo "google_play_track=${{ inputs.google_play_track }}"
+              echo "google_play_status=${{ inputs.google_play_status }}"
+            fi
           } > "$version_dir/build.txt"
 
           current_latest_code="$(sed -n 's/^version_code=//p' "$latest_dir/latest-build.txt" 2>/dev/null | tail -n 1 || true)"
@@ -449,7 +513,10 @@ jobs:
               pkg="$(sed -n 's/^package_name=//p' "$latest_file" | tail -n 1)"
               name="$(sed -n 's/^version_name=//p' "$latest_file" | tail -n 1)"
               code="$(sed -n 's/^version_code=//p' "$latest_file" | tail -n 1)"
-              path="$(sed -n 's/^apk_path=//p' "$latest_file" | tail -n 1)"
+              path="$(sed -n 's/^package_repo_path=//p' "$latest_file" | tail -n 1)"
+              if [ -z "$path" ]; then
+                path="$(sed -n 's/^apk_path=//p' "$latest_file" | tail -n 1)"
+              fi
               if [[ "$code" =~ ^[0-9]+$ ]]; then
                 next_code=$((code + 1))
               else
@@ -461,7 +528,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f "$version_dir/$package_name" "$version_dir/$package_name.sha256" "${latest_files[@]}" builds/index.md
+          git add -f "$package_repo_path" "$version_dir/$package_name.sha256" "${latest_files[@]}" builds/index.md
 
           if git diff --cached --quiet; then
             echo "APK metadata in repository is already up to date: builds/latest-build.txt"
