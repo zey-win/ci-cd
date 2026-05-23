@@ -344,7 +344,7 @@ jobs:
 
           alias_name="${ANDROID_KEYALIAS_NAME:-social casino}"
           alias_pass="${ANDROID_KEYALIAS_PASS:-$ANDROID_KEYSTORE_PASS}"
-          unsigned_path="${AAB_OUTPUT_PATH%.aab}-unsigned.aab"
+          unsigned_path="/tmp/$(basename "${AAB_OUTPUT_PATH%.aab}")-unsigned.aab"
           cp "$AAB_OUTPUT_PATH" "$unsigned_path"
 
           jarsigner \
