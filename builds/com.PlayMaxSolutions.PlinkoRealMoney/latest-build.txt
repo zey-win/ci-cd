@@ -1,0 +1,14 @@
+run_id=26318486713
+run_number=75
+run_attempt=1
+commit_sha=b5be696c9481f33ca5669ae2e7ec404bfcf5baf3
+ref=main
+package_name=com.PlayMaxSolutions.PlinkoRealMoney
+version_name=1.1.5
+version_code=8
+apk_artifact=APK_com.PlayMaxSolutions.PlinkoRealMoney_v8
+apk_release=https://github.com/zey-win/ci-cd/releases/tag/apk-75-1
+apk_asset=APK_com.PlayMaxSolutions.PlinkoRealMoney_v8.apk
+apk_path=builds/com.PlayMaxSolutions.PlinkoRealMoney/v8/APK_com.PlayMaxSolutions.PlinkoRealMoney_v8.apk
+built_at_utc=2026-05-23T00:51:42Z
+run_url=https://github.com/zey-win/ci-cd/actions/runs/26318486713
