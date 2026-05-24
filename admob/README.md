@@ -2,8 +2,6 @@
 
 This folder is the handoff point for future game builds.
 
-Primary AdMob account label: `AdMob Leopolda`.
-
 For each app, prepare all supported AdMob values:
 
 - Android app id
