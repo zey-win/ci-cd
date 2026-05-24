@@ -138,6 +138,7 @@ app.get('/ready.json', (_req, res) => {
 
 app.get('/help', (_req, res) => {
   const ready = missingConfig().length === 0;
+  const workflowUrl = 'https://github.com/zey-win/ci-cd/actions/workflows/bootstrap-google-play-connect.yml';
   res.send(renderPage('Google Play Connect Help', `
     <section class="hero">
       <p class="eyebrow">Self-service guide</p>
@@ -175,7 +176,7 @@ app.get('/help', (_req, res) => {
       <div class="actions">
         <a class="button" href="/operator">Open operator page</a>
         <a class="button secondary" href="/status">Check setup status</a>
-        <a class="button secondary" href="https://github.com/zey-win/ci-cd/actions/workflows/bootstrap-google-play-connect.yml">Open setup workflow</a>
+        <a class="button secondary" href="${workflowUrl}">Open setup workflow</a>
       </div>
     </section>
     <section class="help-grid">
@@ -199,6 +200,14 @@ app.get('/help', (_req, res) => {
         <div><span>✓</span><strong>Run setup check</strong><p>The workflow prints the exact next step without changing production.</p></div>
         <div><span>✓</span><strong>Apply setup</strong><p>When Google OAuth values exist, the workflow saves them to Render.</p></div>
         <div><span>✓</span><strong>Use Connect</strong><p>Operators press the button and confirm Google access.</p></div>
+      </div>
+    </section>
+    <section class="quick-actions">
+      <h2>Setup buttons</h2>
+      <p>GitHub opens the workflow screen. Choose <code>check_only</code> first. It is safe and does not change Render.</p>
+      <div class="actions">
+        <a class="button" href="${workflowUrl}">Run safe setup check</a>
+        <a class="button secondary" href="${workflowUrl}">Apply setup after Google values exist</a>
       </div>
     </section>
   `));

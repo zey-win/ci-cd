@@ -261,7 +261,8 @@ pre {
   margin-top: 0;
 }
 
-.timeline {
+.timeline,
+.quick-actions {
   background: #fff;
   border: 1px solid #dce3ec;
   border-radius: 8px;
@@ -269,7 +270,8 @@ pre {
   margin-top: 18px;
 }
 
-.timeline h2 {
+.timeline h2,
+.quick-actions h2 {
   margin-top: 0;
 }
 
