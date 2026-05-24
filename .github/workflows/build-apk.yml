@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android Play Release
 
 on:
   workflow_dispatch:
@@ -41,7 +41,7 @@ on:
       build_format:
         description: apk = install/test file; aab = Google Play production upload
         required: true
-        default: apk
+        default: aab
         type: choice
         options:
           - apk
@@ -49,7 +49,7 @@ on:
       publish_to_google_play:
         description: Upload AAB to Google Play after build. Requires GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret.
         required: true
-        default: 'false'
+        default: 'true'
         type: choice
         options:
           - 'false'

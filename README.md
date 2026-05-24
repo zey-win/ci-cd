@@ -17,8 +17,8 @@ Use `.github/workflows/build-apk.yml` for Play updates:
    - `UNITY_LICENSE`, `UNITY_EMAIL`, `UNITY_PASSWORD`
    - `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASS`, `ANDROID_KEYALIAS_NAME`, `ANDROID_KEYALIAS_PASS`
    - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
-2. In GitHub Actions, run **Build Android APK**.
-3. Select:
+2. In GitHub Actions, run **Build Android Play Release**.
+3. The workflow defaults are set for Play upload:
    - `build_format`: `aab`
    - `publish_to_google_play`: `true`
    - `google_play_track`: `production` for production updates, or `internal` for test uploads
