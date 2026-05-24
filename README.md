@@ -17,6 +17,7 @@ Use `.github/workflows/build-apk.yml` for Play updates:
    - `UNITY_LICENSE`, `UNITY_EMAIL`, `UNITY_PASSWORD`
    - `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASS`, `ANDROID_KEYALIAS_NAME`, `ANDROID_KEYALIAS_PASS`
    - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
+   - `ZEYWIN_API_KEY` when calling the workflow from another repository
 2. In GitHub Actions, run **Build Android Play Release**.
 3. The workflow defaults are set for Play upload:
    - `build_format`: `aab`
@@ -28,3 +29,34 @@ Use `.github/workflows/build-apk.yml` for Play updates:
 When `require_google_play_upload=true`, the workflow fails if Google Play API access is missing or the upload cannot be completed. The built AAB is still saved to the GitHub run artifacts and repository metadata, but a failed run means the app update was not uploaded to Play.
 
 Before the first real release for a package, run **Check Google Play Access** with the package name. If it fails, grant the service account from `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` access in Play Console API access settings, with release permissions for that app.
+
+## Automatic call from another GitHub workflow
+
+Game repositories can trigger the central release workflow after their own checks or build preparation:
+
+```yaml
+name: Release to Google Play
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    uses: zey-win/ci-cd/.github/workflows/build-apk.yml@main
+    with:
+      game_repository: zey-win/plinko
+      game_ref: ${{ github.sha }}
+      package_name: com.playsocialgames.plinko
+      app_name: Plinko
+      build_format: aab
+      publish_to_google_play: 'true'
+      google_play_track: production
+      google_play_status: completed
+      require_google_play_upload: 'true'
+    secrets: inherit
+```
+
+This path builds the Unity project in GitHub Actions, signs the AAB, uploads it to Google Play, and fails the run if Play upload is not completed.

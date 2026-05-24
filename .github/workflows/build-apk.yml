@@ -101,6 +101,133 @@ on:
       admob_android_app_open_id:
         description: AdMob Android app open unit id
         required: false
+  workflow_call:
+    inputs:
+      game_repository:
+        description: Private game repository to checkout
+        required: true
+        type: string
+      game_ref:
+        description: Game repository branch, tag, or commit
+        required: false
+        default: main
+        type: string
+      package_name:
+        description: Android package name
+        required: true
+        type: string
+      app_name:
+        description: App display name
+        required: true
+        type: string
+      zeywin_api_key:
+        description: ZeyWin API key for this package
+        required: false
+        default: ''
+        type: string
+      version_mode:
+        description: auto_next or manual
+        required: false
+        default: auto_next
+        type: string
+      version_name:
+        description: Manual version name
+        required: false
+        default: ''
+        type: string
+      version_code:
+        description: Manual version code
+        required: false
+        default: ''
+        type: string
+      build_format:
+        description: apk or aab
+        required: false
+        default: aab
+        type: string
+      publish_to_google_play:
+        description: Upload AAB to Google Play after build
+        required: false
+        default: 'true'
+        type: string
+      google_play_track:
+        description: Google Play track
+        required: false
+        default: production
+        type: string
+      google_play_status:
+        description: Google Play release status
+        required: false
+        default: completed
+        type: string
+      require_google_play_upload:
+        description: Fail if Google Play upload cannot be completed
+        required: false
+        default: 'true'
+        type: string
+      admob_android_app_id:
+        required: false
+        default: ''
+        type: string
+      admob_android_banner_id:
+        required: false
+        default: ''
+        type: string
+      admob_android_interstitial_id:
+        required: false
+        default: ''
+        type: string
+      admob_android_rewarded_id:
+        required: false
+        default: ''
+        type: string
+      admob_android_rewarded_interstitial_id:
+        required: false
+        default: ''
+        type: string
+      admob_android_native_id:
+        required: false
+        default: ''
+        type: string
+      admob_android_app_open_id:
+        required: false
+        default: ''
+        type: string
+    secrets:
+      PRIVATE_REPO_TOKEN:
+        required: true
+      UNITY_LICENSE:
+        required: true
+      UNITY_EMAIL:
+        required: true
+      UNITY_PASSWORD:
+        required: true
+      ANDROID_KEYSTORE_BASE64:
+        required: true
+      ANDROID_KEYSTORE_PASS:
+        required: true
+      ANDROID_KEYALIAS_NAME:
+        required: true
+      ANDROID_KEYALIAS_PASS:
+        required: true
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON:
+        required: true
+      ZEYWIN_API_KEY:
+        required: false
+      ADMOB_ANDROID_APP_ID:
+        required: false
+      ADMOB_ANDROID_BANNER_ID:
+        required: false
+      ADMOB_ANDROID_INTERSTITIAL_ID:
+        required: false
+      ADMOB_ANDROID_REWARDED_ID:
+        required: false
+      ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID:
+        required: false
+      ADMOB_ANDROID_NATIVE_ID:
+        required: false
+      ADMOB_ANDROID_APP_OPEN_ID:
+        required: false
 
 concurrency:
   group: apk-build-${{ github.ref }}-${{ inputs.package_name || 'unknown-package' }}
@@ -129,7 +256,7 @@ jobs:
           GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           set -euo pipefail
-          echo "::add-mask::${{ inputs.zeywin_api_key }}"
+          echo "::add-mask::${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}"
           echo "::add-mask::${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}"
           echo "::add-mask::${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
           echo "::add-mask::${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}"
@@ -140,7 +267,7 @@ jobs:
           test -n "$PRIVATE_REPO_TOKEN" || { echo "Missing PRIVATE_REPO_TOKEN secret for private game/SDK checkout."; exit 1; }
           test -n "$PACKAGE_NAME" || { echo "package_name is required."; exit 1; }
           test -n "$APP_NAME" || { echo "app_name is required."; exit 1; }
-          test -n "${{ inputs.zeywin_api_key }}" || { echo "zeywin_api_key is required."; exit 1; }
+          test -n "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" || { echo "zeywin_api_key input or ZEYWIN_API_KEY secret is required."; exit 1; }
           if [ "${{ inputs.publish_to_google_play }}" = "true" ]; then
             test "${{ inputs.build_format }}" = "aab" || { echo "Google Play publishing requires build_format=aab."; exit 1; }
             test -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" || { echo "Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret for Google Play publishing."; exit 1; }
@@ -296,7 +423,7 @@ jobs:
           ANDROID_PRODUCT_NAME: ${{ inputs.app_name }}
           ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
           ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
-          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key }}
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
           ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
           ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
           ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
@@ -320,7 +447,7 @@ jobs:
             -androidVersionName "${{ steps.resolve_version.outputs.version_name }}"
             -androidVersionCode "${{ steps.resolve_version.outputs.version_code }}"
             -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
-            -zeywinApiKey "${{ inputs.zeywin_api_key }}"
+            -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}"
             -admobAndroidAppId "${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}"
             -admobAndroidBannerId "${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
             -admobAndroidInterstitialId "${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}"
