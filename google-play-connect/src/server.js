@@ -128,6 +128,60 @@ app.get('/operator', (_req, res) => {
   `));
 });
 
+app.get('/help', (_req, res) => {
+  res.send(renderPage('Google Play Connect Help', `
+    <section class="hero">
+      <p class="eyebrow">Self-service guide</p>
+      <h1>Google Play Connect</h1>
+      <p class="lead">This page is for the next person who opens the project. Operators use the blue button. Setup checks are safe and do not publish apps.</p>
+      <div class="diagram">
+        <div class="phone-card">
+          <div class="phone-top"></div>
+          <div class="phone-screen">
+            <span>1</span>
+            <strong>Open link</strong>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="phone-card">
+          <div class="phone-top"></div>
+          <div class="phone-screen">
+            <span>2</span>
+            <strong>Google sign-in</strong>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="phone-card">
+          <div class="phone-top"></div>
+          <div class="phone-screen">
+            <span>3</span>
+            <strong>Confirm</strong>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="button" href="/operator">Open operator page</a>
+        <a class="button secondary" href="/status">Check setup status</a>
+        <a class="button secondary" href="https://github.com/zey-win/ci-cd/actions/workflows/bootstrap-google-play-connect.yml">Open setup workflow</a>
+      </div>
+    </section>
+    <section class="help-grid">
+      <div>
+        <h2>For operators</h2>
+        <p>Use only the Connect button. Do not look for API keys, JSON files, Google Cloud, or GitHub secrets.</p>
+      </div>
+      <div>
+        <h2>For setup</h2>
+        <p>Open the setup workflow and run <code>check_only</code>. It prints the exact redirect URI and next action.</p>
+      </div>
+      <div>
+        <h2>After setup</h2>
+        <p>The Connect button signs in with Google and prepares publishing for GitHub Actions.</p>
+      </div>
+    </section>
+  `));
+});
+
 app.get('/status', (_req, res) => {
   const missing = missingConfig();
   const rows = requiredEnv
