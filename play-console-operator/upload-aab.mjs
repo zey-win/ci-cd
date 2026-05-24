@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -31,6 +31,30 @@ function required(args, key) {
     process.exit(1);
   }
   return String(value);
+}
+
+function readKeyValueFile(filePath) {
+  const result = {};
+  const text = readFileSync(filePath, 'utf8');
+  for (const line of text.split(/\r?\n/)) {
+    const match = line.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      result[match[1].trim()] = match[2].trim();
+    }
+  }
+  return result;
+}
+
+function findPackageFile(buildDir, buildInfo) {
+  const repoPath = buildInfo.package_repo_path || buildInfo.apk_path || '';
+  if (!repoPath) {
+    return '';
+  }
+  const absolute = path.resolve('..', repoPath);
+  if (existsSync(absolute) && /\.(aab|apk)$/i.test(absolute)) {
+    return absolute;
+  }
+  return '';
 }
 
 async function clickFirst(page, patterns, options = {}) {
@@ -77,21 +101,48 @@ async function fillReleaseNotes(page, notes) {
 }
 
 const args = parseArgs(process.argv.slice(2));
-const developerId = required(args, 'developer-id');
-const appId = required(args, 'app-id');
-const track = required(args, 'track');
-const aabPath = path.resolve(required(args, 'aab'));
-const versionName = required(args, 'version-name');
+let buildInfo = {};
+if (args['from-build-dir']) {
+  const buildDir = path.resolve(String(args['from-build-dir']));
+  const buildFile = path.join(buildDir, 'build.txt');
+  if (!existsSync(buildFile)) {
+    console.error(`build.txt does not exist: ${buildFile}`);
+    process.exit(1);
+  }
+  buildInfo = readKeyValueFile(buildFile);
+}
+
+const developerId = String(args['developer-id'] || buildInfo.google_play_developer_id || '');
+const appId = String(args['app-id'] || buildInfo.google_play_app_id || '');
+const track = String(args.track || buildInfo.google_play_track || 'production');
+const aabPath = path.resolve(String(args.aab || findPackageFile(args['from-build-dir'], buildInfo)));
+const versionName = String(args['version-name'] || buildInfo.version_name || '');
 const notes = String(args.notes || `Bug fixes and SDK updates for ${versionName}.`);
+const loginOnly = Boolean(args['login-only']);
 const submit = Boolean(args.submit);
 const dryRun = Boolean(args['dry-run']);
 
-if (!existsSync(aabPath)) {
+if (!developerId && !loginOnly) {
+  console.error('Missing --developer-id');
+  process.exit(1);
+}
+
+if (!appId && !loginOnly) {
+  console.error('Missing --app-id');
+  process.exit(1);
+}
+
+if (!versionName && !loginOnly) {
+  console.error('Missing --version-name');
+  process.exit(1);
+}
+
+if (!loginOnly && !existsSync(aabPath)) {
   console.error(`AAB does not exist: ${aabPath}`);
   process.exit(1);
 }
 
-const profileDir = path.resolve('.play-console-profile');
+const profileDir = path.resolve(String(args['profile-dir'] || '.play-console-profile'));
 const appDashboardUrl = `https://play.google.com/console/u/0/developers/${developerId}/app/${appId}/app-dashboard`;
 const trackUrl = `https://play.google.com/console/u/0/developers/${developerId}/app/${appId}/tracks/${track}`;
 const chromeCandidates = [
@@ -106,6 +157,7 @@ console.log(`App: ${appId}`);
 console.log(`Track: ${track}`);
 console.log(`AAB: ${aabPath}`);
 console.log(`Release: ${versionName}`);
+console.log(`Profile: ${profileDir}`);
 console.log(`Submit: ${submit ? 'yes' : 'no, draft/save only'}`);
 
 let context;
@@ -125,6 +177,14 @@ try {
 
 const page = context.pages()[0] || await context.newPage();
 page.setDefaultTimeout(30000);
+
+if (loginOnly) {
+  await page.goto('https://play.google.com/console/u/0/');
+  console.log('Login-only mode: sign in in the opened browser, then close it or stop this command.');
+  await page.pause();
+  await context.close();
+  process.exit(0);
+}
 
 await page.goto(appDashboardUrl);
 await page.waitForLoadState('domcontentloaded');

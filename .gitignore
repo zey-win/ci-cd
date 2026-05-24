@@ -22,5 +22,7 @@ sysinfo.txt
 *.keystore
 *.jks
 node_modules/
+play-console-operator/.play-console-profile/
+.play-console-profile/
 
 .DS_Store

@@ -71,6 +71,7 @@ const config = {
   githubRepo: process.env.GITHUB_REPO || 'ci-cd',
   githubToken: process.env.GITHUB_TOKEN,
   githubSecretName: process.env.GITHUB_SECRET_NAME || 'GOOGLE_PLAY_SERVICE_ACCOUNT_JSON',
+  googleOauthPublic: process.env.GOOGLE_OAUTH_PUBLIC === 'true',
   allowedGoogleEmails: (process.env.ALLOWED_GOOGLE_EMAILS || '')
     .split(',')
     .map((email) => email.trim().toLowerCase())
@@ -92,6 +93,37 @@ function oauthClient() {
     config.googleClientSecret,
     `${config.baseUrl}/oauth2callback`
   );
+}
+
+function oauthStatus() {
+  const missing = missingConfig();
+  if (missing.length) {
+    return {
+      ready: false,
+      blocked: true,
+      label: 'Connection setup is being prepared.',
+      detail: 'Google OAuth values are not fully configured yet.',
+      action: '<a class="button disabled" href="/status">Google OAuth setup required</a>'
+    };
+  }
+
+  if (!config.googleOauthPublic) {
+    return {
+      ready: true,
+      blocked: true,
+      label: 'Google confirmation is not public yet.',
+      detail: 'The automatic Google button stays closed until the OAuth consent screen is published for production. This prevents users from seeing Google 403 access_denied.',
+      action: '<a class="button secondary" href="/partners/guide">Open safe access guide</a>'
+    };
+  }
+
+  return {
+    ready: true,
+    blocked: false,
+    label: 'Google confirmation is ready.',
+    detail: 'Console owners can continue with Google confirmation.',
+    action: '<a class="button" href="/auth/google">Continue with Google</a>'
+  };
 }
 
 function randomState() {
@@ -125,16 +157,15 @@ function escapeHtml(value) {
 }
 
 app.get('/', (_req, res) => {
-  const missing = missingConfig();
-  const ready = missing.length === 0;
+  const oauth = oauthStatus();
 
   res.send(renderPage('Connect Google Play', `
     <section class="hero">
       <p class="eyebrow">ZeyWin CI/CD</p>
       <h1>Connect Google Play publishing</h1>
       <p class="lead">Sign in with the Google account that owns or administers Play Console. ZeyWin prepares the publishing connection in the background.</p>
-      ${ready ? '' : '<div class="notice danger">Connection setup is being prepared. Please try again later.</div>'}
-      <a class="button ${ready ? '' : 'disabled'}" href="${ready ? '/auth/google' : '/operator'}">Connect Google Play</a>
+      <div class="notice ${oauth.blocked ? 'danger' : ''}"><strong>${escapeHtml(oauth.label)}</strong><br>${escapeHtml(oauth.detail)}</div>
+      <div class="actions">${oauth.action}<a class="button secondary" href="/operator">Open operator page</a></div>
     </section>
     <section class="steps">
       <div><strong>1</strong><span>Google sign-in</span></div>
@@ -146,7 +177,7 @@ app.get('/', (_req, res) => {
 });
 
 app.get('/operator', (_req, res) => {
-  const ready = missingConfig().length === 0;
+  const oauth = oauthStatus();
   res.send(renderPage('Operator flow', `
     <section class="hero">
       <p class="eyebrow">For marketers</p>
@@ -158,11 +189,10 @@ app.get('/operator', (_req, res) => {
         <div><strong>3</strong><span>Confirm Play Console access</span></div>
         <div><strong>4</strong><span>ZeyWin processes payment</span></div>
       </section>
-      ${ready
+      ${!oauth.blocked
         ? '<div class="actions"><a class="button" href="/handover">Hand over Play Console</a><a class="button secondary" href="/partners/guide">Open safe access guide</a></div>'
-        : `<div class="notice">Automatic console handover is waiting for Google OAuth setup on Render. No passwords or recovery codes are needed; this will work through official Google confirmation.</div>
+        : `<div class="notice danger"><strong>${escapeHtml(oauth.label)}</strong><br>${escapeHtml(oauth.detail)}</div>
           <div class="actions">
-            <a class="button" href="/handover">Hand over Play Console</a>
             <a class="button secondary" href="/partners/guide">Open safe access guide</a>
             <a class="button secondary" href="/status">Show setup status</a>
           </div>`}
@@ -171,7 +201,7 @@ app.get('/operator', (_req, res) => {
 });
 
 app.get('/handover', (_req, res) => {
-  const ready = missingConfig().length === 0;
+  const oauth = oauthStatus();
   res.send(renderPage('Hand over Play Console', `
     <section class="partner-hero">
       <div>
@@ -179,10 +209,9 @@ app.get('/handover', (_req, res) => {
         <h1>Hand over your Play Console connection</h1>
         <p class="lead">The user has already accepted the commercial and privacy terms before reaching this page. This step only connects the console through official Google confirmation.</p>
         <div class="notice">ZeyWin does not request Google passwords, recovery codes, or backup codes. The connection is created by Google sign-in and consent.</div>
+        ${oauth.blocked ? `<div class="notice danger"><strong>${escapeHtml(oauth.label)}</strong><br>${escapeHtml(oauth.detail)}</div>` : ''}
         <div class="actions">
-          ${ready
-            ? '<a class="button" href="/auth/google">Continue with Google</a>'
-            : '<a class="button disabled" href="/status">Google OAuth setup required</a>'}
+          ${oauth.action}
           <a class="button secondary" href="/partners/guide">View safe access details</a>
         </div>
       </div>
@@ -461,6 +490,25 @@ app.get('/auth/google', (req, res) => {
       <h1>Configuration required</h1>
       <p>Set these environment variables before using the portal:</p>
       <pre>${escapeHtml(missing.join('\n'))}</pre>
+    `));
+    return;
+  }
+
+  const oauth = oauthStatus();
+  if (oauth.blocked) {
+    res.status(409).send(renderPage('Google confirmation not public yet', `
+      <section class="hero">
+        <p class="eyebrow">Google OAuth</p>
+        <h1>Google confirmation is not public yet</h1>
+        <p class="lead">${escapeHtml(oauth.detail)}</p>
+        <div class="notice danger">
+          This protects users from the Google 403 access_denied screen. Publish and verify the OAuth consent screen, or add the exact Google account as a test user before using automatic confirmation.
+        </div>
+        <div class="actions">
+          <a class="button" href="/partners/guide">Open safe access guide</a>
+          <a class="button secondary" href="/status">Show setup status</a>
+        </div>
+      </section>
     `));
     return;
   }

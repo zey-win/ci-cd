@@ -35,6 +35,30 @@ To also continue through review screens, add:
 
 Use `--dry-run` to only open the target release page and print the resolved values.
 
+## Login once
+
+```bash
+cd play-console-operator
+npm run upload -- --login-only
+```
+
+The browser opens with the persistent profile. Sign in to the needed Google Play account once, then stop the command.
+
+## Upload from a CI build folder
+
+If the build folder contains `build.txt`, the operator can read most values automatically:
+
+```bash
+cd play-console-operator
+npm run upload -- \
+  --from-build-dir ../builds/com.playmaxsolutions.slotspot/v22 \
+  --developer-id 7898824668858143466 \
+  --app-id 4972415713524037688 \
+  --dry-run
+```
+
+`developer-id` and `app-id` are still explicit because they are Play Console UI identifiers, not Android package identifiers.
+
 ## Required fields
 
 - `--developer-id`: Play Console developer account id.
@@ -43,5 +67,8 @@ Use `--dry-run` to only open the target release page and print the resolved valu
 - `--aab`: local AAB path.
 - `--version-name`: release name to show in Play Console.
 - `--notes`: release notes text.
+- `--from-build-dir`: optional path to a CI build folder containing `build.txt`.
+- `--profile-dir`: optional browser profile path. Defaults to `.play-console-profile`.
+- `--login-only`: open Play Console only for login/session setup.
 
 The persistent browser profile is stored in `.play-console-profile/` so the operator login survives between runs.
