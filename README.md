@@ -6,4 +6,4 @@ This public repository contains only GitHub Actions release automation. Game and
 
 Latest APK versions and next manual version values are listed in [builds/index.md](builds/index.md).
 
-Google Play API publishing can be connected through the operator portal in [google-play-connect](google-play-connect/). The intended public entry link is `https://zeywin.github.io/connect`.
+Google Play API publishing can be connected through the operator portal in [google-play-connect](google-play-connect/). The public entry link is `https://zey-win.github.io/connect/`.
