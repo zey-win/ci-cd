@@ -576,18 +576,44 @@ async function setupPublishing(auth) {
     serviceAccount = created.data;
   }
 
-  const keyResponse = await iam.projects.serviceAccounts.keys.create({
-    name: serviceAccount.name,
+  const serviceAccountName = serviceAccount.name || `${projectName}/serviceAccounts/${serviceAccountEmail}`;
+  const keyResponse = await retryGoogleOperation(async () => iam.projects.serviceAccounts.keys.create({
+    name: serviceAccountName,
     requestBody: {
       privateKeyType: 'TYPE_GOOGLE_CREDENTIALS_FILE',
       keyAlgorithm: 'KEY_ALG_RSA_2048'
     }
+  }), {
+    attempts: 6,
+    delayMs: 2500,
+    isRetryable: (error) => error.code === 404 || error.code === 409
   });
 
   const keyJson = Buffer.from(keyResponse.data.privateKeyData, 'base64').toString('utf8');
   await saveGitHubSecret(keyJson);
 
   return { serviceAccountEmail };
+}
+
+async function retryGoogleOperation(operation, options) {
+  const attempts = options.attempts || 3;
+  const delayMs = options.delayMs || 1000;
+  const isRetryable = options.isRetryable || (() => false);
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts || !isRetryable(error)) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  throw lastError;
 }
 
 async function saveGitHubSecret(secretValue) {
