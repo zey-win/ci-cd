@@ -19,9 +19,11 @@ jobs:
 
       - name: Validate Google Play secret
         shell: bash
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           set -euo pipefail
-          test -n "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" || {
+          test -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" || {
             echo "Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret."
             exit 1
           }

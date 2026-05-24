@@ -134,8 +134,10 @@ jobs:
           test -n "${{ inputs.zeywin_api_key }}" || { echo "zeywin_api_key is required."; exit 1; }
           if [ "${{ inputs.publish_to_google_play }}" = "true" ]; then
             test "${{ inputs.build_format }}" = "aab" || { echo "Google Play publishing requires build_format=aab."; exit 1; }
-            test -n "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" || { echo "Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret for Google Play publishing."; exit 1; }
+            test -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" || { echo "Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret for Google Play publishing."; exit 1; }
           fi
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
 
       - name: Checkout private game project
         uses: actions/checkout@v4
@@ -421,7 +423,9 @@ jobs:
           printf 'Bug fixes and SDK updates for version %s.\n' "$VERSION_NAME" > whatsnew/whatsnew-en-US
 
       - name: Check Google Play API access
+        id: google_play_access
         if: ${{ inputs.publish_to_google_play == 'true' }}
+        continue-on-error: true
         working-directory: google-play-connect
         env:
           PACKAGE_NAME: ${{ inputs.package_name }}
@@ -429,7 +433,7 @@ jobs:
         run: node scripts/check-play-access.mjs
 
       - name: Upload AAB to Google Play
-        if: ${{ inputs.publish_to_google_play == 'true' }}
+        if: ${{ inputs.publish_to_google_play == 'true' && steps.google_play_access.outcome == 'success' }}
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -457,6 +461,10 @@ jobs:
           PACKAGE_NAME: ${{ inputs.package_name }}
           VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
           VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+          PUBLISH_TO_GOOGLE_PLAY: ${{ inputs.publish_to_google_play }}
+          GOOGLE_PLAY_TRACK: ${{ inputs.google_play_track }}
+          GOOGLE_PLAY_STATUS: ${{ inputs.google_play_status }}
+          GOOGLE_PLAY_API_ACCESS: ${{ steps.google_play_access.outcome || 'skipped' }}
         run: |
           set -euo pipefail
           package_path="$(find build/android -maxdepth 1 -type f -name "*.$BUILD_FORMAT" | head -n 1)"
@@ -509,11 +517,49 @@ jobs:
             echo "package_repo_path=$package_repo_path"
             echo "built_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
             echo "run_url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-            if [ "${{ inputs.publish_to_google_play }}" = "true" ]; then
-              echo "google_play_track=${{ inputs.google_play_track }}"
-              echo "google_play_status=${{ inputs.google_play_status }}"
+            if [ "$PUBLISH_TO_GOOGLE_PLAY" = "true" ]; then
+              echo "google_play_track=$GOOGLE_PLAY_TRACK"
+              echo "google_play_status=$GOOGLE_PLAY_STATUS"
+              echo "google_play_api_access=$GOOGLE_PLAY_API_ACCESS"
+              if [ "$GOOGLE_PLAY_API_ACCESS" = "success" ]; then
+                echo "google_play_upload=api"
+              else
+                echo "google_play_upload=ui_fallback_required"
+              fi
             fi
           } > "$version_dir/build.txt"
+
+          if [ "$PUBLISH_TO_GOOGLE_PLAY" = "true" ] && [ "$GOOGLE_PLAY_API_ACCESS" != "success" ]; then
+            {
+              echo "# Google Play UI Upload Fallback"
+              echo
+              echo "The AAB was built successfully, but Google Play API access was not available for the service account."
+              echo "Upload this package through the Google Play Console web interface from a logged-in browser."
+              echo
+              echo "| Field | Value |"
+              echo "| --- | --- |"
+              echo "| Package | \`$PACKAGE_NAME\` |"
+              echo "| Version name | \`$VERSION_NAME\` |"
+              echo "| Version code | \`$VERSION_CODE\` |"
+              echo "| Track | \`$GOOGLE_PLAY_TRACK\` |"
+              echo "| Release status | \`$GOOGLE_PLAY_STATUS\` |"
+              echo "| File | \`$package_repo_path\` |"
+              echo "| GitHub release | $release_url |"
+              echo
+              echo "## Steps"
+              echo
+              echo "1. Open the app in Google Play Console."
+              echo "2. Open the release track: \`$GOOGLE_PLAY_TRACK\`."
+              echo "3. Create a new release or edit the draft release."
+              echo "4. Upload the AAB from this build."
+              echo "5. Use release name \`$VERSION_NAME\` and release notes from \`whatsnew/whatsnew-en-US\`."
+              echo "6. Save, review, and send the release according to the selected status."
+              echo
+              echo "Service account that still needs Play Console permissions:"
+              echo
+              echo "\`zeywin-play-publisher@zeywin-connect.iam.gserviceaccount.com\`"
+            } > "$version_dir/google-play-ui-upload.md"
+          fi
 
           current_latest_code="$(sed -n 's/^version_code=//p' "$latest_dir/latest-build.txt" 2>/dev/null | tail -n 1 || true)"
           if ! [[ "$current_latest_code" =~ ^[0-9]+$ ]]; then
@@ -521,6 +567,9 @@ jobs:
           fi
 
           latest_files=("$version_dir/build.txt")
+          if [ -f "$version_dir/google-play-ui-upload.md" ]; then
+            latest_files+=("$version_dir/google-play-ui-upload.md")
+          fi
           if [ "$VERSION_CODE" -ge "$current_latest_code" ]; then
             cp "$version_dir/build.txt" "$latest_dir/latest-build.txt"
             latest_files+=("$latest_dir/latest-build.txt")
