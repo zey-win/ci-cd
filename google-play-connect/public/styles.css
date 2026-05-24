@@ -61,6 +61,11 @@ body {
   font-weight: 700;
 }
 
+.button.disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
 .steps {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -118,6 +123,33 @@ pre {
 
 .muted {
   color: #65758b;
+}
+
+.status-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 22px;
+}
+
+.status-table th,
+.status-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.status-table th {
+  color: #475569;
+}
+
+.status-table .ok {
+  color: #087443;
+  font-weight: 800;
+}
+
+.status-table .missing {
+  color: #b42318;
+  font-weight: 800;
 }
 
 @media (max-width: 720px) {

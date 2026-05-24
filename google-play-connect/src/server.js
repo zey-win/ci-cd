@@ -91,7 +91,7 @@ function escapeHtml(value) {
 app.get('/', (_req, res) => {
   const missing = missingConfig();
   const warning = missing.length
-    ? `<div class="notice danger">Server is not configured yet. Missing: <code>${missing.map(escapeHtml).join('</code>, <code>')}</code></div>`
+    ? `<div class="notice danger">Setup is waiting for administrator configuration. Missing: <code>${missing.map(escapeHtml).join('</code>, <code>')}</code></div>`
     : '';
 
   res.send(renderPage('Connect Google Play', `
@@ -100,13 +100,38 @@ app.get('/', (_req, res) => {
       <h1>Connect Google Play publishing</h1>
       <p class="lead">Sign in with the Google account that owns or administers the Play Console account. The portal prepares the service account and saves it into GitHub Actions secrets.</p>
       ${warning}
-      <a class="button" href="/auth/google">Connect Google Play</a>
+      <a class="button ${missing.length ? 'disabled' : ''}" href="${missing.length ? '/status' : '/auth/google'}">Connect Google Play</a>
     </section>
     <section class="steps">
       <div><strong>1</strong><span>Google sign-in</span></div>
       <div><strong>2</strong><span>Create service account key</span></div>
       <div><strong>3</strong><span>Save GitHub secret</span></div>
       <div><strong>4</strong><span>Use Actions publish button</span></div>
+    </section>
+  `));
+});
+
+app.get('/status', (_req, res) => {
+  const missing = missingConfig();
+  const rows = requiredEnv
+    .map((key) => {
+      const ready = !missing.includes(key);
+      return `<tr><td><code>${escapeHtml(key)}</code></td><td class="${ready ? 'ok' : 'missing'}">${ready ? 'Ready' : 'Missing'}</td></tr>`;
+    })
+    .join('');
+
+  res.send(renderPage('Connect status', `
+    <section class="hero">
+      <p class="eyebrow">ZeyWin CI/CD</p>
+      <h1>Connect status</h1>
+      <p class="lead">${missing.length ? 'Administrator configuration is not finished yet.' : 'Google Play connection portal is ready.'}</p>
+      <table class="status-table">
+        <thead><tr><th>Setting</th><th>Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="notice">
+        Public entry page: <a href="https://zey-win.github.io/connect/">https://zey-win.github.io/connect/</a>
+      </div>
     </section>
   `));
 });
