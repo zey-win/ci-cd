@@ -21,5 +21,6 @@ sysinfo.txt
 *.aab
 *.keystore
 *.jks
+node_modules/
 
 .DS_Store
