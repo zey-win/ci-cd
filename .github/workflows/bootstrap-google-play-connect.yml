@@ -105,8 +105,18 @@ jobs:
           deploy_json="$(curl -sS -X POST "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys" \
             -H "Authorization: Bearer ${RENDER_API_KEY}" \
             -H "Content-Type: application/json" \
-            -d '{"clearCache":"do_not_clear"}')"
-          deploy_id="$(node -e 'const body=JSON.parse(process.argv[1]); console.log(body.id || "")' "$deploy_json")"
+            -d '{"clearCache":"clear"}' || true)"
+          if [ -n "$deploy_json" ]; then
+            deploy_id="$(node -e 'const body=JSON.parse(process.argv[1]); console.log(body.id || body.deploy?.id || "")' "$deploy_json")"
+          else
+            deploy_id=""
+          fi
+          if [ -z "$deploy_id" ]; then
+            sleep 3
+            deploy_list_json="$(curl -sS "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys?limit=1" \
+              -H "Authorization: Bearer ${RENDER_API_KEY}")"
+            deploy_id="$(node -e 'const body=JSON.parse(process.argv[1]); const first=Array.isArray(body) ? body[0] : body.deploys?.[0]; console.log(first?.id || first?.deploy?.id || "")' "$deploy_list_json")"
+          fi
           test -n "$deploy_id" || { echo "Render deploy response did not contain an id."; echo "$deploy_json"; exit 1; }
           echo "Render deploy: $deploy_id"
 
