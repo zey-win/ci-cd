@@ -118,6 +118,7 @@ jobs:
           APP_NAME: ${{ inputs.app_name }}
           VERSION_NAME: ${{ inputs.version_name }}
           VERSION_CODE: ${{ inputs.version_code }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           set -euo pipefail
           echo "::add-mask::${{ inputs.zeywin_api_key }}"
@@ -136,8 +137,6 @@ jobs:
             test "${{ inputs.build_format }}" = "aab" || { echo "Google Play publishing requires build_format=aab."; exit 1; }
             test -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" || { echo "Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret for Google Play publishing."; exit 1; }
           fi
-        env:
-          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
 
       - name: Checkout private game project
         uses: actions/checkout@v4
