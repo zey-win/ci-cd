@@ -420,6 +420,14 @@ jobs:
           mkdir -p whatsnew
           printf 'Bug fixes and SDK updates for version %s.\n' "$VERSION_NAME" > whatsnew/whatsnew-en-US
 
+      - name: Check Google Play API access
+        if: ${{ inputs.publish_to_google_play == 'true' }}
+        working-directory: google-play-connect
+        env:
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: node scripts/check-play-access.mjs
+
       - name: Upload AAB to Google Play
         if: ${{ inputs.publish_to_google_play == 'true' }}
         uses: r0adkll/upload-google-play@v1

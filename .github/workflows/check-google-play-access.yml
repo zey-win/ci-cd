@@ -1,0 +1,38 @@
+name: Check Google Play Access
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: Android package name to verify in Google Play
+        required: true
+        default: com.playmaxsolutions.slotspot
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Google Play secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" || {
+            echo "Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret."
+            exit 1
+          }
+
+      - name: Install dependencies
+        working-directory: google-play-connect
+        run: npm ci
+
+      - name: Check package access
+        working-directory: google-play-connect
+        env:
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: node scripts/check-play-access.mjs
