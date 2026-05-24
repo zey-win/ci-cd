@@ -94,6 +94,12 @@ if (!existsSync(aabPath)) {
 const profileDir = path.resolve('.play-console-profile');
 const appDashboardUrl = `https://play.google.com/console/u/0/developers/${developerId}/app/${appId}/app-dashboard`;
 const trackUrl = `https://play.google.com/console/u/0/developers/${developerId}/app/${appId}/tracks/${track}`;
+const chromeCandidates = [
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+];
+const executablePath = chromeCandidates.find((candidate) => existsSync(candidate));
 
 console.log(`Developer: ${developerId}`);
 console.log(`App: ${appId}`);
@@ -102,11 +108,20 @@ console.log(`AAB: ${aabPath}`);
 console.log(`Release: ${versionName}`);
 console.log(`Submit: ${submit ? 'yes' : 'no, draft/save only'}`);
 
-const context = await chromium.launchPersistentContext(profileDir, {
-  headless: false,
-  viewport: { width: 1440, height: 1000 },
-  acceptDownloads: true
-});
+let context;
+try {
+  context = await chromium.launchPersistentContext(profileDir, {
+    headless: false,
+    viewport: { width: 1440, height: 1000 },
+    acceptDownloads: true,
+    executablePath
+  });
+} catch (error) {
+  if (/Executable doesn't exist/i.test(error.message || '')) {
+    console.error('Playwright browser is missing. Run: npx playwright install chromium');
+  }
+  throw error;
+}
 
 const page = context.pages()[0] || await context.newPage();
 page.setDefaultTimeout(30000);
