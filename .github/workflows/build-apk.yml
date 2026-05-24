@@ -21,7 +21,8 @@ on:
         default: Plinko
       zeywin_api_key:
         description: ZeyWin API key for this package
-        required: true
+        required: false
+        default: ''
       version_mode:
         description: auto_next = easiest; manual = use the two version fields below
         required: true

@@ -17,7 +17,7 @@ Use `.github/workflows/build-apk.yml` for Play updates:
    - `UNITY_LICENSE`, `UNITY_EMAIL`, `UNITY_PASSWORD`
    - `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASS`, `ANDROID_KEYALIAS_NAME`, `ANDROID_KEYALIAS_PASS`
    - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
-   - `ZEYWIN_API_KEY` when calling the workflow from another repository
+   - `ZEYWIN_API_KEY` for non-interactive releases, or enter `zeywin_api_key` manually when dispatching the workflow
 2. In GitHub Actions, run **Build Android Play Release**.
 3. The workflow defaults are set for Play upload:
    - `build_format`: `aab`
