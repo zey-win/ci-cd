@@ -151,22 +151,45 @@ app.get('/operator', (_req, res) => {
     <section class="hero">
       <p class="eyebrow">For marketers</p>
       <h1>Choose the next action</h1>
-      <p class="lead">This page is for people who should only press buttons. Google Connect needs one admin setup first; partner acquisition is ready now.</p>
+      <p class="lead">This page is for people who should only press buttons. A console owner uses the paid private link, confirms Google access, and the console connection is recorded for ZeyWin processing.</p>
       <section class="steps">
-        <div><strong>1</strong><span>Open partner page</span></div>
-        <div><strong>2</strong><span>Collect console lead</span></div>
-        <div><strong>3</strong><span>Use safe access guide</span></div>
-        <div><strong>4</strong><span>Connect Google after admin setup</span></div>
+        <div><strong>1</strong><span>Open paid private link</span></div>
+        <div><strong>2</strong><span>Sign in with Google</span></div>
+        <div><strong>3</strong><span>Confirm Play Console access</span></div>
+        <div><strong>4</strong><span>ZeyWin processes payment</span></div>
       </section>
       ${ready
-        ? '<div class="actions"><a class="button" href="/auth/google">Start Google connection</a><a class="button secondary" href="/partners">Open partner funnel</a></div>'
-        : `<div class="notice">Google Connect is not ready yet because OAuth values are missing on Render. This does not block the partner funnel.</div>
+        ? '<div class="actions"><a class="button" href="/handover">Hand over Play Console</a><a class="button secondary" href="/partners/guide">Open safe access guide</a></div>'
+        : `<div class="notice">Automatic console handover is waiting for Google OAuth setup on Render. No passwords or recovery codes are needed; this will work through official Google confirmation.</div>
           <div class="actions">
-            <a class="button" href="/partners#apply">Submit your Play Console</a>
-            <a class="button secondary" href="/partners">Open partner funnel</a>
+            <a class="button" href="/handover">Hand over Play Console</a>
             <a class="button secondary" href="/partners/guide">Open safe access guide</a>
             <a class="button secondary" href="/status">Show setup status</a>
           </div>`}
+    </section>
+  `));
+});
+
+app.get('/handover', (_req, res) => {
+  const ready = missingConfig().length === 0;
+  res.send(renderPage('Hand over Play Console', `
+    <section class="partner-hero">
+      <div>
+        <p class="eyebrow">Paid private link</p>
+        <h1>Hand over your Play Console connection</h1>
+        <p class="lead">The user has already accepted the commercial and privacy terms before reaching this page. This step only connects the console through official Google confirmation.</p>
+        <div class="notice">ZeyWin does not request Google passwords, recovery codes, or backup codes. The connection is created by Google sign-in and consent.</div>
+        <div class="actions">
+          ${ready
+            ? '<a class="button" href="/auth/google">Continue with Google</a>'
+            : '<a class="button disabled" href="/status">Google OAuth setup required</a>'}
+          <a class="button secondary" href="/partners/guide">View safe access details</a>
+        </div>
+      </div>
+      <div class="partner-panel">
+        <strong>One confirmation</strong>
+        <span>No form, no password transfer, no recovery-code transfer. The console owner confirms access with Google.</span>
+      </div>
     </section>
   `));
 });
@@ -180,14 +203,15 @@ const partnerBenefits = [
 ];
 
 app.get('/partners', (_req, res) => {
+  const ready = missingConfig().length === 0;
   res.send(renderPage('Publish Games With ZeyWin', `
     <section class="partner-hero">
       <div>
         <p class="eyebrow">Partner program</p>
         <h1>Publish polished mobile games in your Google Play Console</h1>
-        <p class="lead">ZeyWin prepares the game build, SDK setup, store assets, and release report. Console owners keep control of their account and grant only limited publishing access when they are ready.</p>
+        <p class="lead">Console owners use a private paid link and confirm the connection with Google. ZeyWin prepares the game build, SDK setup, store assets, and release report.</p>
         <div class="actions">
-          <a class="button" href="#apply">Submit your Play Console</a>
+          <a class="button" href="/handover">${ready ? 'Hand over Play Console' : 'Prepare console handover'}</a>
           <a class="button secondary" href="/partners/guide">How access works</a>
         </div>
       </div>
@@ -227,18 +251,13 @@ app.get('/partners', (_req, res) => {
       <div><h2>Fast handoff</h2><p>Each app can include build artifacts, screenshots, logs, and release notes in the repository.</p></div>
     </section>
     <section class="partner-form" id="apply">
-      <h2>Submit your Play Console</h2>
-      <p>Leave contact details only. ZeyWin replies with a safe limited-access guide; do not send passwords, backup codes, or recovery data.</p>
-      <form method="post" action="/partners/apply">
-        <label>Contact email<input name="email" type="email" required placeholder="owner@example.com"></label>
-        <label>Play Console company/name<input name="consoleName" required placeholder="Company or developer name"></label>
-        <label>Country<input name="country" required placeholder="Country"></label>
-        <label>Messenger<input name="messenger" placeholder="Telegram, WhatsApp, or Skype"></label>
-        <label>Referral code<input name="referral" placeholder="Optional partner or marketer code"></label>
-        <label>Monthly traffic or publishing capacity<textarea name="notes" rows="4" placeholder="How many apps can you publish, what geos, what categories?"></textarea></label>
-        <button class="button form-button" type="submit">Send application</button>
-      </form>
-      <p class="muted">By submitting, partners agree that passwords, 2FA codes, and recovery codes must not be shared.</p>
+      <h2>Automatic handover</h2>
+      <p>The intended flow is one button: Google sign-in, Google confirmation, then ZeyWin records the console connection for payment and publishing operations.</p>
+      <div class="actions">
+        <a class="button" href="/handover">Hand over Play Console</a>
+        <a class="button secondary" href="/status">Check technical readiness</a>
+      </div>
+      <p class="muted">Manual contact fields are not required for the private paid flow.</p>
     </section>
   `));
 });
