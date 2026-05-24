@@ -72,6 +72,14 @@ on:
         options:
           - draft
           - completed
+      require_google_play_upload:
+        description: Fail the workflow if Google Play upload is requested but cannot be completed
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
       admob_android_app_id:
         description: AdMob Android app id
         required: false
@@ -464,6 +472,7 @@ jobs:
           GOOGLE_PLAY_TRACK: ${{ inputs.google_play_track }}
           GOOGLE_PLAY_STATUS: ${{ inputs.google_play_status }}
           GOOGLE_PLAY_API_ACCESS: ${{ steps.google_play_access.outcome || 'skipped' }}
+          REQUIRE_GOOGLE_PLAY_UPLOAD: ${{ inputs.require_google_play_upload }}
         run: |
           set -euo pipefail
           package_path="$(find build/android -maxdepth 1 -type f -name "*.$BUILD_FORMAT" | head -n 1)"
@@ -520,6 +529,7 @@ jobs:
               echo "google_play_track=$GOOGLE_PLAY_TRACK"
               echo "google_play_status=$GOOGLE_PLAY_STATUS"
               echo "google_play_api_access=$GOOGLE_PLAY_API_ACCESS"
+              echo "require_google_play_upload=$REQUIRE_GOOGLE_PLAY_UPLOAD"
               if [ "$GOOGLE_PLAY_API_ACCESS" = "success" ]; then
                 echo "google_play_upload=api"
               else
@@ -619,3 +629,11 @@ jobs:
             echo "Metadata push failed after APK release upload. APK is already available in the release: $release_url"
             exit 0
           fi
+
+      - name: Require Google Play upload
+        if: ${{ inputs.publish_to_google_play == 'true' && inputs.require_google_play_upload == 'true' && steps.google_play_access.outcome != 'success' }}
+        shell: bash
+        run: |
+          echo "Google Play upload was requested, but API access failed. The AAB was built and saved, but it was not uploaded to Google Play."
+          echo "Grant the service account Play Console release permissions, then rerun with build_format=aab and publish_to_google_play=true."
+          exit 1
