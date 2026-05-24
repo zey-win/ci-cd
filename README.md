@@ -26,9 +26,9 @@ Use `.github/workflows/build-apk.yml` for Play updates:
    - `google_play_status`: `completed` for immediate rollout, or `draft` to leave a draft in Play Console
    - `require_google_play_upload`: `true`
 
-When `require_google_play_upload=true`, the workflow fails if Google Play API access is missing or the upload cannot be completed. The built AAB is still saved to the GitHub run artifacts and repository metadata, but a failed run means the app update was not uploaded to Play.
+When `require_google_play_upload=true`, the workflow fails if Google Play upload permission is missing or the upload cannot be completed. The built AAB is still saved to the GitHub run artifacts and repository metadata, but a failed run means the app update was not uploaded to Play.
 
-Before the first real release for a package, run **Check Google Play Access** with the package name. If it fails, grant the service account from `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` access in Play Console API access settings, with release permissions for that app.
+Before the first real release for a package, run **Check Google Play Access** with the package name. If it fails, grant the service account from `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` access in Play Console **Users and permissions**, with release permissions for that app.
 
 ## Automatic call from another GitHub workflow
 

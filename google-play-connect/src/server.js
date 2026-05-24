@@ -318,6 +318,7 @@ app.post('/partners/apply', (req, res) => {
 });
 
 app.get('/partners/guide', (_req, res) => {
+  const serviceAccountEmail = `${config.serviceAccountId}@${config.googleCloudProjectId || 'zeywin-connect'}.iam.gserviceaccount.com`;
   res.send(renderPage('Partner Access Guide', `
     <section class="hero">
       <p class="eyebrow">Safe access guide</p>
@@ -328,7 +329,7 @@ app.get('/partners/guide', (_req, res) => {
       <h2>Partner steps</h2>
       <div class="timeline-row">
         <div><span>1</span><strong>Open Play Console users</strong><p>Go to Users and permissions in the partner's Play Console.</p></div>
-        <div><span>2</span><strong>Add ZeyWin access</strong><p>Add the ZeyWin publishing email or service account supplied by the operator.</p></div>
+        <div><span>2</span><strong>Add ZeyWin access</strong><p>Invite <code>${escapeHtml(serviceAccountEmail)}</code>.</p></div>
         <div><span>3</span><strong>Limit permissions</strong><p>Grant release/upload permissions only for the selected app.</p></div>
         <div><span>4</span><strong>Review release</strong><p>ZeyWin prepares the build, report, screenshots, and release notes for approval.</p></div>
       </div>
@@ -561,20 +562,20 @@ app.get('/oauth2callback', async (req, res) => {
     }
 
     const result = await setupPublishing(client);
-    const playConsoleUrl = 'https://play.google.com/console/developers/api-access';
+    const playUsersUrl = 'https://play.google.com/console/developers/users-and-permissions';
 
     res.send(renderPage('Google Play connected', `
       <section class="hero">
         <p class="eyebrow">Connected account</p>
-        <h1>Publishing secret is ready</h1>
-        <p class="lead">GitHub secret <code>${escapeHtml(config.githubSecretName)}</code> was saved in <code>${escapeHtml(config.githubOwner)}/${escapeHtml(config.githubRepo)}</code>.</p>
+        <h1>Publishing identity is ready</h1>
+        <p class="lead">GitHub secret <code>${escapeHtml(config.githubSecretName)}</code> was saved in <code>${escapeHtml(config.githubOwner)}/${escapeHtml(config.githubRepo)}</code>. One Play Console permission step is still required.</p>
       </section>
       <section class="result">
         <p><strong>Google account:</strong> <code>${escapeHtml(email)}</code></p>
         <p><strong>Service account:</strong> <code>${escapeHtml(result.serviceAccountEmail)}</code></p>
         <p><strong>Cloud project:</strong> <code>${escapeHtml(config.googleCloudProjectId)}</code></p>
         <div class="notice">
-          If GitHub publish still fails with Google Play permission errors, open <a href="${playConsoleUrl}" target="_blank" rel="noreferrer">Play Console API access</a> and grant this service account release permissions for the app.
+          Open <a href="${playUsersUrl}" target="_blank" rel="noreferrer">Play Console Users and permissions</a>, invite the service account email above, select the app, and grant release permissions. Do not look for API access if it is not visible in this Play Console account.
         </div>
       </section>
     `));
@@ -582,7 +583,7 @@ app.get('/oauth2callback', async (req, res) => {
     res.status(500).send(renderPage('Setup failed', `
       <h1>Setup failed</h1>
       <p>${escapeHtml(error.message || error)}</p>
-      <p class="muted">Most common reason: the signed-in Google account is not an owner/admin of the Google Cloud project or Play Console API access.</p>
+      <p class="muted">Most common reason: the signed-in Google account is not an owner/admin of the Google Cloud project, or Google OAuth was not allowed for this account.</p>
     `));
   }
 });

@@ -19,7 +19,7 @@ Copy `.env.example` and fill:
 - `GITHUB_TOKEN`: GitHub token with repository secret write access.
 - `GITHUB_OWNER` / `GITHUB_REPO`: normally `zey-win` / `ci-cd`.
 
-The Google account used in the browser must have permission to enable APIs and manage service accounts in the chosen Cloud project. It must also have Play Console API access permissions. If Google Play refuses publication after the secret is saved, open Play Console API access and grant the shown service account release permissions for the app.
+The Google account used in the browser must have permission to enable APIs and manage service accounts in the chosen Cloud project. If Google Play refuses publication after the secret is saved, open Play Console **Users and permissions**, invite the shown service account email, select the app, and grant release permissions.
 
 ## Run locally
 
