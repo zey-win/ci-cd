@@ -164,6 +164,31 @@ pre {
   font-weight: 800;
 }
 
+.readiness {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #d5deea;
+  background: #f8fafc;
+}
+
+.readiness span {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.readiness.ready span {
+  background: #12b76a;
+}
+
+.readiness.preparing span {
+  background: #f79009;
+}
+
 .diagram {
   display: grid;
   grid-template-columns: 1fr auto 1fr auto 1fr;
@@ -236,13 +261,58 @@ pre {
   margin-top: 0;
 }
 
+.timeline {
+  background: #fff;
+  border: 1px solid #dce3ec;
+  border-radius: 8px;
+  padding: 28px;
+  margin-top: 18px;
+}
+
+.timeline h2 {
+  margin-top: 0;
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.timeline-row div {
+  border-left: 4px solid #155eef;
+  padding-left: 14px;
+}
+
+.timeline-row span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #155eef;
+  font-weight: 900;
+}
+
+.timeline-row strong {
+  display: block;
+  margin-top: 10px;
+}
+
+.timeline-row p {
+  font-size: 15px;
+  margin-bottom: 0;
+}
+
 @media (max-width: 720px) {
   .steps {
     grid-template-columns: 1fr;
   }
 
   .diagram,
-  .help-grid {
+  .help-grid,
+  .timeline-row {
     grid-template-columns: 1fr;
   }
 

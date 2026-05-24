@@ -128,12 +128,25 @@ app.get('/operator', (_req, res) => {
   `));
 });
 
+app.get('/ready.json', (_req, res) => {
+  const missing = missingConfig();
+  res.json({
+    ready: missing.length === 0,
+    state: missing.length === 0 ? 'ready' : 'preparing'
+  });
+});
+
 app.get('/help', (_req, res) => {
+  const ready = missingConfig().length === 0;
   res.send(renderPage('Google Play Connect Help', `
     <section class="hero">
       <p class="eyebrow">Self-service guide</p>
       <h1>Google Play Connect</h1>
       <p class="lead">This page is for the next person who opens the project. Operators use the blue button. Setup checks are safe and do not publish apps.</p>
+      <div class="readiness ${ready ? 'ready' : 'preparing'}">
+        <span></span>
+        <strong>${ready ? 'Ready for operators' : 'Setup is preparing'}</strong>
+      </div>
       <div class="diagram">
         <div class="phone-card">
           <div class="phone-top"></div>
@@ -177,6 +190,15 @@ app.get('/help', (_req, res) => {
       <div>
         <h2>After setup</h2>
         <p>The Connect button signs in with Google and prepares publishing for GitHub Actions.</p>
+      </div>
+    </section>
+    <section class="timeline">
+      <h2>If the button is not ready yet</h2>
+      <div class="timeline-row">
+        <div><span>✓</span><strong>Open guide</strong><p>You are here. No technical access is required to read this page.</p></div>
+        <div><span>✓</span><strong>Run setup check</strong><p>The workflow prints the exact next step without changing production.</p></div>
+        <div><span>✓</span><strong>Apply setup</strong><p>When Google OAuth values exist, the workflow saves them to Render.</p></div>
+        <div><span>✓</span><strong>Use Connect</strong><p>Operators press the button and confirm Google access.</p></div>
       </div>
     </section>
   `));
