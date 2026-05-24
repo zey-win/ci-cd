@@ -90,23 +90,41 @@ function escapeHtml(value) {
 
 app.get('/', (_req, res) => {
   const missing = missingConfig();
-  const warning = missing.length
-    ? `<div class="notice danger">Setup is waiting for administrator configuration. Missing: <code>${missing.map(escapeHtml).join('</code>, <code>')}</code></div>`
-    : '';
+  const ready = missing.length === 0;
 
   res.send(renderPage('Connect Google Play', `
     <section class="hero">
       <p class="eyebrow">ZeyWin CI/CD</p>
       <h1>Connect Google Play publishing</h1>
-      <p class="lead">Sign in with the Google account that owns or administers the Play Console account. The portal prepares the service account and saves it into GitHub Actions secrets.</p>
-      ${warning}
-      <a class="button ${missing.length ? 'disabled' : ''}" href="${missing.length ? '/status' : '/auth/google'}">Connect Google Play</a>
+      <p class="lead">Sign in with the Google account that owns or administers Play Console. ZeyWin prepares the publishing connection in the background.</p>
+      ${ready ? '' : '<div class="notice danger">This portal is waiting for one-time admin bootstrap. Operators do not need to fill technical settings.</div>'}
+      <a class="button ${ready ? '' : 'disabled'}" href="${ready ? '/auth/google' : '/operator'}">Connect Google Play</a>
     </section>
     <section class="steps">
       <div><strong>1</strong><span>Google sign-in</span></div>
       <div><strong>2</strong><span>Create service account key</span></div>
       <div><strong>3</strong><span>Save GitHub secret</span></div>
       <div><strong>4</strong><span>Use Actions publish button</span></div>
+    </section>
+  `));
+});
+
+app.get('/operator', (_req, res) => {
+  const ready = missingConfig().length === 0;
+  res.send(renderPage('Operator flow', `
+    <section class="hero">
+      <p class="eyebrow">For marketers</p>
+      <h1>Three clicks only</h1>
+      <p class="lead">The operator flow is intentionally simple. No API keys, JSON files, Google Cloud screens, or GitHub secrets are shown here.</p>
+      <section class="steps">
+        <div><strong>1</strong><span>Open this page</span></div>
+        <div><strong>2</strong><span>Sign in with Google</span></div>
+        <div><strong>3</strong><span>Confirm access</span></div>
+      </section>
+      ${ready
+        ? '<a class="button" href="/auth/google">Start Google connection</a>'
+        : '<div class="notice danger">Admin bootstrap is not finished yet. Send this page to the technical owner, not to the marketer.</div>'}
+      <p class="muted">Admin diagnostics: <a href="/status">/status</a></p>
     </section>
   `));
 });
@@ -130,7 +148,7 @@ app.get('/status', (_req, res) => {
         <tbody>${rows}</tbody>
       </table>
       <div class="notice">
-        Public entry page: <a href="https://zey-win.github.io/connect/">https://zey-win.github.io/connect/</a>
+        Admin-only diagnostics. Marketing flow: <a href="/operator">/operator</a>. Public entry page: <a href="https://zey-win.github.io/connect/">https://zey-win.github.io/connect/</a>
       </div>
     </section>
   `));
