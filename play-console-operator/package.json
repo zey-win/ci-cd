@@ -1,0 +1,12 @@
+{
+  "name": "zeywin-play-console-operator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "upload": "node upload-aab.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.53.0"
+  }
+}
