@@ -46,6 +46,14 @@ Set the deployed URL as `BASE_URL`, and set the Google OAuth redirect URI to:
 https://YOUR-DOMAIN/oauth2callback
 ```
 
+For Render, this repository includes a root `render.yaml` Blueprint. Create the Blueprint from `zey-win/ci-cd`, then fill the `sync: false` values in Render:
+
+- `GOOGLE_CLOUD_PROJECT_ID`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GITHUB_TOKEN`
+- optional `ALLOWED_GOOGLE_EMAILS`
+
 The public operator entry page is intended to be:
 
 ```text
