@@ -11,6 +11,7 @@ on:
         options:
           - check_only
           - apply
+          - redeploy_only
       google_cloud_project_id:
         description: Google Cloud project id used for Play publishing
         required: false
@@ -94,7 +95,7 @@ jobs:
           node google-play-connect/scripts/bootstrap-admin.mjs
 
       - name: Redeploy connect portal
-        if: ${{ inputs.setup_mode == 'apply' }}
+        if: ${{ inputs.setup_mode == 'apply' || inputs.setup_mode == 'redeploy_only' }}
         shell: bash
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -108,7 +109,7 @@ jobs:
             | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const body=JSON.parse(s); console.log(`Render deploy: ${body.id || "created"}`);})'
 
       - name: Summary
-        if: ${{ inputs.setup_mode == 'apply' }}
+        if: ${{ inputs.setup_mode == 'apply' || inputs.setup_mode == 'redeploy_only' }}
         shell: bash
         run: |
           {
