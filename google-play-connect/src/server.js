@@ -97,7 +97,7 @@ app.get('/', (_req, res) => {
       <p class="eyebrow">ZeyWin CI/CD</p>
       <h1>Connect Google Play publishing</h1>
       <p class="lead">Sign in with the Google account that owns or administers Play Console. ZeyWin prepares the publishing connection in the background.</p>
-      ${ready ? '' : '<div class="notice danger">The operator button is not active yet. A technical owner must finish one-time bootstrap first.</div>'}
+      ${ready ? '' : '<div class="notice danger">Connection setup is being prepared. Please try again later.</div>'}
       <a class="button ${ready ? '' : 'disabled'}" href="${ready ? '/auth/google' : '/operator'}">Connect Google Play</a>
     </section>
     <section class="steps">
@@ -123,8 +123,7 @@ app.get('/operator', (_req, res) => {
       </section>
       ${ready
         ? '<a class="button" href="/auth/google">Start Google connection</a>'
-        : '<div class="notice danger">Admin bootstrap is not finished yet. Send this page to the technical owner, not to the marketer.</div>'}
-      <p class="muted">Admin diagnostics: <a href="/status">/status</a></p>
+        : '<div class="notice danger">Connection setup is being prepared. Please try again later.</div>'}
     </section>
   `));
 });
