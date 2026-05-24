@@ -67,7 +67,7 @@ function readRenderKeyFromCli() {
 }
 
 function requireTools() {
-  for (const tool of ['curl', 'gcloud']) {
+  for (const tool of ['curl']) {
     run(tool, ['--version'], { capture: true, optional: false });
   }
 }
@@ -96,7 +96,6 @@ async function main() {
   }
 
   console.log(`Using Google Cloud project: ${projectId}`);
-  run('gcloud', ['services', 'enable', 'androidpublisher.googleapis.com', 'iam.googleapis.com', 'serviceusage.googleapis.com', '--project', projectId]);
 
   const clientId = env('GOOGLE_CLIENT_ID');
   const clientSecret = env('GOOGLE_CLIENT_SECRET');
