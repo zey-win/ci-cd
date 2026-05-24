@@ -21,11 +21,27 @@ These are backend environment variables, not marketer inputs.
 
 ## Automation target
 
-The next bootstrap script should:
+Run the bootstrap script from repository root:
+
+```bash
+export GITHUB_TOKEN="$(gh auth token)"
+export GOOGLE_CLOUD_PROJECT_ID="your-google-cloud-project"
+export GOOGLE_CLIENT_ID="your-oauth-web-client-id"
+export GOOGLE_CLIENT_SECRET="your-oauth-web-client-secret"
+node google-play-connect/scripts/bootstrap-admin.mjs
+```
+
+If `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are not provided, the script stops with the exact redirect URI that must be used for the OAuth Web Client:
+
+```text
+https://zeywin-connect.onrender.com/oauth2callback
+```
+
+The bootstrap script:
 
 1. Create or select a Google Cloud project.
 2. Enable `androidpublisher.googleapis.com`, `iam.googleapis.com`, and OAuth consent requirements.
-3. Create an OAuth Web Client with redirect URI:
+3. Validate OAuth Web Client values with redirect URI:
    `https://zeywin-connect.onrender.com/oauth2callback`
 4. Write `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_CLOUD_PROJECT_ID` into Render.
 5. Write `GITHUB_TOKEN` into Render from the technical GitHub owner token.
