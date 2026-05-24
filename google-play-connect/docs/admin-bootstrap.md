@@ -47,3 +47,25 @@ The bootstrap script:
 5. Write `GITHUB_TOKEN` into Render from the technical GitHub owner token.
 
 After bootstrap, marketers use only the Connect button.
+
+## GitHub Action bootstrap
+
+Technical owners can also run **Bootstrap Google Play Connect** from GitHub Actions.
+
+Required repository secrets:
+
+- `RENDER_API_KEY`
+- `CONNECT_GITHUB_TOKEN`
+
+Manual workflow inputs:
+
+- `google_cloud_project_id`
+- `google_client_id`
+- `google_client_secret`
+- `render_service_id`
+
+After the workflow succeeds, operators use only:
+
+```text
+https://zey-win.github.io/connect/
+```
