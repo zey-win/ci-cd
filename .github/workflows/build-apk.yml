@@ -84,8 +84,14 @@ on:
       admob_android_rewarded_id:
         description: AdMob Android rewarded unit id
         required: false
+      admob_android_rewarded_interstitial_id:
+        description: AdMob Android rewarded interstitial unit id
+        required: false
       admob_android_native_id:
         description: AdMob Android native unit id
+        required: false
+      admob_android_app_open_id:
+        description: AdMob Android app open unit id
         required: false
 
 concurrency:
@@ -119,7 +125,9 @@ jobs:
           echo "::add-mask::${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
           echo "::add-mask::${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}"
           echo "::add-mask::${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}"
           echo "::add-mask::${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID }}"
           test -n "$PRIVATE_REPO_TOKEN" || { echo "Missing PRIVATE_REPO_TOKEN secret for private game/SDK checkout."; exit 1; }
           test -n "$PACKAGE_NAME" || { echo "package_name is required."; exit 1; }
           test -n "$APP_NAME" || { echo "app_name is required."; exit 1; }
@@ -284,7 +292,9 @@ jobs:
           ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
           ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
           ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
+          ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID: ${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}
           ADMOB_ANDROID_NATIVE_ID: ${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}
+          ADMOB_ANDROID_APP_OPEN_ID: ${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID }}
           APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
           AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
         with:
@@ -306,7 +316,9 @@ jobs:
             -admobAndroidBannerId "${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
             -admobAndroidInterstitialId "${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}"
             -admobAndroidRewardedId "${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}"
+            -admobAndroidRewardedInterstitialId "${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}"
             -admobAndroidNativeId "${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}"
+            -admobAndroidAppOpenId "${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID }}"
 
       - name: Upload Unity build log on failure
         if: failure()
