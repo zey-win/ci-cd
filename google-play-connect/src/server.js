@@ -24,6 +24,25 @@ const requiredEnv = [
   'GITHUB_TOKEN'
 ];
 
+const playConsoleAccounts = [
+  {
+    name: 'ASAD DEV',
+    developerId: '4617426840232156042'
+  },
+  {
+    name: 'Plinko apps',
+    developerId: '5922122594113010907'
+  },
+  {
+    name: 'Casino Beast Mobile Apps',
+    developerId: '5744111115048602760'
+  },
+  {
+    name: 'SALAMAT JN',
+    developerId: '9163726882297311441'
+  }
+];
+
 const config = {
   port: Number(process.env.PORT || 8080),
   baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 8080}`,
@@ -136,9 +155,28 @@ app.get('/ready.json', (_req, res) => {
   });
 });
 
+app.get('/play-accounts.json', (_req, res) => {
+  res.json({
+    accounts: playConsoleAccounts.map((account) => ({
+      ...account,
+      consoleUrl: `https://play.google.com/console/u/0/developers/${account.developerId}/app-list`
+    }))
+  });
+});
+
 app.get('/help', (_req, res) => {
   const ready = missingConfig().length === 0;
   const workflowUrl = 'https://github.com/zey-win/ci-cd/actions/workflows/bootstrap-google-play-connect.yml';
+  const accountCards = playConsoleAccounts
+    .map((account) => {
+      const url = `https://play.google.com/console/u/0/developers/${account.developerId}/app-list`;
+      return `<a class="account-card" href="${url}" target="_blank" rel="noreferrer">
+        <strong>${escapeHtml(account.name)}</strong>
+        <code>${escapeHtml(account.developerId)}</code>
+      </a>`;
+    })
+    .join('');
+
   res.send(renderPage('Google Play Connect Help', `
     <section class="hero">
       <p class="eyebrow">Self-service guide</p>
@@ -209,6 +247,11 @@ app.get('/help', (_req, res) => {
         <a class="button" href="${workflowUrl}">Run safe setup check</a>
         <a class="button secondary" href="${workflowUrl}">Apply setup after Google values exist</a>
       </div>
+    </section>
+    <section class="account-list">
+      <h2>Known Play Console accounts</h2>
+      <p>These accounts were found in the logged-in browser and are linked here so future operators do not have to search manually.</p>
+      <div class="account-grid">${accountCards}</div>
     </section>
   `));
 });
