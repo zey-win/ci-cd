@@ -97,7 +97,7 @@ app.get('/', (_req, res) => {
       <p class="eyebrow">ZeyWin CI/CD</p>
       <h1>Connect Google Play publishing</h1>
       <p class="lead">Sign in with the Google account that owns or administers Play Console. ZeyWin prepares the publishing connection in the background.</p>
-      ${ready ? '' : '<div class="notice danger">This portal is waiting for one-time admin bootstrap. Operators do not need to fill technical settings.</div>'}
+      ${ready ? '' : '<div class="notice danger">The operator button is not active yet. A technical owner must finish one-time bootstrap first.</div>'}
       <a class="button ${ready ? '' : 'disabled'}" href="${ready ? '/auth/google' : '/operator'}">Connect Google Play</a>
     </section>
     <section class="steps">
