@@ -79,6 +79,7 @@ const config = {
 
 app.disable('x-powered-by');
 app.use(cookieParser());
+app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 function missingConfig() {
@@ -159,6 +160,136 @@ app.get('/operator', (_req, res) => {
       ${ready
         ? '<a class="button" href="/auth/google">Start Google connection</a>'
         : '<div class="notice danger">Connection setup is being prepared. Please try again later.</div>'}
+    </section>
+  `));
+});
+
+const partnerBenefits = [
+  'Ready-to-publish mobile games for Google Play',
+  'No password sharing and no recovery-code sharing',
+  'Limited Play Console access only when a release is ready',
+  'Revenue-share friendly process for console owners',
+  'Screenshots, release notes, and build reports prepared by ZeyWin'
+];
+
+app.get('/partners', (_req, res) => {
+  res.send(renderPage('Publish Games With ZeyWin', `
+    <section class="partner-hero">
+      <div>
+        <p class="eyebrow">Partner program</p>
+        <h1>Publish polished mobile games in your Google Play Console</h1>
+        <p class="lead">ZeyWin prepares the game build, SDK setup, store assets, and release report. Console owners keep control of their account and grant only limited publishing access when they are ready.</p>
+        <div class="actions">
+          <a class="button" href="#apply">Apply as console partner</a>
+          <a class="button secondary" href="/partners/guide">How access works</a>
+        </div>
+      </div>
+      <div class="partner-panel">
+        <strong>Zero password exchange</strong>
+        <span>We never ask for Google passwords, backup codes, or personal account recovery data.</span>
+      </div>
+    </section>
+    <section class="partner-strip">
+      <div><strong>1</strong><span>Apply</span></div>
+      <div><strong>2</strong><span>Review game fit</span></div>
+      <div><strong>3</strong><span>Grant limited access</span></div>
+      <div><strong>4</strong><span>Publish and track revenue</span></div>
+    </section>
+    <section class="growth-system">
+      <h2>Console partner growth loop</h2>
+      <p>Use this as the gradual system for increasing the number of partner consoles without asking for account credentials.</p>
+      <div class="growth-grid">
+        <div><strong>Week 1</strong><span>Collect warm leads from known marketers, studios, and console owners.</span></div>
+        <div><strong>Week 2</strong><span>Publish 1 demo case with screenshots, launch video, and revenue-share terms.</span></div>
+        <div><strong>Week 3</strong><span>Give every accepted partner a referral link and a bonus for each approved console.</span></div>
+        <div><strong>Week 4</strong><span>Move active partners into repeat publishing: one new app slot per console per cycle.</span></div>
+      </div>
+    </section>
+    <section class="funnel-board">
+      <h2>Partner funnel statuses</h2>
+      <div class="status-lanes">
+        <div><strong>Lead</strong><span>Contact submitted. No access yet.</span></div>
+        <div><strong>Qualified</strong><span>Console owner confirmed app category and country.</span></div>
+        <div><strong>Access ready</strong><span>Limited Play Console access granted.</span></div>
+        <div><strong>Published</strong><span>First app/update sent for review.</span></div>
+        <div><strong>Referral</strong><span>Partner invited another console owner.</span></div>
+      </div>
+    </section>
+    <section class="help-grid">
+      ${partnerBenefits.map((item) => `<div><h2>${escapeHtml(item)}</h2><p>Built for operators who want a simple, documented publishing process without technical setup.</p></div>`).join('')}
+      <div><h2>Fast handoff</h2><p>Each app can include build artifacts, screenshots, logs, and release notes in the repository.</p></div>
+    </section>
+    <section class="partner-form" id="apply">
+      <h2>Console partner application</h2>
+      <p>Submit contact details only. A ZeyWin operator will reply with the limited-access instructions.</p>
+      <form method="post" action="/partners/apply">
+        <label>Contact email<input name="email" type="email" required placeholder="owner@example.com"></label>
+        <label>Play Console company/name<input name="consoleName" required placeholder="Company or developer name"></label>
+        <label>Country<input name="country" required placeholder="Country"></label>
+        <label>Messenger<input name="messenger" placeholder="Telegram, WhatsApp, or Skype"></label>
+        <label>Referral code<input name="referral" placeholder="Optional partner or marketer code"></label>
+        <label>Monthly traffic or publishing capacity<textarea name="notes" rows="4" placeholder="How many apps can you publish, what geos, what categories?"></textarea></label>
+        <button class="button form-button" type="submit">Send application</button>
+      </form>
+      <p class="muted">By submitting, partners agree that passwords, 2FA codes, and recovery codes must not be shared.</p>
+    </section>
+  `));
+});
+
+app.post('/partners/apply', (req, res) => {
+  const submittedAt = new Date().toISOString();
+  const fields = {
+    submittedAt,
+    email: String(req.body.email || '').trim(),
+    consoleName: String(req.body.consoleName || '').trim(),
+    country: String(req.body.country || '').trim(),
+    messenger: String(req.body.messenger || '').trim(),
+    referral: String(req.body.referral || '').trim(),
+    notes: String(req.body.notes || '').trim()
+  };
+
+  res.send(renderPage('Application received', `
+    <section class="hero">
+      <p class="eyebrow">Application received</p>
+      <h1>Partner lead saved for operator review</h1>
+      <p class="lead">Use the summary below in CRM, GitHub issue, or marketer chat. No secret data was collected.</p>
+      <pre>${escapeHtml(JSON.stringify(fields, null, 2))}</pre>
+      <div class="actions">
+        <a class="button" href="/partners/guide">Show access guide</a>
+        <a class="button secondary" href="/partners">Back to partner page</a>
+      </div>
+    </section>
+  `));
+});
+
+app.get('/partners/guide', (_req, res) => {
+  res.send(renderPage('Partner Access Guide', `
+    <section class="hero">
+      <p class="eyebrow">Safe access guide</p>
+      <h1>How console owners grant publishing access</h1>
+      <p class="lead">This is the marketer-friendly version. Partners keep their Google account private and add ZeyWin as a limited user or service account in Play Console.</p>
+    </section>
+    <section class="timeline">
+      <h2>Partner steps</h2>
+      <div class="timeline-row">
+        <div><span>1</span><strong>Open Play Console users</strong><p>Go to Users and permissions in the partner's Play Console.</p></div>
+        <div><span>2</span><strong>Add ZeyWin access</strong><p>Add the ZeyWin publishing email or service account supplied by the operator.</p></div>
+        <div><span>3</span><strong>Limit permissions</strong><p>Grant release/upload permissions only for the selected app.</p></div>
+        <div><span>4</span><strong>Review release</strong><p>ZeyWin prepares the build, report, screenshots, and release notes for approval.</p></div>
+      </div>
+    </section>
+    <section class="quick-actions">
+      <h2>Rules</h2>
+      <ul class="rules">
+        <li>No Google passwords.</li>
+        <li>No backup or recovery codes.</li>
+        <li>No personal Gmail takeover.</li>
+        <li>Only Play Console permissions that can be revoked by the owner.</li>
+      </ul>
+      <div class="actions">
+        <a class="button" href="/partners">Open partner landing</a>
+        <a class="button secondary" href="/help">Open operator help</a>
+      </div>
     </section>
   `));
 });

@@ -263,7 +263,10 @@ pre {
 
 .timeline,
 .quick-actions,
-.account-list {
+.account-list,
+.growth-system,
+.funnel-board,
+.partner-form {
   background: #fff;
   border: 1px solid #dce3ec;
   border-radius: 8px;
@@ -273,8 +276,129 @@ pre {
 
 .timeline h2,
 .quick-actions h2,
-.account-list h2 {
+.account-list h2,
+.growth-system h2,
+.funnel-board h2,
+.partner-form h2 {
   margin-top: 0;
+}
+
+.partner-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 22px;
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid #dce3ec;
+  border-radius: 8px;
+  padding: 34px;
+  box-shadow: 0 10px 30px rgba(20, 35, 60, 0.07);
+}
+
+.partner-hero h1 {
+  margin: 0 0 14px;
+  font-size: clamp(34px, 6vw, 62px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.partner-panel {
+  display: grid;
+  align-content: end;
+  gap: 12px;
+  min-height: 240px;
+  padding: 22px;
+  border-radius: 8px;
+  background: #101828;
+  color: #fff;
+}
+
+.partner-panel strong {
+  font-size: 28px;
+  line-height: 1.05;
+}
+
+.partner-panel span {
+  color: #cbd5e1;
+}
+
+.partner-strip,
+.growth-grid,
+.status-lanes {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.partner-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.growth-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.status-lanes {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.partner-strip div,
+.growth-grid div,
+.status-lanes div {
+  border: 1px solid #d5deea;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 16px;
+}
+
+.partner-strip strong,
+.growth-grid strong,
+.status-lanes strong {
+  display: block;
+  color: #155eef;
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.partner-strip span,
+.growth-grid span,
+.status-lanes span {
+  color: #475569;
+}
+
+.partner-form form {
+  display: grid;
+  gap: 14px;
+  max-width: 720px;
+}
+
+.partner-form label {
+  display: grid;
+  gap: 8px;
+  color: #344054;
+  font-weight: 800;
+}
+
+.partner-form input,
+.partner-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.form-button {
+  border: 0;
+  cursor: pointer;
+}
+
+.rules {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding-left: 20px;
 }
 
 .account-grid {
@@ -344,7 +468,11 @@ pre {
   .diagram,
   .help-grid,
   .timeline-row,
-  .account-grid {
+  .account-grid,
+  .partner-hero,
+  .partner-strip,
+  .growth-grid,
+  .status-lanes {
     grid-template-columns: 1fr;
   }
 
