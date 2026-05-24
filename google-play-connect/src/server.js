@@ -40,6 +40,22 @@ const playConsoleAccounts = [
   {
     name: 'SALAMAT JN',
     developerId: '9163726882297311441'
+  },
+  {
+    name: 'Play 777 Slots',
+    developerId: '7898824668858143466'
+  },
+  {
+    name: 'Play Max Solutions',
+    developerId: '7373129813717950889'
+  },
+  {
+    name: 'Popaads',
+    developerId: '7964884476190249217'
+  },
+  {
+    name: 'Сasino Slots Free',
+    developerId: '5841159787162622259'
   }
 ];
 
