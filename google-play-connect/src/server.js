@@ -150,16 +150,22 @@ app.get('/operator', (_req, res) => {
   res.send(renderPage('Operator flow', `
     <section class="hero">
       <p class="eyebrow">For marketers</p>
-      <h1>Three clicks only</h1>
-      <p class="lead">The operator flow is intentionally simple. No API keys, JSON files, Google Cloud screens, or GitHub secrets are shown here.</p>
+      <h1>Choose the next action</h1>
+      <p class="lead">This page is for people who should only press buttons. Google Connect needs one admin setup first; partner acquisition is ready now.</p>
       <section class="steps">
-        <div><strong>1</strong><span>Open this page</span></div>
-        <div><strong>2</strong><span>Sign in with Google</span></div>
-        <div><strong>3</strong><span>Confirm access</span></div>
+        <div><strong>1</strong><span>Open partner page</span></div>
+        <div><strong>2</strong><span>Collect console lead</span></div>
+        <div><strong>3</strong><span>Use safe access guide</span></div>
+        <div><strong>4</strong><span>Connect Google after admin setup</span></div>
       </section>
       ${ready
-        ? '<a class="button" href="/auth/google">Start Google connection</a>'
-        : '<div class="notice danger">Connection setup is being prepared. Please try again later.</div>'}
+        ? '<div class="actions"><a class="button" href="/auth/google">Start Google connection</a><a class="button secondary" href="/partners">Open partner funnel</a></div>'
+        : `<div class="notice">Google Connect is not ready yet because OAuth values are missing on Render. This does not block the partner funnel.</div>
+          <div class="actions">
+            <a class="button" href="/partners">Open partner funnel</a>
+            <a class="button secondary" href="/partners/guide">Open safe access guide</a>
+            <a class="button secondary" href="/status">Show setup status</a>
+          </div>`}
     </section>
   `));
 });
