@@ -26,3 +26,7 @@ play-console-operator/.play-console-profile/
 .play-console-profile/
 
 .DS_Store
+
+# Local agent/browser artifacts
+.playwright-cli/
+output/
