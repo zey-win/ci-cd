@@ -3,15 +3,23 @@ name: Bootstrap Google Play Connect
 on:
   workflow_dispatch:
     inputs:
+      setup_mode:
+        description: check_only prints exact admin requirements; apply writes Render env and redeploys
+        required: true
+        default: check_only
+        type: choice
+        options:
+          - check_only
+          - apply
       google_cloud_project_id:
         description: Google Cloud project id used for Play publishing
-        required: true
+        required: false
       google_client_id:
         description: Google OAuth Web Client ID
-        required: true
+        required: false
       google_client_secret:
         description: Google OAuth Web Client Secret
-        required: true
+        required: false
       render_service_id:
         description: Render service id for zeywin-connect
         required: true
@@ -33,7 +41,43 @@ jobs:
           test -n "${{ secrets.RENDER_API_KEY }}" || { echo "Missing RENDER_API_KEY secret."; exit 1; }
           test -n "${{ secrets.CONNECT_GITHUB_TOKEN }}" || { echo "Missing CONNECT_GITHUB_TOKEN secret."; exit 1; }
 
+      - name: Check admin requirements
+        if: ${{ inputs.setup_mode == 'check_only' }}
+        shell: bash
+        run: |
+          {
+            echo "### Google Play Connect admin requirements"
+            echo
+            echo "This check does not modify Render."
+            echo
+            echo "Create/select a Google Cloud project and OAuth Web Client once."
+            echo
+            echo "**OAuth redirect URI:**"
+            echo
+            echo "\`\`\`text"
+            echo "https://zeywin-connect.onrender.com/oauth2callback"
+            echo "\`\`\`"
+            echo
+            echo "Then rerun this workflow with:"
+            echo
+            echo "- \`setup_mode=apply\`"
+            echo "- \`google_cloud_project_id\`"
+            echo "- \`google_client_id\`"
+            echo "- \`google_client_secret\`"
+            echo
+            echo "After success, marketers use only:"
+            echo
+            echo "https://zey-win.github.io/connect/"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop after check
+        if: ${{ inputs.setup_mode == 'check_only' }}
+        shell: bash
+        run: |
+          echo "Check-only mode finished."
+
       - name: Bootstrap Render environment
+        if: ${{ inputs.setup_mode == 'apply' }}
         shell: bash
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -44,9 +88,13 @@ jobs:
           RENDER_SERVICE_ID: ${{ inputs.render_service_id }}
         run: |
           set -euo pipefail
+          test -n "$GOOGLE_CLOUD_PROJECT_ID" || { echo "google_cloud_project_id is required in apply mode."; exit 1; }
+          test -n "$GOOGLE_CLIENT_ID" || { echo "google_client_id is required in apply mode."; exit 1; }
+          test -n "$GOOGLE_CLIENT_SECRET" || { echo "google_client_secret is required in apply mode."; exit 1; }
           node google-play-connect/scripts/bootstrap-admin.mjs
 
       - name: Redeploy connect portal
+        if: ${{ inputs.setup_mode == 'apply' }}
         shell: bash
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
@@ -60,6 +108,7 @@ jobs:
             | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{const body=JSON.parse(s); console.log(`Render deploy: ${body.id || "created"}`);})'
 
       - name: Summary
+        if: ${{ inputs.setup_mode == 'apply' }}
         shell: bash
         run: |
           {
