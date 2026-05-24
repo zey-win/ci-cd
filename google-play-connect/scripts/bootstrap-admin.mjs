@@ -31,7 +31,7 @@ function run(command, args, options = {}) {
     const stderr = result.stderr ? `\n${result.stderr}` : '';
     fail(`Command failed: ${command} ${args.join(' ')}${stderr}`);
   }
-  return options.capture ? result.stdout.trim() : '';
+  return options.capture ? String(result.stdout || '').trim() : '';
 }
 
 function jsonRequest(method, url, body) {

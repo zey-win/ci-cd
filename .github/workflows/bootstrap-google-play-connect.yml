@@ -13,13 +13,13 @@ on:
           - apply
           - redeploy_only
       google_cloud_project_id:
-        description: Google Cloud project id used for Play publishing
+        description: Optional override. Default comes from repository secret GOOGLE_CLOUD_PROJECT_ID.
         required: false
       google_client_id:
-        description: Google OAuth Web Client ID
+        description: Optional override. Default comes from repository secret GOOGLE_CLIENT_ID.
         required: false
       google_client_secret:
-        description: Google OAuth Web Client Secret
+        description: Optional override. Default comes from repository secret GOOGLE_CLIENT_SECRET.
         required: false
       render_service_id:
         description: Render service id for zeywin-connect
@@ -83,9 +83,9 @@ jobs:
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.CONNECT_GITHUB_TOKEN }}
-          GOOGLE_CLOUD_PROJECT_ID: ${{ inputs.google_cloud_project_id }}
-          GOOGLE_CLIENT_ID: ${{ inputs.google_client_id }}
-          GOOGLE_CLIENT_SECRET: ${{ inputs.google_client_secret }}
+          GOOGLE_CLOUD_PROJECT_ID: ${{ inputs.google_cloud_project_id || secrets.GOOGLE_CLOUD_PROJECT_ID }}
+          GOOGLE_CLIENT_ID: ${{ inputs.google_client_id || secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ inputs.google_client_secret || secrets.GOOGLE_CLIENT_SECRET }}
           RENDER_SERVICE_ID: ${{ inputs.render_service_id }}
         run: |
           set -euo pipefail
