@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -6,7 +7,9 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import { google } from 'googleapis';
 import { Octokit } from '@octokit/rest';
-import sodium from 'libsodium-wrappers';
+
+const require = createRequire(import.meta.url);
+const sodium = require('libsodium-wrappers');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
