@@ -162,7 +162,8 @@ app.get('/operator', (_req, res) => {
         ? '<div class="actions"><a class="button" href="/auth/google">Start Google connection</a><a class="button secondary" href="/partners">Open partner funnel</a></div>'
         : `<div class="notice">Google Connect is not ready yet because OAuth values are missing on Render. This does not block the partner funnel.</div>
           <div class="actions">
-            <a class="button" href="/partners">Open partner funnel</a>
+            <a class="button" href="/partners#apply">Submit your Play Console</a>
+            <a class="button secondary" href="/partners">Open partner funnel</a>
             <a class="button secondary" href="/partners/guide">Open safe access guide</a>
             <a class="button secondary" href="/status">Show setup status</a>
           </div>`}
@@ -186,7 +187,7 @@ app.get('/partners', (_req, res) => {
         <h1>Publish polished mobile games in your Google Play Console</h1>
         <p class="lead">ZeyWin prepares the game build, SDK setup, store assets, and release report. Console owners keep control of their account and grant only limited publishing access when they are ready.</p>
         <div class="actions">
-          <a class="button" href="#apply">Apply as console partner</a>
+          <a class="button" href="#apply">Submit your Play Console</a>
           <a class="button secondary" href="/partners/guide">How access works</a>
         </div>
       </div>
@@ -226,8 +227,8 @@ app.get('/partners', (_req, res) => {
       <div><h2>Fast handoff</h2><p>Each app can include build artifacts, screenshots, logs, and release notes in the repository.</p></div>
     </section>
     <section class="partner-form" id="apply">
-      <h2>Console partner application</h2>
-      <p>Submit contact details only. A ZeyWin operator will reply with the limited-access instructions.</p>
+      <h2>Submit your Play Console</h2>
+      <p>Leave contact details only. ZeyWin replies with a safe limited-access guide; do not send passwords, backup codes, or recovery data.</p>
       <form method="post" action="/partners/apply">
         <label>Contact email<input name="email" type="email" required placeholder="owner@example.com"></label>
         <label>Play Console company/name<input name="consoleName" required placeholder="Company or developer name"></label>
