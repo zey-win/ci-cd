@@ -1,0 +1,39 @@
+name: Dispatch Google Play Release
+
+on:
+  repository_dispatch:
+    types:
+      - google-play-release
+  workflow_dispatch:
+    inputs:
+      game_repository:
+        description: Private game repository to checkout
+        required: true
+        default: zey-win/plinko
+      game_ref:
+        description: Game repository branch, tag, or commit
+        required: true
+        default: main
+      package_name:
+        description: Android package name
+        required: true
+        default: com.playsocialgames.plinko
+      app_name:
+        description: App display name
+        required: true
+        default: Plinko
+
+jobs:
+  release:
+    uses: ./.github/workflows/build-apk.yml
+    with:
+      game_repository: ${{ github.event.client_payload.game_repository || inputs.game_repository }}
+      game_ref: ${{ github.event.client_payload.game_ref || inputs.game_ref }}
+      package_name: ${{ github.event.client_payload.package_name || inputs.package_name }}
+      app_name: ${{ github.event.client_payload.app_name || inputs.app_name }}
+      build_format: aab
+      publish_to_google_play: 'true'
+      google_play_track: ${{ github.event.client_payload.google_play_track || 'production' }}
+      google_play_status: ${{ github.event.client_payload.google_play_status || 'completed' }}
+      require_google_play_upload: 'true'
+    secrets: inherit

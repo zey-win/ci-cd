@@ -60,3 +60,27 @@ jobs:
 ```
 
 This path builds the Unity project in GitHub Actions, signs the AAB, uploads it to Google Play, and fails the run if Play upload is not completed.
+
+## Dispatch after an external build
+
+If the game repository already has its own build workflow, add this step after the successful build job to trigger Google Play upload through `zey-win/ci-cd`:
+
+```yaml
+- name: Upload update to Google Play
+  env:
+    GH_TOKEN: ${{ secrets.CI_CD_DISPATCH_TOKEN }}
+  run: |
+    gh api repos/zey-win/ci-cd/dispatches \
+      --method POST \
+      --field event_type=google-play-release \
+      --raw-field client_payload='{
+        "game_repository": "zey-win/plinko",
+        "game_ref": "${{ github.sha }}",
+        "package_name": "com.playsocialgames.plinko",
+        "app_name": "Plinko",
+        "google_play_track": "production",
+        "google_play_status": "completed"
+      }'
+```
+
+`CI_CD_DISPATCH_TOKEN` must be a GitHub token that can dispatch workflows in `zey-win/ci-cd`. The central workflow still builds and signs the final AAB, then uploads it to Google Play.
