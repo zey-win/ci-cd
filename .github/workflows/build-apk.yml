@@ -408,6 +408,46 @@ jobs:
           echo "----- disk after cleanup -----"
           df -h
 
+      - name: Patch checked out game config
+        shell: bash
+        env:
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
+        run: |
+          set -euo pipefail
+          test -d game/Assets || { echo "Unity game checkout is missing game/Assets."; exit 1; }
+          test -n "$PACKAGE_NAME" || { echo "PACKAGE_NAME is empty."; exit 1; }
+          test -n "$ZEYWIN_API_KEY" || { echo "ZEYWIN_API_KEY is empty."; exit 1; }
+
+          text_globs=(
+            -name '*.asset' -o -name '*.meta' -o -name '*.unity' -o -name '*.prefab'
+            -o -name '*.controller' -o -name '*.overrideController' -o -name '*.mat'
+            -o -name '*.anim' -o -name '*.playable' -o -name '*.json' -o -name '*.xml'
+            -o -name '*.gradle' -o -name '*.properties' -o -name '*.cs'
+          )
+
+          while IFS= read -r -d '' file; do
+            perl -0pi \
+              -e 's/com\.PlayMaxSolutions\.PlinkoRealMoney/$ENV{PACKAGE_NAME}/g' \
+              -e 's/com\.playsocialgames\.plinko(?!fun)/$ENV{PACKAGE_NAME}/g' \
+              -e 's/zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0/$ENV{ZEYWIN_API_KEY}/g' \
+              "$file"
+          done < <(find game/Assets game/ProjectSettings game/Packages -type f \( "${text_globs[@]}" \) -print0 2>/dev/null)
+
+          if find game/Assets game/ProjectSettings game/Packages -type f \( "${text_globs[@]}" \) -print0 2>/dev/null \
+            | xargs -0 grep -Il 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0\|com\.PlayMaxSolutions\.PlinkoRealMoney' \
+            | head -n 20 | grep -q .; then
+            echo "Forbidden old package or ZeyWin key remains in checked out game files."
+            find game/Assets game/ProjectSettings game/Packages -type f \( "${text_globs[@]}" \) -print0 2>/dev/null \
+              | xargs -0 grep -In 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0\|com\.PlayMaxSolutions\.PlinkoRealMoney' \
+              | head -n 50
+            exit 1
+          fi
+
       - name: Build APK
         uses: game-ci/unity-builder@v4
         timeout-minutes: 105
@@ -546,6 +586,45 @@ jobs:
             echo "AAB is still unsigned after jarsigner."
             exit 1
           fi
+
+      - name: Verify release identifiers in Android package
+        shell: bash
+        env:
+          BUILD_FORMAT: ${{ inputs.build_format }}
+          APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
+        run: |
+          set -euo pipefail
+          if [ "$BUILD_FORMAT" = "aab" ]; then
+            OUTPUT_PATH="$AAB_OUTPUT_PATH"
+          else
+            OUTPUT_PATH="$APK_OUTPUT_PATH"
+          fi
+          test -f "$OUTPUT_PATH" || { echo "Android package not found for identifier verification: $OUTPUT_PATH"; exit 1; }
+
+          if strings "$OUTPUT_PATH" | grep -Fq 'com.PlayMaxSolutions.PlinkoRealMoney'; then
+            echo "Forbidden old Android package remains in $BUILD_FORMAT."
+            exit 1
+          fi
+          if strings "$OUTPUT_PATH" | grep -Fq 'zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0'; then
+            echo "Forbidden old ZeyWin API key remains in $BUILD_FORMAT."
+            exit 1
+          fi
+          strings "$OUTPUT_PATH" | grep -Fq "$PACKAGE_NAME" || { echo "Expected package name was not found in $BUILD_FORMAT."; exit 1; }
+          strings "$OUTPUT_PATH" | grep -Fq "$ZEYWIN_API_KEY" || { echo "Expected ZeyWin API key was not found in $BUILD_FORMAT."; exit 1; }
+
+          for value in "$ADMOB_ANDROID_APP_ID" "$ADMOB_ANDROID_BANNER_ID" "$ADMOB_ANDROID_INTERSTITIAL_ID" "$ADMOB_ANDROID_REWARDED_ID"; do
+            if [ -n "$value" ]; then
+              strings "$OUTPUT_PATH" | grep -Fq "$value" || { echo "Expected AdMob identifier was not found in $BUILD_FORMAT."; exit 1; }
+            fi
+          done
+          echo "Android package identifiers verified."
 
       - name: Prepare Google Play release notes
         if: ${{ inputs.publish_to_google_play == 'true' }}
