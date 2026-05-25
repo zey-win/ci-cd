@@ -637,6 +637,12 @@ jobs:
           mkdir -p whatsnew
           printf 'Bug fixes and SDK updates for version %s.\n' "$VERSION_NAME" > whatsnew/whatsnew-en-US
 
+      - name: Install Google Play API dependencies
+        if: ${{ inputs.publish_to_google_play == 'true' }}
+        working-directory: google-play-connect
+        shell: bash
+        run: npm ci
+
       - name: Check Google Play API access
         id: google_play_access
         if: ${{ inputs.publish_to_google_play == 'true' }}
