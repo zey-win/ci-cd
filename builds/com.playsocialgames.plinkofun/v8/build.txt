@@ -1,0 +1,16 @@
+run_id=26421114240
+run_number=108
+run_attempt=1
+commit_sha=c4e7b328ae46af06e1afd1ed910e4d40875a4430
+ref=main
+package_name=com.playsocialgames.plinkofun
+version_name=1.0.8
+version_code=8
+build_format=apk
+apk_artifact=APK_com.playsocialgames.plinkofun_v8
+apk_release=https://github.com/zey-win/ci-cd/releases/tag/apk-108-1
+apk_asset=APK_com.playsocialgames.plinkofun_v8.apk
+apk_path=builds/com.playsocialgames.plinkofun/v8/APK_com.playsocialgames.plinkofun_v8.apk
+package_repo_path=builds/com.playsocialgames.plinkofun/v8/APK_com.playsocialgames.plinkofun_v8.apk
+built_at_utc=2026-05-25T22:08:53Z
+run_url=https://github.com/zey-win/ci-cd/actions/runs/26421114240
