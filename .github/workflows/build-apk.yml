@@ -432,9 +432,10 @@ jobs:
 
           while IFS= read -r -d '' file; do
             perl -0pi \
-              -e 's/com\.PlayMaxSolutions\.PlinkoRealMoney/$ENV{PACKAGE_NAME}/g' \
-              -e 's/com\.playsocialgames\.plinko(?!fun)/$ENV{PACKAGE_NAME}/g' \
-              -e 's/zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0/$ENV{ZEYWIN_API_KEY}/g' \
+              -e 'BEGIN { $pkg = $ENV{"PACKAGE_NAME"}; $key = $ENV{"ZEYWIN_API_KEY"}; }' \
+              -e 's/com\.PlayMaxSolutions\.PlinkoRealMoney/$pkg/g' \
+              -e 's/com\.playsocialgames\.plinko\b/$pkg/g' \
+              -e 's/zw_b805cd36c981a96312521e8d84b20f5b54731a69914c31c0/$key/g' \
               "$file"
           done < <(find game/Assets game/ProjectSettings game/Packages -type f \( "${text_globs[@]}" \) -print0 2>/dev/null)
 
