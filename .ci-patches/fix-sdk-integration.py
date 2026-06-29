@@ -203,11 +203,12 @@ def generate_build_script(assets):
     editor_dir.mkdir(parents=True, exist_ok=True)
     script = editor_dir / "BuildGithubActionsApk.cs"
     script.write_text(textwrap.dedent("""\
-    using System;
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using UnityEditor;
+using System;
+     using System.IO;
+     using System.Linq;
+     using System.Reflection;
+     using System.Collections.Generic;
+     using UnityEditor;
     using UnityEditor.Build.Reporting;
     using UnityEngine;
 
@@ -244,11 +245,20 @@ def generate_build_script(assets):
 
             var options = new BuildPlayerOptions
             {
-                scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
+                scenes = EditorBuildSettings.scenes.Where(s => s.enabled && File.Exists(Path.GetFullPath(s.path))).Select(s => s.path).ToArray(),
                 locationPathName = outputPath ?? "build/Android/Android.apk",
                 target = BuildTarget.Android,
                 options = BuildOptions.None
             };
+
+            if (options.scenes.Length == 0)
+            {
+                Debug.LogWarning("No scenes in EditorBuildSettings, using fallback scene search");
+                options.scenes = Directory.GetFiles(Application.dataPath, "*.unity", SearchOption.AllDirectories)
+                    .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/"))
+                    .Take(10)
+                    .ToArray();
+            }
 
             var report = BuildPipeline.BuildPlayer(options);
             if (report.summary.result != BuildResult.Succeeded)
@@ -327,11 +337,20 @@ def generate_build_script(assets):
 
             var options = new BuildPlayerOptions
             {
-                scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
+                scenes = EditorBuildSettings.scenes.Where(s => s.enabled && File.Exists(Path.GetFullPath(s.path))).Select(s => s.path).ToArray(),
                 locationPathName = outputPath ?? "build/Android/Android.aab",
                 target = BuildTarget.Android,
                 options = BuildOptions.None
             };
+
+            if (options.scenes.Length == 0)
+            {
+                Debug.LogWarning("No scenes in EditorBuildSettings, using fallback scene search");
+                options.scenes = Directory.GetFiles(Application.dataPath, "*.unity", SearchOption.AllDirectories)
+                    .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/"))
+                    .Take(10)
+                    .ToArray();
+            }
 
             var report = BuildPipeline.BuildPlayer(options);
             if (report.summary.result != BuildResult.Succeeded)
