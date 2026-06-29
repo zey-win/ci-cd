@@ -21,6 +21,7 @@ def main():
     remove_sdk_examples(assets)
     fix_dll_metas(assets)
     fix_dotween_modules(assets)
+    remove_duplicate_plugins(assets)
     remove_pixel_perfect_package(manifest_path)
     patch_game_scripts(assets)
     generate_build_script(assets)
@@ -166,7 +167,7 @@ def fix_dotween_modules(assets):
                 print(f"  Removed {a.relative_to(assets) if hasattr(a, 'relative_to') else a.name}")
 
 def patch_game_scripts(assets):
-    print("\n[7/10] Patching game scripts for Unity 6000 compatibility...")
+    print("\n[9/10] Patching game scripts for Unity 6000 compatibility...")
     for f in assets.glob("**/GameLocalNotifications.cs"):
         text = f.read_text(encoding="utf-8", errors="replace")
         if "using Unity.Notifications;" in text:
@@ -178,6 +179,15 @@ def patch_game_scripts(assets):
         if meta.exists(): meta.unlink()
         print(f"  Removed {f.relative_to(assets.parent)}")
 
+def remove_duplicate_plugins(assets):
+    print("\n[7/10] Removing duplicate Android plugins (colliding with UPM packages)...")
+    aar = assets / "Plugins" / "Android" / "UniWebView.aar"
+    if aar.exists():
+        aar.unlink()
+        meta = pathlib.Path(str(aar) + ".meta")
+        if meta.exists(): meta.unlink()
+        print(f"  Removed {aar.relative_to(assets.parent)} (provided by UPM package)")
+
 def remove_pixel_perfect_package(manifest_path):
     print("\n[8/10] Removing incompatible com.unity.2d.pixel-perfect package...")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -188,7 +198,7 @@ def remove_pixel_perfect_package(manifest_path):
         print("  Removed com.unity.2d.pixel-perfect (incompatible with Unity 6000)")
 
 def generate_build_script(assets):
-    print("\n[9/10] Generating BuildGithubActionsApk build script...")
+    print("\n[10/10] Generating BuildGithubActionsApk build script...")
     editor_dir = assets / "Editor"
     editor_dir.mkdir(parents=True, exist_ok=True)
     script = editor_dir / "BuildGithubActionsApk.cs"
@@ -357,7 +367,7 @@ def generate_build_script(assets):
         print(f"  Generated {script.relative_to(assets.parent)}")
 
 def clear_cached_files(assets):
-    print("[10/10] Clearing cached files...")
+    print("[11/10] Clearing cached files...")
     root = assets.parent
     for d in [root/"Library/Artifacts", root/"Library/ScriptAssemblies", root/"Library/PackageCache", root/"Temp"]:
         if d.exists():
