@@ -4,4 +4,4 @@ Use this table before workflow runs. For a new release, use the next manual valu
 
 | Package | Latest version name | Latest version code | Next manual version name | Next manual version code | APK |
 | --- | --- | ---: | --- | ---: | --- |
-| `com.playmaxsolutions.slotspot` | `1.0.11` | `11` | `1.0.12` | `12` | [builds/com.playmaxsolutions.slotspot/v11/APK_com.playmaxsolutions.slotspot_v11.apk](builds/com.playmaxsolutions.slotspot/v11/APK_com.playmaxsolutions.slotspot_v11.apk) |
+| `com.playmaxsolutions.slotspot` | `1.0.13` | `13` | `1.0.14` | `14` | [builds/com.playmaxsolutions.slotspot/v13/APK_com.playmaxsolutions.slotspot_v13.apk.url](builds/com.playmaxsolutions.slotspot/v13/APK_com.playmaxsolutions.slotspot_v13.apk.url) |
