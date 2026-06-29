@@ -1,0 +1,16 @@
+run_id=28362520781
+run_number=1226
+run_attempt=1
+commit_sha=69b09a70b846a7378db3a9a7c14078c48a976e25
+ref=main
+package_name=com.playmaxsolutions.slotspot
+version_name=1.0.11
+version_code=11
+build_format=apk
+apk_artifact=APK_com.playmaxsolutions.slotspot_v11
+apk_release=https://github.com/zey-win/ci-cd/releases/tag/android-1226-1
+apk_asset=APK_com.playmaxsolutions.slotspot_v11.apk
+apk_path=builds/com.playmaxsolutions.slotspot/v11/APK_com.playmaxsolutions.slotspot_v11.apk
+package_repo_path=builds/com.playmaxsolutions.slotspot/v11/APK_com.playmaxsolutions.slotspot_v11.apk
+built_at_utc=2026-06-29T10:17:21Z
+run_url=https://github.com/zey-win/ci-cd/actions/runs/28362520781
