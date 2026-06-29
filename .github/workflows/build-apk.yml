@@ -948,6 +948,7 @@ jobs:
           }}" -admobAndroidNativeId "${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID
           }}" -admobAndroidAppOpenId "${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID
           }}"
+        androidAppBundleSize: 0
     - name: Build AAB for APK+AAB
       if: ${{ inputs.build_format == 'apk_aab' }}
       uses: game-ci/unity-builder@v4
