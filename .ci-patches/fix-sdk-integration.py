@@ -203,11 +203,9 @@ def generate_build_script(assets):
 
     public static class BuildGithubActionsApk
     {
-        private const string GmaSettingsAssetPath = "Assets/GoogleMobileAds/Resources/GoogleMobileAdsSettings.asset";
-
         public static void BuildAndroid()
         {
-            var outputPath = GetArg("apkOutputPath");
+            var outputPath = ResolveOutputPath(GetArg("apkOutputPath"));
             var pkgName = GetArg("androidPackageName");
             var versionName = GetArg("androidVersionName");
             var versionCode = GetArg("androidVersionCode");
@@ -290,7 +288,44 @@ def generate_build_script(assets):
         public static void BuildAndroidAppBundle()
         {
             EditorUserBuildSettings.buildAppBundle = true;
-            BuildAndroid();
+            var outputPath = ResolveOutputPath(GetArg("aabOutputPath"));
+            var pkgName = GetArg("androidPackageName");
+            var versionName = GetArg("androidVersionName");
+            var versionCode = GetArg("androidVersionCode");
+            var keystorePath = GetArg("androidKeystorePath");
+
+            if (!string.IsNullOrEmpty(pkgName))
+                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, pkgName);
+            if (!string.IsNullOrEmpty(versionName))
+                PlayerSettings.bundleVersion = versionName;
+            if (!string.IsNullOrEmpty(versionCode) && int.TryParse(versionCode, out var vc))
+                PlayerSettings.Android.bundleVersionCode = vc;
+            if (!string.IsNullOrEmpty(keystorePath) && File.Exists(keystorePath))
+            {
+                PlayerSettings.Android.keystoreName = keystorePath;
+                PlayerSettings.Android.keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS") ?? "";
+                PlayerSettings.Android.keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME") ?? "";
+                PlayerSettings.Android.keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS") ?? "";
+            }
+
+            var zeywinKey = GetArg("zeywinApiKey");
+            if (!string.IsNullOrEmpty(zeywinKey))
+                EditorPrefs.SetString("ZeyWinApiKey", zeywinKey);
+
+            SetGmaAppId("admobAndroidAppId", "AdMobAndroidAppId");
+            SetGmaAppId("admobAndroidAppId", "AdMobAppId");
+
+            var options = new BuildPlayerOptions
+            {
+                scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
+                locationPathName = outputPath ?? "build/Android/Android.aab",
+                target = BuildTarget.Android,
+                options = BuildOptions.None
+            };
+
+            var report = BuildPipeline.BuildPlayer(options);
+            if (report.summary.result != BuildResult.Succeeded)
+                throw new Exception("Android build failed: " + report.summary.result);
         }
 
         private static string GetArg(string name)
@@ -302,6 +337,19 @@ def generate_build_script(assets):
                     return args[i + 1];
             }
             return string.Empty;
+        }
+
+        private static string ResolveOutputPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return null;
+            if (!path.StartsWith("/home/runner/work/"))
+                return path;
+            var projectPath = Path.GetDirectoryName(Application.dataPath);
+            var workspace = Path.GetDirectoryName(projectPath);
+            var parts = path.Split('/');
+            var relParts = parts.Skip(6);
+            return workspace + "/" + string.Join("/", relParts);
         }
     }
     """), encoding="utf-8")
