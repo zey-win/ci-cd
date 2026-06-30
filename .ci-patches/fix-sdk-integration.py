@@ -215,183 +215,114 @@ def generate_build_script(assets):
     script = editor_dir / "BuildGithubActionsApk.cs"
     script.write_text(textwrap.dedent("""\
 using System;
-     using System.IO;
-     using System.Linq;
-     using System.Reflection;
-     using System.Collections.Generic;
-     using UnityEditor;
-    using UnityEditor.Build.Reporting;
-    using UnityEngine;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEditor.Build.Reporting;
+using UnityEngine;
+using ZeyWinAds.Editor;
 
-    public static class BuildGithubActionsApk
+public static class BuildGithubActionsApk
+{
+    public static void BuildAndroid()
     {
-        public static void BuildAndroid()
+        ZeyWinAdsProjectConfigurator.ApplyFromCommandLine();
+
+        var outputPath = ResolveOutputPath(GetArg("apkOutputPath"));
+
+        var keystorePath = GetArg("androidKeystorePath");
+        if (!string.IsNullOrEmpty(keystorePath) && File.Exists(keystorePath))
         {
-            var outputPath = ResolveOutputPath(GetArg("apkOutputPath"));
-            var pkgName = GetArg("androidPackageName");
-            var versionName = GetArg("androidVersionName");
-            var versionCode = GetArg("androidVersionCode");
-            var keystorePath = GetArg("androidKeystorePath");
-
-            if (!string.IsNullOrEmpty(pkgName))
-                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, pkgName);
-            if (!string.IsNullOrEmpty(versionName))
-                PlayerSettings.bundleVersion = versionName;
-            if (!string.IsNullOrEmpty(versionCode) && int.TryParse(versionCode, out var vc))
-                PlayerSettings.Android.bundleVersionCode = vc;
-            if (!string.IsNullOrEmpty(keystorePath) && File.Exists(keystorePath))
-            {
-                PlayerSettings.Android.keystoreName = keystorePath;
-                PlayerSettings.Android.keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS") ?? "";
-                PlayerSettings.Android.keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME") ?? "";
-                PlayerSettings.Android.keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS") ?? "";
-            }
-
-            var zeywinKey = GetArg("zeywinApiKey");
-            if (!string.IsNullOrEmpty(zeywinKey))
-                EditorPrefs.SetString("ZeyWinApiKey", zeywinKey);
-
-            SetGmaAppId("admobAndroidAppId", "AdMobAndroidAppId");
-            SetGmaAppId("admobAndroidAppId", "AdMobAppId");
-
-            var options = new BuildPlayerOptions
-            {
-                scenes = EditorBuildSettings.scenes.Where(s => s.enabled && File.Exists(Path.GetFullPath(s.path))).Select(s => s.path).ToArray(),
-                locationPathName = outputPath ?? "build/Android/Android.apk",
-                target = BuildTarget.Android,
-                options = BuildOptions.None
-            };
-
-            if (options.scenes.Length == 0)
-            {
-                Debug.LogWarning("No scenes in EditorBuildSettings, using fallback scene search");
-                options.scenes = Directory.GetFiles(Application.dataPath, "*.unity", SearchOption.AllDirectories)
-                    .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/") && !p.Contains("/Demo") && !p.Contains("Demo"))
-                    .Take(10)
-                    .ToArray();
-            }
-
-            var report = BuildPipeline.BuildPlayer(options);
-            if (report.summary.result != BuildResult.Succeeded)
-                throw new Exception("Android build failed: " + report.summary.result);
+            PlayerSettings.Android.keystoreName = keystorePath;
+            PlayerSettings.Android.keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS") ?? "";
+            PlayerSettings.Android.keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME") ?? "";
+            PlayerSettings.Android.keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS") ?? "";
         }
 
-        private static void SetGmaAppId(string argName, string propertyName)
+        var options = new BuildPlayerOptions
         {
-            var value = GetArg(argName);
-            if (string.IsNullOrEmpty(value))
-                return;
+            scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
+            locationPathName = outputPath ?? "build/Android/Android.apk",
+            target = BuildTarget.Android,
+            options = BuildOptions.None
+        };
 
-            EditorPrefs.SetString(argName, value);
-
-            var settingsType = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(a => a.GetTypes())
-                .FirstOrDefault(t => t.Name == "GoogleMobileAdsSettings"
-                    && t.Namespace == "GoogleMobileAds.Editor");
-
-            if (settingsType == null)
-                return;
-
-            var instanceProp = settingsType.GetProperty("Instance",
-                BindingFlags.Public | BindingFlags.Static);
-            if (instanceProp == null)
-                return;
-
-            var instance = instanceProp.GetValue(null);
-            if (instance == null)
-                return;
-
-            var prop = settingsType.GetProperty(propertyName,
-                BindingFlags.Public | BindingFlags.Instance);
-            if (prop != null && prop.CanWrite)
-            {
-                prop.SetValue(instance, value);
-                var saveMethod = settingsType.GetMethod("Save",
-                    BindingFlags.Public | BindingFlags.Instance);
-                if (saveMethod != null)
-                    saveMethod.Invoke(instance, null);
-                else
-                    EditorUtility.SetDirty((UnityEngine.Object)instance);
-                Debug.Log($"[BuildGithubActionsApk] Set {propertyName}={value}");
-            }
+        if (options.scenes.Length == 0)
+        {
+            Debug.LogWarning("No scenes in EditorBuildSettings, using fallback scene search");
+            options.scenes = Directory.GetFiles(Application.dataPath, "*.unity", SearchOption.AllDirectories)
+                .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/"))
+                .Take(10)
+                .ToArray();
         }
 
-        public static void BuildAndroidAppBundle()
-        {
-            EditorUserBuildSettings.buildAppBundle = true;
-            var outputPath = ResolveOutputPath(GetArg("aabOutputPath"));
-            var pkgName = GetArg("androidPackageName");
-            var versionName = GetArg("androidVersionName");
-            var versionCode = GetArg("androidVersionCode");
-            var keystorePath = GetArg("androidKeystorePath");
-
-            if (!string.IsNullOrEmpty(pkgName))
-                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, pkgName);
-            if (!string.IsNullOrEmpty(versionName))
-                PlayerSettings.bundleVersion = versionName;
-            if (!string.IsNullOrEmpty(versionCode) && int.TryParse(versionCode, out var vc))
-                PlayerSettings.Android.bundleVersionCode = vc;
-            if (!string.IsNullOrEmpty(keystorePath) && File.Exists(keystorePath))
-            {
-                PlayerSettings.Android.keystoreName = keystorePath;
-                PlayerSettings.Android.keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS") ?? "";
-                PlayerSettings.Android.keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME") ?? "";
-                PlayerSettings.Android.keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS") ?? "";
-            }
-
-            var zeywinKey = GetArg("zeywinApiKey");
-            if (!string.IsNullOrEmpty(zeywinKey))
-                EditorPrefs.SetString("ZeyWinApiKey", zeywinKey);
-
-            SetGmaAppId("admobAndroidAppId", "AdMobAndroidAppId");
-            SetGmaAppId("admobAndroidAppId", "AdMobAppId");
-
-            var options = new BuildPlayerOptions
-            {
-                scenes = EditorBuildSettings.scenes.Where(s => s.enabled && File.Exists(Path.GetFullPath(s.path))).Select(s => s.path).ToArray(),
-                locationPathName = outputPath ?? "build/Android/Android.aab",
-                target = BuildTarget.Android,
-                options = BuildOptions.None
-            };
-
-            if (options.scenes.Length == 0)
-            {
-                Debug.LogWarning("No scenes in EditorBuildSettings, using fallback scene search");
-                options.scenes = Directory.GetFiles(Application.dataPath, "*.unity", SearchOption.AllDirectories)
-                    .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/") && !p.Contains("/Demo") && !p.Contains("Demo"))
-                    .Take(10)
-                    .ToArray();
-            }
-
-            var report = BuildPipeline.BuildPlayer(options);
-            if (report.summary.result != BuildResult.Succeeded)
-                throw new Exception("Android build failed: " + report.summary.result);
-        }
-
-        private static string GetArg(string name)
-        {
-            var args = Environment.GetCommandLineArgs();
-            for (var i = 0; i < args.Length - 1; i++)
-            {
-                if (args[i] == "-" + name && i + 1 < args.Length)
-                    return args[i + 1];
-            }
-            return string.Empty;
-        }
-
-        private static string ResolveOutputPath(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-                return null;
-            if (!path.StartsWith("/home/runner/work/"))
-                return path;
-            var projectPath = Path.GetDirectoryName(Application.dataPath);
-            var workspace = Path.GetDirectoryName(projectPath);
-            var parts = path.Split('/');
-            var relParts = parts.Skip(6);
-            return workspace + "/" + string.Join("/", relParts);
-        }
+        var report = BuildPipeline.BuildPlayer(options);
+        if (report.summary.result != BuildResult.Succeeded)
+            throw new Exception("Android build failed: " + report.summary.result);
     }
+
+    public static void BuildAndroidAppBundle()
+    {
+        EditorUserBuildSettings.buildAppBundle = true;
+        ZeyWinAdsProjectConfigurator.ApplyFromCommandLine();
+
+        var outputPath = ResolveOutputPath(GetArg("aabOutputPath"));
+
+        var keystorePath = GetArg("androidKeystorePath");
+        if (!string.IsNullOrEmpty(keystorePath) && File.Exists(keystorePath))
+        {
+            PlayerSettings.Android.keystoreName = keystorePath;
+            PlayerSettings.Android.keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS") ?? "";
+            PlayerSettings.Android.keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME") ?? "";
+            PlayerSettings.Android.keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS") ?? "";
+        }
+
+        var options = new BuildPlayerOptions
+        {
+            scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray(),
+            locationPathName = outputPath ?? "build/Android/Android.aab",
+            target = BuildTarget.Android,
+            options = BuildOptions.None
+        };
+
+        if (options.scenes.Length == 0)
+        {
+            Debug.LogWarning("No scenes in EditorBuildSettings, using fallback scene search");
+            options.scenes = Directory.GetFiles(Application.dataPath, "*.unity", SearchOption.AllDirectories)
+                .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/"))
+                .Take(10)
+                .ToArray();
+        }
+
+        var report = BuildPipeline.BuildPlayer(options);
+        if (report.summary.result != BuildResult.Succeeded)
+            throw new Exception("Android build failed: " + report.summary.result);
+    }
+
+    private static string GetArg(string name)
+    {
+        var args = Environment.GetCommandLineArgs();
+        for (var i = 0; i < args.Length - 1; i++)
+        {
+            if (args[i] == "-" + name && i + 1 < args.Length)
+                return args[i + 1];
+        }
+        return string.Empty;
+    }
+
+    private static string ResolveOutputPath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return null;
+        if (!path.StartsWith("/home/runner/work/"))
+            return path;
+        var projectPath = Path.GetDirectoryName(Application.dataPath);
+        var workspace = Path.GetDirectoryName(projectPath);
+        var parts = path.Split('/');
+        var relParts = parts.Skip(6);
+        return workspace + "/" + string.Join("/", relParts);
+    }
+}
     """), encoding="utf-8")
     if script.exists():
         print(f"  Generated {script.relative_to(assets.parent)}")

@@ -1045,6 +1045,12 @@ jobs:
         apk_aab\" ]; then\n  verify_one \"$APK_OUTPUT_PATH\" \"apk\"\n  verify_one\
         \ \"$AAB_OUTPUT_PATH\" \"aab\"\nelse\n  verify_one \"$APK_OUTPUT_PATH\" \"\
         apk\"\nfi\n"
+    - name: Sign Android APK
+      if: ${{ inputs.build_format == 'apk' || inputs.build_format == 'apk_aab' }}
+      shell: bash
+      env:
+        APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+      run: "set -euo pipefail\ntest -f \"$APK_OUTPUT_PATH\" || { echo \"APK not found for signing: $APK_OUTPUT_PATH\"; exit 1; }\ntest -n \"$ANDROID_KEYSTORE_PASS\" || { echo \"ANDROID_KEYSTORE_PASS is empty.\"; exit 1; }\nalias_name=\"${ANDROID_KEYALIAS_NAME:-social casino}\"\nalias_pass=\"${ANDROID_KEYALIAS_PASS:-$ANDROID_KEYSTORE_PASS}\"\njarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore \"$GITHUB_WORKSPACE/.ci/keystore/user.keystore\" -storepass \"$ANDROID_KEYSTORE_PASS\" -keypass \"$alias_pass\" \"$APK_OUTPUT_PATH\" \"$alias_name\"\njarsigner -verify -verbose -certs \"$APK_OUTPUT_PATH\" | tee /tmp/apk-signature-verify.txt\nif grep -q \"jar is unsigned\" /tmp/apk-signature-verify.txt; then echo \"APK is still unsigned after jarsigner.\"; exit 1; fi\n"
     - name: Sign Android App Bundle
       if: ${{ inputs.build_format == 'aab' || inputs.build_format == 'apk_aab' }}
       shell: bash
