@@ -192,6 +192,12 @@ def remove_duplicate_plugins(assets):
         meta = pathlib.Path(str(aar) + ".meta")
         if meta.exists(): meta.unlink()
         print(f"  Removed {aar.relative_to(assets.parent)} (provided by UPM package)")
+    androidlib = assets / "Plugins" / "Android" / "GoogleMobileAdsPlugin.androidlib"
+    if androidlib.exists():
+        shutil.rmtree(androidlib)
+        meta = pathlib.Path(str(androidlib) + ".meta")
+        if meta.exists(): meta.unlink()
+        print(f"  Removed {androidlib.relative_to(assets.parent)} (namespace conflict with UPM com.google.ads.mobile)")
 
 def remove_pixel_perfect_package(manifest_path):
     print("\n[8/10] Removing incompatible com.unity.2d.pixel-perfect package...")
