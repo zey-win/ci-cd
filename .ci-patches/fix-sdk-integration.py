@@ -117,7 +117,7 @@ def remove_conflicting_asset_sdks(assets, manifest_path):
 
 def remove_sdk_examples(assets):
     print("\n[4/10] Removing SDK examples and demos...")
-    for rel in ["FacebookSDK/Examples", "PlayFabSDK/Examples", "IronSource/Demo", "AppLovin/Demo", "MaxSdk/Demos", "GoogleMobileAds/Editor"]:
+    for rel in ["FacebookSDK/Examples", "PlayFabSDK/Examples", "IronSource/Demo", "AppLovin/Demo", "MaxSdk/Demos", "GoogleMobileAds/Editor", "PushExpress"]:
         d = assets / rel
         if d.exists():
             shutil.rmtree(d)
@@ -260,7 +260,7 @@ using System;
             {
                 Debug.LogWarning("No scenes in EditorBuildSettings, using fallback scene search");
                 options.scenes = Directory.GetFiles(Application.dataPath, "*.unity", SearchOption.AllDirectories)
-                    .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/"))
+                    .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/") && !p.Contains("/Demo") && !p.Contains("Demo"))
                     .Take(10)
                     .ToArray();
             }
@@ -352,7 +352,7 @@ using System;
             {
                 Debug.LogWarning("No scenes in EditorBuildSettings, using fallback scene search");
                 options.scenes = Directory.GetFiles(Application.dataPath, "*.unity", SearchOption.AllDirectories)
-                    .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/"))
+                    .Where(p => !p.Contains("/Library/") && !p.Contains("/Temp/") && !p.Contains("/Demo") && !p.Contains("Demo"))
                     .Take(10)
                     .ToArray();
             }

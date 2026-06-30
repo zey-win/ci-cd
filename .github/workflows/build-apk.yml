@@ -927,7 +927,7 @@ jobs:
         APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
         AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
       with:
-        unityVersion: 6000.5.0f1
+        unityVersion: 6000.5.1f1
         targetPlatform: Android
         projectPath: game
         versioning: None
@@ -981,7 +981,7 @@ jobs:
         APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
         AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
       with:
-        unityVersion: 6000.5.0f1
+        unityVersion: 6000.5.1f1
         targetPlatform: Android
         projectPath: game
         versioning: None
