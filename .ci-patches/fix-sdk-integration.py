@@ -178,6 +178,11 @@ def patch_game_scripts(assets):
         meta = pathlib.Path(str(f) + ".meta")
         if meta.exists(): meta.unlink()
         print(f"  Removed {f.relative_to(assets.parent)}")
+    for f in assets.glob("**/MethodPopup.cs"):
+        text = f.read_text(encoding="utf-8", errors="replace")
+        if "using Unity.VisualScripting;" in text:
+            f.write_text(text.replace("using Unity.VisualScripting;", "// using Unity.VisualScripting;"), encoding="utf-8")
+            print(f"  Patched {f.relative_to(assets.parent)}")
 
 def remove_duplicate_plugins(assets):
     print("\n[7/10] Removing duplicate Android plugins (colliding with UPM packages)...")
