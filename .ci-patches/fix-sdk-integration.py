@@ -68,7 +68,7 @@ def add_upm_packages(manifest_path, assets):
         "com.crashguard.sdk": "https://github.com/zey-win/CrashGuardSDK-Unity.git#2b3947155206bc445e2d6088ac51cdf2760f921d",
         "com.unity.textmeshpro": "3.0.9",
         "com.unity.mobile.notifications": "2.3.2",
-        "io.sentry.unity": "2.2.1",
+        "io.sentry.unity": "4.6.0",
     }
     added = [f"{p}@{v}" for p, v in packages.items() if p not in deps]
     for p, v in packages.items():
