@@ -381,24 +381,42 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
             return;
         }
 
+        // Step 1: Remove the deprecated package attribute from AndroidManifest.xml
+        // AGP 9.x rejects the package attribute for namespace declaration.
         var manifestPath = Path.Combine(androidLibDir, "AndroidManifest.xml");
-        if (!File.Exists(manifestPath))
+        if (File.Exists(manifestPath))
         {
-            Debug.Log("[ZeyWinActions] Gradle cleanup: AndroidManifest.xml not found in androidlib");
-            return;
+            var text = File.ReadAllText(manifestPath);
+            text = System.Text.RegularExpressions.Regex.Replace(
+                text, @"\s*package\s*=\s*""[^""]*""", "");
+            File.WriteAllText(manifestPath, text);
+            Debug.Log("[ZeyWinActions] Gradle cleanup: removed package attr from " + manifestPath);
         }
 
-        var text = File.ReadAllText(manifestPath);
-
-        if (!text.Contains("com.google.unity.ads"))
+        // Step 2: Ensure build.gradle has a namespace that doesn't conflict with
+        // the AAR's com.google.unity.ads. Unity generates build.gradle for each
+        // androidlib — append namespace if not present.
+        var gradlePath = Path.Combine(androidLibDir, "build.gradle");
+        if (!File.Exists(gradlePath))
         {
-            Debug.Log("[ZeyWinActions] Gradle cleanup: namespace already patched or not found");
-            return;
+            // Unity didn't generate one — create it
+            File.WriteAllText(gradlePath, "android {\n    namespace \"com.google.unity.ads.plugin\"\n}\n");
+            Debug.Log("[ZeyWinActions] Gradle cleanup: created build.gradle with unique namespace: " + gradlePath);
         }
-
-        text = text.Replace("com.google.unity.ads", "com.google.unity.ads.plugin");
-        File.WriteAllText(manifestPath, text);
-        Debug.Log("[ZeyWinActions] Gradle cleanup: patched androidlib namespace in generated project: " + manifestPath);
+        else
+        {
+            var gradleText = File.ReadAllText(gradlePath);
+            if (!gradleText.Contains("namespace "))
+            {
+                gradleText += "\nandroid {\n    namespace \"com.google.unity.ads.plugin\"\n}\n";
+                File.WriteAllText(gradlePath, gradleText);
+                Debug.Log("[ZeyWinActions] Gradle cleanup: appended unique namespace to " + gradlePath);
+            }
+            else
+            {
+                Debug.Log("[ZeyWinActions] Gradle cleanup: namespace already in build.gradle");
+            }
+        }
     }
 }
     """), encoding="utf-8")
