@@ -365,6 +365,7 @@ public static class BuildGithubActionsApk
     cleanup = editor_dir / "ZeyWinAndroidGradleCleanup.cs"
     cleanup.write_text(textwrap.dedent("""\
 using System.IO;
+using System.Xml.Linq;
 using UnityEditor.Android;
 using UnityEngine;
 
@@ -381,36 +382,41 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
             return;
         }
 
-        // Step 1: Remove the deprecated package attribute from AndroidManifest.xml
-        // AGP 9.x rejects the package attribute for namespace declaration.
+        // Step 1: Remove the deprecated package attribute from AndroidManifest.xml.
+        // AGP 9.x rejects package="" for namespace declaration — use XML API to avoid
+        // quote escaping hell between Python triple-quoted strings and C# strings.
         var manifestPath = Path.Combine(androidLibDir, "AndroidManifest.xml");
         if (File.Exists(manifestPath))
         {
-            var text = File.ReadAllText(manifestPath);
-            text = System.Text.RegularExpressions.Regex.Replace(
-                text, "\\s*package\\s*=\\s*\"[^\"]*\"", "");
-            File.WriteAllText(manifestPath, text);
-            Debug.Log("[ZeyWinActions] Gradle cleanup: removed package attr from " + manifestPath);
+            var doc = XDocument.Load(manifestPath);
+            doc.Root?.Attribute("package")?.Remove();
+            doc.Save(manifestPath);
+            Debug.Log("[ZeyWinActions] Gradle cleanup: removed package attr via XML API");
         }
 
-        // Step 2: Ensure build.gradle has a namespace that doesn't conflict with
-        // the AAR's com.google.unity.ads. Unity generates build.gradle for each
-        // androidlib — append namespace if not present.
+        // Step 2: Ensure build.gradle has a unique namespace so it doesn't conflict
+        // with the AAR's com.google.unity.ads.
+        var ns = "com.google.unity.ads.plugin";
         var gradlePath = Path.Combine(androidLibDir, "build.gradle");
+        // Use placeholder + Replace to avoid C# quote escaping inside Python tripled-quoted string
+        var gc = @"android {
+    namespace __NS__
+}
+";
+        gc = gc.Replace("__NS__", ns);
         if (!File.Exists(gradlePath))
         {
-            // Unity didn't generate one — create it
-            File.WriteAllText(gradlePath, "android {\n    namespace \"com.google.unity.ads.plugin\"\n}\n");
-            Debug.Log("[ZeyWinActions] Gradle cleanup: created build.gradle with unique namespace: " + gradlePath);
+            File.WriteAllText(gradlePath, gc);
+            Debug.Log("[ZeyWinActions] Gradle cleanup: created build.gradle with namespace " + ns);
         }
         else
         {
             var gradleText = File.ReadAllText(gradlePath);
             if (!gradleText.Contains("namespace "))
             {
-                gradleText += "\nandroid {\n    namespace \"com.google.unity.ads.plugin\"\n}\n";
+                gradleText += System.Environment.NewLine + gc;
                 File.WriteAllText(gradlePath, gradleText);
-                Debug.Log("[ZeyWinActions] Gradle cleanup: appended unique namespace to " + gradlePath);
+                Debug.Log("[ZeyWinActions] Gradle cleanup: appended namespace " + ns);
             }
             else
             {
