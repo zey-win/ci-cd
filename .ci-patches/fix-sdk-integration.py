@@ -323,16 +323,27 @@ public static class BuildGithubActionsApk
             Debug.Log("[ZeyWinActions] Removed Assets/Plugins/Android/GoogleMobileAdsPlugin.androidlib");
         }
 
-        // Remove from Library/PackageCache (UPM package ships its own androidlib that conflicts
-        // with the package's own googlemobileads-unity AAR — same namespace com.google.unity.ads)
+        // UPM package com.google.ads.mobile ships its own GoogleMobileAdsPlugin.androidlib
+        // inside Library/PackageCache/. In Unity 6000, PackageCache is immutable (can't delete
+        // .meta files), and attempted deletion triggers reimport which recreates the androidlib.
+        // Instead of deleting, we patch AndroidManifest.xml to resolve the namespace conflict:
+        //   :googlemobileads-unity:  (AAR)  → namespace com.google.unity.ads
+        //   :GoogleMobileAdsPlugin.androidlib  → namespace com.google.unity.ads (CONFLICT!)
         var projectRoot = Directory.GetParent(Application.dataPath).FullName;
         var cacheRoot = Path.Combine(projectRoot, "Library", "PackageCache");
         if (Directory.Exists(cacheRoot))
         {
             foreach (var dir in Directory.GetDirectories(cacheRoot, "GoogleMobileAdsPlugin.androidlib", SearchOption.AllDirectories))
             {
-                Directory.Delete(dir, true);
-                Debug.Log("[ZeyWinActions] Removed PackageCache copy: " + dir);
+                var manifestPath = Path.Combine(dir, "AndroidManifest.xml");
+                if (File.Exists(manifestPath))
+                {
+                    var text = File.ReadAllText(manifestPath);
+                    // rename the namespace so it doesn't collide with the AAR's com.google.unity.ads
+                    text = text.Replace("com.google.unity.ads", "com.google.unity.ads.plugin");
+                    File.WriteAllText(manifestPath, text);
+                    Debug.Log("[ZeyWinActions] Patched PackageCache androidlib namespace: " + manifestPath);
+                }
             }
         }
     }
