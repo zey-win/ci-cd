@@ -313,13 +313,27 @@ public static class BuildGithubActionsApk
 
     private static void RemoveDuplicateGoogleMobileAdsPlugin()
     {
-        var path = Path.Combine(Application.dataPath, "Plugins", "Android", "GoogleMobileAdsPlugin.androidlib");
-        if (Directory.Exists(path))
+        // Remove from Assets/Plugins/Android (may be recreated by UPM post-import scripts)
+        var assetsLib = Path.Combine(Application.dataPath, "Plugins", "Android", "GoogleMobileAdsPlugin.androidlib");
+        if (Directory.Exists(assetsLib))
         {
-            Directory.Delete(path, true);
-            var metaPath = path + ".meta";
+            Directory.Delete(assetsLib, true);
+            var metaPath = assetsLib + ".meta";
             if (File.Exists(metaPath)) File.Delete(metaPath);
-            Debug.Log("Removed duplicate Assets/Plugins/Android/GoogleMobileAdsPlugin.androidlib before build");
+            Debug.Log("[ZeyWinActions] Removed Assets/Plugins/Android/GoogleMobileAdsPlugin.androidlib");
+        }
+
+        // Remove from Library/PackageCache (UPM package ships its own androidlib that conflicts
+        // with the package's own googlemobileads-unity AAR — same namespace com.google.unity.ads)
+        var projectRoot = Directory.GetParent(Application.dataPath).FullName;
+        var cacheRoot = Path.Combine(projectRoot, "Library", "PackageCache");
+        if (Directory.Exists(cacheRoot))
+        {
+            foreach (var dir in Directory.GetDirectories(cacheRoot, "GoogleMobileAdsPlugin.androidlib", SearchOption.AllDirectories))
+            {
+                Directory.Delete(dir, true);
+                Debug.Log("[ZeyWinActions] Removed PackageCache copy: " + dir);
+            }
         }
     }
 
