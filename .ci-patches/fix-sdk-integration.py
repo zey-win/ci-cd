@@ -217,7 +217,9 @@ def generate_build_script(assets):
 using System;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using UnityEditor;
+using UnityEditor.Android;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using ZeyWinAds.Editor;
@@ -355,19 +357,6 @@ public static class BuildGithubActionsApk
         return workspace + "/" + string.Join("/", relParts);
     }
 }
-    """), encoding="utf-8")
-    if script.exists():
-        print(f"  Generated {script.relative_to(assets.parent)}")
-
-    # Generate Gradle cleanup helper that runs after Unity generates the Gradle project
-    # but before Gradle executes. This patches the androidlib AndroidManifest.xml at the
-    # Gradle project level, where Unity 6000's in-memory package cache doesn't interfere.
-    cleanup = editor_dir / "ZeyWinAndroidGradleCleanup.cs"
-    cleanup.write_text(textwrap.dedent("""\
-using System.IO;
-using System.Xml.Linq;
-using UnityEditor.Android;
-using UnityEngine;
 
 public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProject
 {
@@ -382,9 +371,6 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
             return;
         }
 
-        // Step 1: Remove the deprecated package attribute from AndroidManifest.xml.
-        // AGP 9.x rejects package="" for namespace declaration — use XML API to avoid
-        // quote escaping hell between Python triple-quoted strings and C# strings.
         var manifestPath = Path.Combine(androidLibDir, "AndroidManifest.xml");
         if (File.Exists(manifestPath))
         {
@@ -394,19 +380,12 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
             Debug.Log("[ZeyWinActions] Gradle cleanup: removed package attr via XML API");
         }
 
-        // Step 2: Ensure build.gradle has a unique namespace so it doesn't conflict
-        // with the AAR's com.google.unity.ads. Unity auto-generates build.gradle for
-        // androidlibs using the manifest package attr, so we must OVERWRITE any
-        // existing namespace value.
         var ns = "com.google.unity.ads.plugin";
         var gradlePath = Path.Combine(androidLibDir, "build.gradle");
         var nsLine = "namespace " + '"' + ns + '"';
         if (!File.Exists(gradlePath))
         {
-            var gc = @"android {
-    __NS_LINE__
-}
-";
+            var gc = "android {\n    __NS_LINE__\n}\n";
             gc = gc.Replace("__NS_LINE__", nsLine);
             File.WriteAllText(gradlePath, gc);
             Debug.Log("[ZeyWinActions] Gradle cleanup: created build.gradle " + nsLine);
@@ -415,7 +394,7 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
         {
             var gradleText = File.ReadAllText(gradlePath);
             var hasNs = false;
-            var lines = gradleText.Split(new[] { System.Environment.NewLine }, System.StringSplitOptions.None);
+            var lines = gradleText.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
             for (int i = 0; i < lines.Length; i++)
             {
                 if (lines[i].TrimStart().StartsWith("namespace "))
@@ -427,12 +406,12 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
             }
             if (hasNs)
             {
-                gradleText = string.Join(System.Environment.NewLine, lines);
+                gradleText = string.Join("\n", lines);
                 Debug.Log("[ZeyWinActions] Gradle cleanup: replaced namespace with " + nsLine);
             }
             else
             {
-                gradleText += System.Environment.NewLine + "android {" + System.Environment.NewLine + "    " + nsLine + System.Environment.NewLine + "}";
+                gradleText += "\nandroid {\n    " + nsLine + "\n}\n";
                 Debug.Log("[ZeyWinActions] Gradle cleanup: appended namespace " + nsLine);
             }
             File.WriteAllText(gradlePath, gradleText);
@@ -440,8 +419,8 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
     }
 }
     """), encoding="utf-8")
-    if cleanup.exists():
-        print(f"  Generated {cleanup.relative_to(assets.parent)}")
+    if script.exists():
+        print(f"  Generated {script.relative_to(assets.parent)}")
 
 def clear_cached_files(assets):
     print("[11/10] Clearing cached files...")
