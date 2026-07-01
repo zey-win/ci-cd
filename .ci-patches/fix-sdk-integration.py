@@ -226,6 +226,7 @@ public static class BuildGithubActionsApk
 {
     public static void BuildAndroid()
     {
+        RemoveDuplicateGoogleMobileAdsPlugin();
         ZeyWinAdsProjectConfigurator.ApplyFromCommandLine();
 
         var outputPath = ResolveOutputPath(GetArg("apkOutputPath"));
@@ -263,6 +264,7 @@ public static class BuildGithubActionsApk
 
     public static void BuildAndroidAppBundle()
     {
+        RemoveDuplicateGoogleMobileAdsPlugin();
         EditorUserBuildSettings.buildAppBundle = true;
         ZeyWinAdsProjectConfigurator.ApplyFromCommandLine();
 
@@ -299,6 +301,18 @@ public static class BuildGithubActionsApk
             throw new Exception("Android build failed: " + report.summary.result);
     }
 
+    private static void RemoveDuplicateGoogleMobileAdsPlugin()
+    {
+        var path = Path.Combine(Application.dataPath, "Plugins", "Android", "GoogleMobileAdsPlugin.androidlib");
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, true);
+            var metaPath = path + ".meta";
+            if (File.Exists(metaPath)) File.Delete(metaPath);
+            Debug.Log("Removed duplicate Assets/Plugins/Android/GoogleMobileAdsPlugin.androidlib before build");
+        }
+    }
+
     private static string GetArg(string name)
     {
         var args = Environment.GetCommandLineArgs();
@@ -330,7 +344,10 @@ public static class BuildGithubActionsApk
 def clear_cached_files(assets):
     print("[11/10] Clearing cached files...")
     root = assets.parent
-    for d in [root/"Library/Artifacts", root/"Library/ScriptAssemblies", root/"Library/PackageCache", root/"Temp"]:
+    # Keep PackageCache — clearing it forces full re-extraction of UPM packages,
+    # which re-runs GoogleMobileAds post-import scripts that recreate
+    # Assets/Plugins/Android/GoogleMobileAdsPlugin.androidlib (causing manifest merge conflict).
+    for d in [root/"Library/Artifacts", root/"Library/ScriptAssemblies", root/"Temp"]:
         if d.exists():
             shutil.rmtree(d); print(f"  Cleared {d.name}")
 
