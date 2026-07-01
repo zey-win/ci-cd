@@ -395,33 +395,47 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
         }
 
         // Step 2: Ensure build.gradle has a unique namespace so it doesn't conflict
-        // with the AAR's com.google.unity.ads.
+        // with the AAR's com.google.unity.ads. Unity auto-generates build.gradle for
+        // androidlibs using the manifest package attr, so we must OVERWRITE any
+        // existing namespace value.
         var ns = "com.google.unity.ads.plugin";
         var gradlePath = Path.Combine(androidLibDir, "build.gradle");
-        // Use placeholder + Replace to avoid C# quote escaping inside Python tripled-quoted string
-        var gc = @"android {
-    namespace __NS__
-}
-";
-        gc = gc.Replace("__NS__", ns);
+        var nsLine = "namespace " + '"' + ns + '"';
         if (!File.Exists(gradlePath))
         {
+            var gc = @"android {
+    __NS_LINE__
+}
+";
+            gc = gc.Replace("__NS_LINE__", nsLine);
             File.WriteAllText(gradlePath, gc);
-            Debug.Log("[ZeyWinActions] Gradle cleanup: created build.gradle with namespace " + ns);
+            Debug.Log("[ZeyWinActions] Gradle cleanup: created build.gradle " + nsLine);
         }
         else
         {
             var gradleText = File.ReadAllText(gradlePath);
-            if (!gradleText.Contains("namespace "))
+            var hasNs = false;
+            var lines = gradleText.Split(new[] { System.Environment.NewLine }, System.StringSplitOptions.None);
+            for (int i = 0; i < lines.Length; i++)
             {
-                gradleText += System.Environment.NewLine + gc;
-                File.WriteAllText(gradlePath, gradleText);
-                Debug.Log("[ZeyWinActions] Gradle cleanup: appended namespace " + ns);
+                if (lines[i].TrimStart().StartsWith("namespace "))
+                {
+                    lines[i] = "    " + nsLine;
+                    hasNs = true;
+                    break;
+                }
+            }
+            if (hasNs)
+            {
+                gradleText = string.Join(System.Environment.NewLine, lines);
+                Debug.Log("[ZeyWinActions] Gradle cleanup: replaced namespace with " + nsLine);
             }
             else
             {
-                Debug.Log("[ZeyWinActions] Gradle cleanup: namespace already in build.gradle");
+                gradleText += System.Environment.NewLine + "android {" + System.Environment.NewLine + "    " + nsLine + System.Environment.NewLine + "}";
+                Debug.Log("[ZeyWinActions] Gradle cleanup: appended namespace " + nsLine);
             }
+            File.WriteAllText(gradlePath, gradleText);
         }
     }
 }
