@@ -388,7 +388,7 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
         {
             var text = File.ReadAllText(manifestPath);
             text = System.Text.RegularExpressions.Regex.Replace(
-                text, @"\s*package\s*=\s*""[^""]*""", "");
+                text, "\\s*package\\s*=\\s*\"[^\"]*\"", "");
             File.WriteAllText(manifestPath, text);
             Debug.Log("[ZeyWinActions] Gradle cleanup: removed package attr from " + manifestPath);
         }
