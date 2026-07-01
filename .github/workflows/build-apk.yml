@@ -349,8 +349,8 @@ jobs:
     - name: Validate inputs and secrets
       shell: bash
       env:
-         PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-         APP_NAME: ${{ inputs.app_name || 'Slots: Slot Machines' }}
+        PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
+        APP_NAME: "${{ inputs.app_name || 'Slots: Slot Machines' }}"
         VERSION_NAME: ${{ inputs.version_name }}
         VERSION_CODE: ${{ inputs.version_code }}
         GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
@@ -377,8 +377,8 @@ jobs:
     - name: Checkout private game project (SSH)
       uses: actions/checkout@v4
       with:
-         repository: ${{ inputs.game_repository || 'zey-win/SlotSpot' }}
-         ref: ${{ inputs.game_ref || 'main' }}
+        repository: ${{ inputs.game_repository || 'zey-win/SlotSpot' }}
+        ref: ${{ inputs.game_ref || 'main' }}
         path: game
         ssh-key: ${{ secrets.SLOTSPOT_SSH_PRIVATE_KEY }}
         persist-credentials: false
@@ -681,8 +681,8 @@ jobs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
-         PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-         VERSION_MODE: ${{ inputs.version_mode || 'auto_next' }}
+        PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
+        VERSION_MODE: ${{ inputs.version_mode || 'auto_next' }}
         VERSION_NAME_INPUT: ${{ inputs.version_name }}
         VERSION_CODE_INPUT: ${{ inputs.version_code }}
       run: "set -euo pipefail\n\nmax_code=0\nlatest_file=\"builds/$PACKAGE_NAME/latest-build.txt\"\
@@ -912,7 +912,7 @@ jobs:
         GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
         ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-        ANDROID_PRODUCT_NAME: ${{ inputs.app_name || 'Slots: Slot Machines' }}
+        ANDROID_PRODUCT_NAME: "${{ inputs.app_name || 'Slots: Slot Machines' }}"
         ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
         ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
         ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
@@ -965,7 +965,7 @@ jobs:
         GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
         ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-        ANDROID_PRODUCT_NAME: ${{ inputs.app_name || 'Slots: Slot Machines' }}
+        ANDROID_PRODUCT_NAME: "${{ inputs.app_name || 'Slots: Slot Machines' }}"
         ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
         ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
         ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
