@@ -2,6 +2,12 @@ name: Build Android Play Release
 run-name: 'Android: ${{ inputs.app_name }} / ${{ inputs.package_name }} / ${{ inputs.build_format
   }} / ${{ inputs.builder_request_id || github.run_id }}'
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.ci-patches/**'
+      - '.github/workflows/build-apk.yml'
+      - '.github/workflows/play-release-dispatch.yml'
   workflow_dispatch:
     inputs:
       builder_request_id:
@@ -343,8 +349,8 @@ jobs:
     - name: Validate inputs and secrets
       shell: bash
       env:
-        PACKAGE_NAME: ${{ inputs.package_name }}
-        APP_NAME: ${{ inputs.app_name }}
+         PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
+         APP_NAME: ${{ inputs.app_name || 'Slots: Slot Machines' }}
         VERSION_NAME: ${{ inputs.version_name }}
         VERSION_CODE: ${{ inputs.version_code }}
         GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
@@ -371,8 +377,8 @@ jobs:
     - name: Checkout private game project (SSH)
       uses: actions/checkout@v4
       with:
-        repository: ${{ inputs.game_repository }}
-        ref: ${{ inputs.game_ref }}
+         repository: ${{ inputs.game_repository || 'zey-win/SlotSpot' }}
+         ref: ${{ inputs.game_ref || 'main' }}
         path: game
         ssh-key: ${{ secrets.SLOTSPOT_SSH_PRIVATE_KEY }}
         persist-credentials: false
@@ -675,8 +681,8 @@ jobs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
-        PACKAGE_NAME: ${{ inputs.package_name }}
-        VERSION_MODE: ${{ inputs.version_mode }}
+         PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
+         VERSION_MODE: ${{ inputs.version_mode || 'auto_next' }}
         VERSION_NAME_INPUT: ${{ inputs.version_name }}
         VERSION_CODE_INPUT: ${{ inputs.version_code }}
       run: "set -euo pipefail\n\nmax_code=0\nlatest_file=\"builds/$PACKAGE_NAME/latest-build.txt\"\
@@ -905,8 +911,8 @@ jobs:
         UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
-        ANDROID_PACKAGE_NAME: ${{ inputs.package_name }}
-        ANDROID_PRODUCT_NAME: ${{ inputs.app_name }}
+        ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
+        ANDROID_PRODUCT_NAME: ${{ inputs.app_name || 'Slots: Slot Machines' }}
         ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
         ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
         ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
@@ -931,11 +937,11 @@ jobs:
         targetPlatform: Android
         projectPath: game
         versioning: None
-        buildMethod: ${{ inputs.build_format == 'aab' && 'BuildGithubActionsApk.BuildAndroidAppBundle'
+        buildMethod: ${{ (inputs.build_format || 'apk') == 'aab' && 'BuildGithubActionsApk.BuildAndroidAppBundle'
           || 'BuildGithubActionsApk.BuildAndroid' }}
         customParameters: -logFile - -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path
           }}" -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
-          -androidPackageName "${{ inputs.package_name }}" -androidVersionName "${{
+          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidVersionName "${{
           steps.resolve_version.outputs.version_name }}" -androidVersionCode "${{
           steps.resolve_version.outputs.version_code }}" -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
           -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" -admobAndroidAppId
@@ -958,8 +964,8 @@ jobs:
         UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
-        ANDROID_PACKAGE_NAME: ${{ inputs.package_name }}
-        ANDROID_PRODUCT_NAME: ${{ inputs.app_name }}
+        ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
+        ANDROID_PRODUCT_NAME: ${{ inputs.app_name || 'Slots: Slot Machines' }}
         ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
         ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
         ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
@@ -987,7 +993,7 @@ jobs:
         buildMethod: BuildGithubActionsApk.BuildAndroidAppBundle
         customParameters: -logFile - -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path
           }}" -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
-          -androidPackageName "${{ inputs.package_name }}" -androidVersionName "${{
+          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidVersionName "${{
           steps.resolve_version.outputs.version_name }}" -androidVersionCode "${{
           steps.resolve_version.outputs.version_code }}" -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
           -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" -admobAndroidAppId
@@ -1014,7 +1020,7 @@ jobs:
     - name: Verify Android build output
       shell: bash
       env:
-        BUILD_FORMAT: ${{ inputs.build_format }}
+        BUILD_FORMAT: ${{ inputs.build_format || 'apk' }}
         APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
         AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
       run: "set -euo pipefail\nsudo chown -R \"$USER:$USER\" build Builds game/build\
@@ -1046,13 +1052,13 @@ jobs:
         \ \"$AAB_OUTPUT_PATH\" \"aab\"\nelse\n  verify_one \"$APK_OUTPUT_PATH\" \"\
         apk\"\nfi\n"
     - name: Sign Android APK
-      if: ${{ inputs.build_format == 'apk' || inputs.build_format == 'apk_aab' }}
+      if: ${{ (inputs.build_format || 'apk') == 'apk' || (inputs.build_format || 'apk') == 'apk_aab' }}
       shell: bash
       env:
         APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
       run: "set -euo pipefail\ntest -f \"$APK_OUTPUT_PATH\" || { echo \"APK not found for signing: $APK_OUTPUT_PATH\"; exit 1; }\ntest -n \"$ANDROID_KEYSTORE_PASS\" || { echo \"ANDROID_KEYSTORE_PASS is empty.\"; exit 1; }\nalias_name=\"${ANDROID_KEYALIAS_NAME:-social casino}\"\nalias_pass=\"${ANDROID_KEYALIAS_PASS:-$ANDROID_KEYSTORE_PASS}\"\njarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore \"$GITHUB_WORKSPACE/.ci/keystore/user.keystore\" -storepass \"$ANDROID_KEYSTORE_PASS\" -keypass \"$alias_pass\" \"$APK_OUTPUT_PATH\" \"$alias_name\"\njarsigner -verify -verbose -certs \"$APK_OUTPUT_PATH\" | tee /tmp/apk-signature-verify.txt\nif grep -q \"jar is unsigned\" /tmp/apk-signature-verify.txt; then echo \"APK is still unsigned after jarsigner.\"; exit 1; fi\n"
     - name: Sign Android App Bundle
-      if: ${{ inputs.build_format == 'aab' || inputs.build_format == 'apk_aab' }}
+      if: ${{ (inputs.build_format || 'apk') == 'aab' || (inputs.build_format || 'apk') == 'apk_aab' }}
       shell: bash
       env:
         AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
@@ -1119,8 +1125,8 @@ jobs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
-        BUILD_FORMAT: ${{ inputs.build_format }}
-        PACKAGE_NAME: ${{ inputs.package_name }}
+        BUILD_FORMAT: ${{ inputs.build_format || 'apk' }}
+        PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
         VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
         VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
         APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}

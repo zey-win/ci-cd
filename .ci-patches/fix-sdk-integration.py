@@ -238,6 +238,11 @@ public static class BuildGithubActionsApk
             PlayerSettings.Android.keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS") ?? "";
             PlayerSettings.Android.keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME") ?? "";
             PlayerSettings.Android.keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS") ?? "";
+            Debug.Log("[ZeyWinActions] Signing configured: keystore=" + File.Exists(keystorePath) + " pass=" + !string.IsNullOrEmpty(PlayerSettings.Android.keystorePass) + " alias=" + !string.IsNullOrEmpty(PlayerSettings.Android.keyaliasName));
+        }
+        else
+        {
+            Debug.LogWarning("[ZeyWinActions] No keystore found at " + keystorePath + " — APK will be unsigned");
         }
 
         var options = new BuildPlayerOptions
@@ -277,6 +282,11 @@ public static class BuildGithubActionsApk
             PlayerSettings.Android.keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS") ?? "";
             PlayerSettings.Android.keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME") ?? "";
             PlayerSettings.Android.keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS") ?? "";
+            Debug.Log("[ZeyWinActions] Signing configured: keystore=" + File.Exists(keystorePath) + " pass=" + !string.IsNullOrEmpty(PlayerSettings.Android.keystorePass) + " alias=" + !string.IsNullOrEmpty(PlayerSettings.Android.keyaliasName));
+        }
+        else
+        {
+            Debug.LogWarning("[ZeyWinActions] No keystore found at " + keystorePath + " — AAB will be unsigned");
         }
 
         var options = new BuildPlayerOptions
