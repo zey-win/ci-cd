@@ -934,7 +934,7 @@ jobs:
           || 'BuildGithubActionsApk.BuildAndroid' }}
         customParameters: -logFile - -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path
           }}" -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
-          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidVersionName "${{
+          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidProductName "${{ inputs.app_name || 'Slots: Slot Machines' }}" -androidVersionName "${{
           steps.resolve_version.outputs.version_name }}" -androidVersionCode "${{
           steps.resolve_version.outputs.version_code }}" -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
           -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" -admobAndroidAppId
@@ -986,7 +986,7 @@ jobs:
         buildMethod: BuildGithubActionsApk.BuildAndroidAppBundle
         customParameters: -logFile - -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path
           }}" -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
-          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidVersionName "${{
+          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidProductName "${{ inputs.app_name || 'Slots: Slot Machines' }}" -androidVersionName "${{
           steps.resolve_version.outputs.version_name }}" -androidVersionCode "${{
           steps.resolve_version.outputs.version_code }}" -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
           -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" -admobAndroidAppId

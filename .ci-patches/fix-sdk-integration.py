@@ -231,7 +231,9 @@ public static class BuildGithubActionsApk
         RemoveDuplicateGoogleMobileAdsPlugin();
         ZeyWinAdsProjectConfigurator.ApplyFromCommandLine();
 
-        var productName = Environment.GetEnvironmentVariable("ANDROID_PRODUCT_NAME");
+        var productName = GetArg("androidProductName");
+        if (string.IsNullOrEmpty(productName))
+            productName = Environment.GetEnvironmentVariable("ANDROID_PRODUCT_NAME");
         if (!string.IsNullOrEmpty(productName))
         {
             PlayerSettings.productName = productName;
