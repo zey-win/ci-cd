@@ -385,7 +385,10 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
         var nsLine = "namespace " + '"' + ns + '"';
         if (!File.Exists(gradlePath))
         {
-            var gc = "android {\n    __NS_LINE__\n}\n";
+            var gc = @"android {
+    __NS_LINE__
+}
+";
             gc = gc.Replace("__NS_LINE__", nsLine);
             File.WriteAllText(gradlePath, gc);
             Debug.Log("[ZeyWinActions] Gradle cleanup: created build.gradle " + nsLine);
@@ -394,7 +397,7 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
         {
             var gradleText = File.ReadAllText(gradlePath);
             var hasNs = false;
-            var lines = gradleText.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
+            var lines = gradleText.Split(new[] { '\\n', '\\r' }, System.StringSplitOptions.RemoveEmptyEntries);
             for (int i = 0; i < lines.Length; i++)
             {
                 if (lines[i].TrimStart().StartsWith("namespace "))
@@ -406,12 +409,12 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
             }
             if (hasNs)
             {
-                gradleText = string.Join("\n", lines);
+                gradleText = string.Join("\\n", lines);
                 Debug.Log("[ZeyWinActions] Gradle cleanup: replaced namespace with " + nsLine);
             }
             else
             {
-                gradleText += "\nandroid {\n    " + nsLine + "\n}\n";
+                gradleText += "\\nandroid {\\n    " + nsLine + "\\n}\\n";
                 Debug.Log("[ZeyWinActions] Gradle cleanup: appended namespace " + nsLine);
             }
             File.WriteAllText(gradlePath, gradleText);
