@@ -374,7 +374,7 @@ public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProje
 
     public void OnPostGenerateGradleAndroidProject(string projectPath)
     {
-        var androidLibDir = Path.Combine(projectPath, "unityLibrary", "GoogleMobileAdsPlugin.androidlib");
+        var androidLibDir = Path.Combine(projectPath, "GoogleMobileAdsPlugin.androidlib");
         if (!Directory.Exists(androidLibDir))
         {
             Debug.Log("[ZeyWinActions] Gradle cleanup: androidlib not found at " + androidLibDir);
