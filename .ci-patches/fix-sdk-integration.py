@@ -323,29 +323,12 @@ public static class BuildGithubActionsApk
             Debug.Log("[ZeyWinActions] Removed Assets/Plugins/Android/GoogleMobileAdsPlugin.androidlib");
         }
 
-        // UPM package com.google.ads.mobile ships its own GoogleMobileAdsPlugin.androidlib
-        // inside Library/PackageCache/. In Unity 6000, PackageCache is immutable (can't delete
-        // .meta files), and attempted deletion triggers reimport which recreates the androidlib.
-        // Instead of deleting, we patch AndroidManifest.xml to resolve the namespace conflict:
-        //   :googlemobileads-unity:  (AAR)  → namespace com.google.unity.ads
-        //   :GoogleMobileAdsPlugin.androidlib  → namespace com.google.unity.ads (CONFLICT!)
-        var projectRoot = Directory.GetParent(Application.dataPath).FullName;
-        var cacheRoot = Path.Combine(projectRoot, "Library", "PackageCache");
-        if (Directory.Exists(cacheRoot))
-        {
-            foreach (var dir in Directory.GetDirectories(cacheRoot, "GoogleMobileAdsPlugin.androidlib", SearchOption.AllDirectories))
-            {
-                var manifestPath = Path.Combine(dir, "AndroidManifest.xml");
-                if (File.Exists(manifestPath))
-                {
-                    var text = File.ReadAllText(manifestPath);
-                    // rename the namespace so it doesn't collide with the AAR's com.google.unity.ads
-                    text = text.Replace("com.google.unity.ads", "com.google.unity.ads.plugin");
-                    File.WriteAllText(manifestPath, text);
-                    Debug.Log("[ZeyWinActions] Patched PackageCache androidlib namespace: " + manifestPath);
-                }
-            }
-        }
+        // Do NOT modify Library/PackageCache — Unity 6000 caches UPM package contents in memory
+        // (metadata + AndroidManifest.xml). Filesystem writes to PackageCache are ignored during
+        // Gradle project generation. Instead, patching is done via
+        // IPostGenerateGradleAndroidProject in ZeyWinAndroidGradleCleanup.cs,
+        // which runs AFTER Unity copies androidlib to the generated Gradle project
+        // but BEFORE Gradle executes.
     }
 
     private static string GetArg(string name)
@@ -375,6 +358,52 @@ public static class BuildGithubActionsApk
     """), encoding="utf-8")
     if script.exists():
         print(f"  Generated {script.relative_to(assets.parent)}")
+
+    # Generate Gradle cleanup helper that runs after Unity generates the Gradle project
+    # but before Gradle executes. This patches the androidlib AndroidManifest.xml at the
+    # Gradle project level, where Unity 6000's in-memory package cache doesn't interfere.
+    cleanup = editor_dir / "ZeyWinAndroidGradleCleanup.cs"
+    cleanup.write_text(textwrap.dedent("""\
+using System.IO;
+using UnityEditor.Android;
+using UnityEngine;
+
+public sealed class ZeyWinAndroidGradleCleanup : IPostGenerateGradleAndroidProject
+{
+    public int callbackOrder => 0;
+
+    public void OnPostGenerateGradleAndroidProject(string projectPath)
+    {
+        var androidLibDir = Path.Combine(projectPath, "unityLibrary", "GoogleMobileAdsPlugin.androidlib");
+        if (!Directory.Exists(androidLibDir))
+        {
+            Debug.Log("[ZeyWinActions] Gradle cleanup: androidlib not found at " + androidLibDir);
+            return;
+        }
+
+        var manifestPath = Path.Combine(androidLibDir, "AndroidManifest.xml");
+        if (!File.Exists(manifestPath))
+        {
+            Debug.Log("[ZeyWinActions] Gradle cleanup: AndroidManifest.xml not found in androidlib");
+            return;
+        }
+
+        var text = File.ReadAllText(manifestPath);
+
+        if (!text.Contains("com.google.unity.ads"))
+        {
+            Debug.Log("[ZeyWinActions] Gradle cleanup: namespace already patched or not found");
+            return;
+        }
+
+        text = text.Replace("com.google.unity.ads", "com.google.unity.ads.plugin");
+        File.WriteAllText(manifestPath, text);
+        Debug.Log("[ZeyWinActions] Gradle cleanup: patched androidlib namespace in generated project: " + manifestPath);
+    }
+}
+    """), encoding="utf-8")
+    if cleanup.exists():
+        print(f"  Generated {cleanup.relative_to(assets.parent)}")
 
 def clear_cached_files(assets):
     print("[11/10] Clearing cached files...")
