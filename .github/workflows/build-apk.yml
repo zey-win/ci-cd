@@ -1,12 +1,6 @@
 name: Build Android Play Release
-run-name: 'Android: ${{ inputs.app_name || ''push'' }} / ${{ inputs.package_name || ''auto'' }} / ${{ inputs.build_format || ''apk'' }} / ${{ inputs.builder_request_id || github.run_id }}'
+run-name: 'Android: ${{ inputs.app_name }} / ${{ inputs.package_name }} / ${{ inputs.build_format }} / ${{ inputs.builder_request_id || github.run_id }}'
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.ci-patches/**'
-      - '.github/workflows/build-apk.yml'
-      - '.github/workflows/play-release-dispatch.yml'
   workflow_dispatch:
     inputs:
       builder_request_id:
