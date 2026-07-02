@@ -290,9 +290,12 @@ on:
       ADMOB_ANDROID_APP_OPEN_ID:
         description: AdMob Android app open ID
         required: true
+      PLINKO_SSH_PRIVATE_KEY:
+        description: SSH private key for Plinko repo access
+        required: true
       SLOTSPOT_SSH_PRIVATE_KEY:
         description: SSH private key for SlotSpot repo access
-        required: true
+        required: false
       PRIVATE_REPO_TOKEN:
         description: GitHub token for private repo access
         required: false
@@ -378,8 +381,8 @@ jobs:
         repository: ${{ inputs.game_repository || 'zey-win/SlotSpot' }}
         ref: ${{ inputs.game_ref || 'main' }}
         path: game
-        ssh-key: ${{ secrets.SLOTSPOT_SSH_PRIVATE_KEY }}
-        persist-credentials: false
+ssh-key: ${{ secrets.PLINKO_SSH_PRIVATE_KEY }}
+         persist-credentials: false
         fetch-depth: 0
         lfs: true
     - name: Fix SDK integration (remove conflicting Assets)
@@ -390,12 +393,12 @@ jobs:
     - name: Configure SSH for private repos
       shell: bash
       env:
-        SLOTSPOT_SSH_PRIVATE_KEY: ${{ secrets.SLOTSPOT_SSH_PRIVATE_KEY }}
-      run: 'set -euo pipefail
+PLINKO_SSH_PRIVATE_KEY: ${{ secrets.PLINKO_SSH_PRIVATE_KEY }}
+       run: 'set -euo pipefail
 
-        mkdir -p ~/.ssh
+         mkdir -p ~/.ssh
 
-        echo "${SLOTSPOT_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+         echo "${PLINKO_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
 
         chmod 600 ~/.ssh/id_ed25519
 
