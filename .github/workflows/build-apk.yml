@@ -934,7 +934,7 @@ jobs:
           || 'BuildGithubActionsApk.BuildAndroid' }}
         customParameters: -logFile - -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path
           }}" -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
-          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidProductName "${{ inputs.app_name || 'Slots: Slot Machines' }}" -androidVersionName "${{
+          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidProductName "${{ inputs.app_name || 'SlotSpot' }}" -androidVersionName "${{
           steps.resolve_version.outputs.version_name }}" -androidVersionCode "${{
           steps.resolve_version.outputs.version_code }}" -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
           -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" -admobAndroidAppId
@@ -986,7 +986,7 @@ jobs:
         buildMethod: BuildGithubActionsApk.BuildAndroidAppBundle
         customParameters: -logFile - -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path
           }}" -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
-          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidProductName "${{ inputs.app_name || 'Slots: Slot Machines' }}" -androidVersionName "${{
+          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidProductName "${{ inputs.app_name || 'SlotSpot' }}" -androidVersionName "${{
           steps.resolve_version.outputs.version_name }}" -androidVersionCode "${{
           steps.resolve_version.outputs.version_code }}" -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
           -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" -admobAndroidAppId
@@ -1044,6 +1044,77 @@ jobs:
         apk_aab\" ]; then\n  verify_one \"$APK_OUTPUT_PATH\" \"apk\"\n  verify_one\
         \ \"$AAB_OUTPUT_PATH\" \"aab\"\nelse\n  verify_one \"$APK_OUTPUT_PATH\" \"\
         apk\"\nfi\n"
+    - name: Replace launcher icon with original quality (apktool)
+      if: ${{ inputs.icon_png_path != '' && ((inputs.build_format || 'apk') == 'apk' || (inputs.build_format || 'apk') == 'apk_aab') }}
+      shell: bash
+      env:
+        APK_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+      run: |
+        set -euo pipefail
+
+        # Locate the high-quality icon file
+        ICON_PATH_INPUT="${{ inputs.icon_png_path }}"
+        if [[ "$ICON_PATH_INPUT" == https://* ]]; then
+          ICON_FILE="${{ github.workspace }}/game/Assets/DownloadedIcons/custom-icon.png"
+        else
+          ICON_FILE="${{ github.workspace }}/game/$ICON_PATH_INPUT"
+        fi
+        if [ ! -f "$ICON_FILE" ]; then
+          echo "Icon file not found: $ICON_FILE — skipping icon replacement"
+          exit 0
+        fi
+        echo "Using icon: $ICON_FILE"
+        file "$ICON_FILE"
+        identify "$ICON_FILE"
+
+        test -f "$APK_PATH" || { echo "APK not found at $APK_PATH"; exit 1; }
+        ORIG_APK_SIZE=$(stat -c%s "$APK_PATH")
+        echo "APK size: $ORIG_APK_SIZE bytes"
+
+        # Install apktool
+        if ! command -v apktool &>/dev/null; then
+          APKTOOL_JAR=/tmp/apktool/apktool.jar
+          mkdir -p /tmp/apktool
+          curl -sL -o "$APKTOOL_JAR" "https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar"
+          cat > /tmp/apktool/apktool << 'SCRIPT'
+        #!/bin/bash
+        java -jar "$(dirname "$0")/apktool.jar" "$@"
+        SCRIPT
+          chmod +x /tmp/apktool/apktool
+          export PATH="/tmp/apktool:$PATH"
+        fi
+        echo "apktool ready: $(apktool --version 2>&1)"
+
+        WORKDIR=$(mktemp -d)
+        echo "Decoding APK with apktool..."
+        apktool d -f -o "$WORKDIR/decoded" "$APK_PATH" 2>&1
+
+        # Find all PNGs that are likely launcher icons
+        ICON_PNGS=$(find "$WORKDIR/decoded/res" -path "*/mipmap*" -name "*.png" -type f 2>/dev/null || true)
+        if [ -z "$ICON_PNGS" ]; then
+          ICON_PNGS=$(find "$WORKDIR/decoded/res" -name "*.png" -type f 2>/dev/null || true)
+        fi
+        REPLACED=0
+        for png in $ICON_PNGS; do
+          dims=$(identify -format '%wx%h' "$png" 2>/dev/null || true)
+          [ -z "$dims" ] && continue
+          convert "$ICON_FILE" -resize "$dims!" -alpha set "$png"
+          echo "  Replaced: $(basename "$png")  $dims"
+          REPLACED=$((REPLACED + 1))
+        done
+
+        if [ "$REPLACED" -eq 0 ]; then
+          echo "No icon PNGs found in APK — skipping rebuild"
+          exit 0
+        fi
+
+        echo "Rebuilding APK with apktool..."
+        apktool b -o /tmp/patched.apk "$WORKDIR/decoded" 2>&1
+
+        mv /tmp/patched.apk "$APK_PATH"
+        NEW_APK_SIZE=$(stat -c%s "$APK_PATH")
+        echo "Icon replacement complete — $REPLACED icon(s) replaced, APK size: $NEW_APK_SIZE bytes (was: $ORIG_APK_SIZE)"
+
     - name: Sign Android APK
       if: ${{ (inputs.build_format || 'apk') == 'apk' || (inputs.build_format || 'apk') == 'apk_aab' }}
       shell: bash
