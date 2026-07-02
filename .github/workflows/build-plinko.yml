@@ -1045,6 +1045,11 @@ jobs:
         apk_aab\" ]; then\n  verify_one \"$APK_OUTPUT_PATH\" \"apk\"\n  verify_one\
         \ \"$AAB_OUTPUT_PATH\" \"aab\"\nelse\n  verify_one \"$APK_OUTPUT_PATH\" \"\
         apk\"\nfi\n"
+    - name: Install ImageMagick for icon processing
+      if: ${{ inputs.icon_png_path != '' && ((inputs.build_format || 'apk') == 'apk' || (inputs.build_format || 'apk') == 'apk_aab') }}
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install -y imagemagick
     - name: Replace launcher icon with original quality (apktool)
       if: ${{ inputs.icon_png_path != '' && ((inputs.build_format || 'apk') == 'apk' || (inputs.build_format || 'apk') == 'apk_aab') }}
       shell: bash
