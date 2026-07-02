@@ -70,7 +70,7 @@ on:
           - 'true'
           - 'false'
       signing_profile:
-        description: 'playmax, slotspot, or playsocialgames'
+        description: 'playsocialgames, playmax, or slotspot'
         required: false
         default: playsocialgames
         type: choice
@@ -174,11 +174,10 @@ on:
         description: Builder backend request ID
         required: false
         type: string
-zeywin_api_key:
-        description: 'ZeyWin API key for this package'
+      zeywin_api_key:
+        description: ZeyWin API key for this package
         required: false
         type: string
-        default: zw_5deabf1b2a9e7b450d9e9b5260a31374dcb6e62d20053c4b
       version_mode:
         description: Version mode (auto/manual)
         required: true
