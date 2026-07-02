@@ -70,7 +70,7 @@ on:
           - 'true'
           - 'false'
       signing_profile:
-        description: 'playsocialgames, playmax, or slotspot'
+        description: 'playmax, slotspot, or playsocialgames'
         required: false
         default: playsocialgames
         type: choice
@@ -116,22 +116,18 @@ on:
         description: 'AdMob Android app ID'
         required: false
         type: string
-        default: ca-app-pub-6988952582458184~6613433438
       admob_android_banner_id:
         description: 'AdMob banner ID'
         required: false
         type: string
-        default: ca-app-pub-6988952582458184/4530693980
       admob_android_interstitial_id:
         description: 'AdMob interstitial ID'
         required: false
         type: string
-        default: ca-app-pub-6988952582458184/9211185343
       admob_android_rewarded_id:
         description: 'AdMob rewarded ID'
         required: false
         type: string
-        default: ca-app-pub-6988952582458184/7061184633
       admob_android_rewarded_interstitial_id:
         description: 'AdMob rewarded interstitial ID'
         required: false
@@ -293,9 +289,6 @@ on:
       PLINKO_SSH_PRIVATE_KEY:
         description: SSH private key for Plinko repo access
         required: true
-      SLOTSPOT_SSH_PRIVATE_KEY:
-        description: SSH private key for SlotSpot repo access
-        required: false
       PRIVATE_REPO_TOKEN:
         description: GitHub token for private repo access
         required: false
@@ -381,8 +374,8 @@ jobs:
         repository: ${{ inputs.game_repository || 'zey-win/SlotSpot' }}
         ref: ${{ inputs.game_ref || 'main' }}
         path: game
-ssh-key: ${{ secrets.PLINKO_SSH_PRIVATE_KEY }}
-         persist-credentials: false
+        ssh-key: ${{ secrets.PLINKO_SSH_PRIVATE_KEY }}
+        persist-credentials: false
         fetch-depth: 0
         lfs: true
     - name: Fix SDK integration (remove conflicting Assets)
@@ -393,12 +386,12 @@ ssh-key: ${{ secrets.PLINKO_SSH_PRIVATE_KEY }}
     - name: Configure SSH for private repos
       shell: bash
       env:
-PLINKO_SSH_PRIVATE_KEY: ${{ secrets.PLINKO_SSH_PRIVATE_KEY }}
-       run: 'set -euo pipefail
+        PLINKO_SSH_PRIVATE_KEY: ${{ secrets.PLINKO_SSH_PRIVATE_KEY }}
+      run: 'set -euo pipefail
 
-         mkdir -p ~/.ssh
+        mkdir -p ~/.ssh
 
-         echo "${PLINKO_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+        echo "${SLOTSPOT_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
 
         chmod 600 ~/.ssh/id_ed25519
 
