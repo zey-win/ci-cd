@@ -1085,6 +1085,7 @@ jobs:
                 "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/.ci-patches/fix-sdk-integration.py" \
                 > "$SCRIPT" && echo "✅ Recovered via GitHub API" || {
                 echo "❌ Cannot recover script – using built-in inline fallback"
+                echo "Using built-in inline SDK fixer script"
                 cat > "$SCRIPT" << 'EOF'
           #!/usr/bin/env python3
           import sys, pathlib, shutil, json, re, textwrap
@@ -1094,41 +1095,36 @@ jobs:
               if not assets.exists(): print(f"❌ Assets not found: {assets}"); sys.exit(1)
               if not manifest_path.exists(): print(f"❌ manifest.json not found: {manifest_path}"); sys.exit(1)
               remove_gma_editor_stubs(assets); add_upm_packages(manifest_path); remove_conflicting_asset_sdks(assets, manifest_path)
-              remove_obsolete_packages(manifest_path); fix_urp_pixelperfect(assets, manifest_path)
-              remove_sdk_examples(assets); fix_dll_metas(assets); fix_dotween_modules(assets)
-              fix_tmp_fonts(assets); clear_cached_files(assets)
+              remove_obsolete_packages(manifest_path)
+              remove_sdk_examples(assets); fix_tmp_fonts(assets); clear_cached_files(assets)
           def remove_gma_editor_stubs(a):
               d = a / "GoogleMobileAds" / "Editor"
               if d.exists(): shutil.rmtree(d); print("  ✅ Removed GoogleMobileAds/Editor"); (pathlib.Path(str(d)+".meta")).unlink(missing_ok=True)
-           def add_upm_packages(mp):
-               m = json.loads(mp.read_text(encoding="utf-8"))
-               regs = m.setdefault("scopedRegistries",[])
-               if not any(r.get("url")=="https://package.openupm.com" for r in regs):
-                   regs.append({"name":"OpenUPM","url":"https://package.openupm.com","scopes":["com.google.ads.mobile","com.google.external-dependency-manager"]})
-                   print("  ✅ Added OpenUPM scoped registry")
-               deps = m.setdefault("dependencies",{})
-               for p,v in {"com.google.ads.mobile":"11.2.0","com.google.external-dependency-manager":"1.2.187","com.unity.textmeshpro":"3.0.9"}.items():
-                   if p not in deps: deps[p]=v; print(f"  ✅ Added UPM {p}@{v}")
-               mp.write_text(json.dumps(m,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
-           def remove_obsolete_packages(mp):
-               content = mp.read_text(encoding="utf-8")
-               obsolete = ["com.unity.2d.pixel-perfect","com.unity.2d.aseprite","com.unity.2d.tilemap.extras","com.unity.modules.adaptiveperformance","com.unity.modules.vectorgraphics"]
-               modified = False
-               for pkg in obsolete:
-                   if f'"{pkg}"' in content:
-                       content = re.sub(rf'^\s*"{pkg}"\s*:\s*"[^"]+",?\s*$\n?', '', content, flags=re.MULTILINE)
-                       print(f"  ✅ Removed obsolete package {pkg}")
-                       modified = True
-               if modified:
-                   mp.write_text(content, encoding="utf-8")
-           def fix_urp_pixelperfect(a, mp):
-               content = mp.read_text(encoding="utf-8")
-               pkg = "com.unity.2d.pixel-perfect"
-               if f'"{pkg}"' in content:
-                   content = re.sub(rf'^\s*"{pkg}"\s*:\s*"[^"]+",?\s*$\n?', '', content, flags=re.MULTILINE)
-                   mp.write_text(content, encoding="utf-8")
-                   print(f"  ✅ Removed {pkg} from manifest (incompatible with Unity 6)")
-           REMOVE_IF_UPM=[("com.google.ads.mobile","GoogleMobileAds"),("com.google.external-dependency-manager","ExternalDependencyManager")]
+          def add_upm_packages(mp):
+              try:
+                  m = json.loads(mp.read_text(encoding="utf-8"))
+                  regs = m.setdefault("scopedRegistries",[])
+                  if not any(r.get("url")=="https://package.openupm.com" for r in regs):
+                      regs.append({"name":"OpenUPM","url":"https://package.openupm.com","scopes":["com.google.ads.mobile","com.google.external-dependency-manager"]})
+                      print("  ✅ Added OpenUPM scoped registry")
+                  deps = m.setdefault("dependencies",{})
+                  for p,v in {"com.google.ads.mobile":"11.2.0","com.google.external-dependency-manager":"1.2.187","com.unity.textmeshpro":"3.0.9"}.items():
+                      if p not in deps: deps[p]=v; print(f"  ✅ Added UPM {p}@{v}")
+                  mp.write_text(json.dumps(m,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+              except Exception as e: print(f"Error in add_upm_packages: {e}")
+          def remove_obsolete_packages(mp):
+              try:
+                  m = json.loads(mp.read_text(encoding="utf-8"))
+                  deps = m.get("dependencies", {})
+                  obsolete = ["com.unity.2d.pixel-perfect","com.unity.2d.aseprite","com.unity.2d.tilemap.extras","com.unity.modules.adaptiveperformance","com.unity.modules.vectorgraphics"]
+                  modified = False
+                  for pkg in obsolete:
+                      if pkg in deps: del deps[pkg]; print(f"  ✅ Removed obsolete package {pkg}"); modified = True
+                  for pkg in list(deps.keys()):
+                      if pkg.startswith("com.google.firebase."): del deps[pkg]; print(f"  ✅ Removed Firebase package {pkg}"); modified = True
+                  if modified: mp.write_text(json.dumps(m, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+              except Exception as e: print(f"Error in remove_obsolete_packages: {e}")
+          REMOVE_IF_UPM=[("com.google.ads.mobile","GoogleMobileAds"),("com.google.external-dependency-manager","ExternalDependencyManager")]
           def remove_conflicting_asset_sdks(a,mp):
               try: deps=json.loads(mp.read_text(encoding="utf-8")).get("dependencies",{})
               except: deps={}
@@ -1138,44 +1134,6 @@ jobs:
           def remove_sdk_examples(a):
               for r in EXAMPLE_DIRS:
                   if (d:=a/r).exists(): shutil.rmtree(d); print(f"  ✅ Removed Assets/{r}")
-          def fix_dll_metas(a):
-              ANY_META=textwrap.dedent("""\
-              fileFormatVersion: 2
-              guid: {guid}
-              PluginImporter:
-                externalObjects: {}
-                serializedVersion: 2
-                iconMap: {}
-                executionOrder: {}
-                defineConstraints: []
-                isPreloaded: 0
-                isOverridable: 0
-                isExplicitlyReferenced: 0
-                validateReferences: 1
-                platformData:
-                - first: {'':Any}
-                  second: {enabled:1,settings:{Exclude Android:0,Exclude Editor:0,Exclude Linux64:1,Exclude OSXUniversal:1,Exclude Win:1,Exclude Win64:1,Exclude iOS:1}}
-                - first: {Any: Editor}
-                  second: {enabled:1,settings:{CPU:AnyCPU,DefaultValueInitialized:true,OS:Any}}
-                userData:
-                assetBundleName:
-                assetBundleVariant:
-              """)
-              fixed=0
-              for meta in a.rglob("*.dll.meta"):
-                  try: text=meta.read_text(encoding="utf-8",errors="replace")
-                  except: continue
-                  if "DefaultImporter" not in text: continue
-                  g=re.search(r'guid: ([a-f0-9]+)',text); guid=g.group(1) if g else "0"*32
-                  meta.write_text(ANY_META.format(guid=guid),encoding="utf-8"); fixed+=1
-              if fixed: print(f"  ✅ Fixed {fixed} .dll.meta files")
-          def fix_dotween_modules(a):
-              removed=0
-              for md in a.rglob("DOTween/Modules"):
-                  if not md.is_dir(): continue
-                  for asmdef in md.rglob("*.asmdef"):
-                      asmdef.unlink(); (pathlib.Path(str(asmdef)+".meta")).unlink(missing_ok=True); removed+=1
-              if removed: print(f"  ✅ Removed {removed} asmdef in DOTween/Modules")
           def fix_tmp_fonts(a):
               fixed=0
               for af in a.rglob("*.asset"):
@@ -1200,6 +1158,11 @@ jobs:
           echo "Running comprehensive SDK integration fixer..."
           python3 "$SCRIPT" "game/Assets" "game/Packages/manifest.json"
 
+          echo "Patching Mobile Notifications API for Unity 6..."
+          find game/Assets -name "*.cs" -type f -exec sed -i 's/AndroidNotificationCenter.UsingExactScheduling/true/g' {} +
+          
+          echo "Patching UniWebView for Unity 6 API deprecations..."
+          find game/Assets -name "WebViewManager.cs" -type f -exec sed -i 's/OnPageErrorReceived/OnLoadingErrorReceived/g' {} +
       - name: Remove TextMesh Pro Examples (Unity 6 compatibility)
         shell: bash
         run: |
