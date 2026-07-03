@@ -24,6 +24,7 @@ def main():
     remove_duplicate_plugins(assets)
     remove_pixel_perfect_package(manifest_path)
     patch_game_scripts(assets)
+    remove_obsolete_packages(manifest_path)
     generate_build_script(assets)
     clear_cached_files(assets)
     print("\n" + "=" * 70)
@@ -207,6 +208,22 @@ def remove_pixel_perfect_package(manifest_path):
         del deps["com.unity.2d.pixel-perfect"]
         manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print("  Removed com.unity.2d.pixel-perfect (incompatible with Unity 6000)")
+
+def remove_obsolete_packages(manifest_path):
+    print("\n[8.5/10] Removing obsolete Firebase and 2D packages...")
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        deps = manifest.setdefault("dependencies", {})
+        modified = False
+        for pkg in list(deps.keys()):
+            if pkg.startswith("com.google.firebase.") or pkg in ["com.unity.2d.aseprite", "com.unity.2d.tilemap.extras", "com.unity.2d.psdimporter", "com.unity.2d.pixel-perfect"]:
+                del deps[pkg]
+                print(f"  Removed obsolete package {pkg}")
+                modified = True
+        if modified:
+            manifest_path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    except Exception as e:
+        print(f"  Error modifying manifest: {e}")
 
 def generate_build_script(assets):
     print("\n[10/10] Generating BuildGithubActionsApk build script...")
