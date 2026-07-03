@@ -95,6 +95,22 @@ on:
       admob_android_app_open_id:
         description: AdMob Android app open unit id
         required: false
+      publish_to_google_play:
+        description: Publish to Google Play after build
+        required: false
+        default: 'false'
+      google_play_track:
+        description: Google Play track (internal, alpha, beta, production)
+        required: false
+        default: 'internal'
+      google_play_status:
+        description: Google Play release status (completed, draft, halted, inProgress)
+        required: false
+        default: 'completed'
+      require_google_play_upload:
+        description: Fail workflow if Google Play upload is skipped
+        required: false
+        default: 'false'
   workflow_call:
     inputs:
       builder_request_id:
