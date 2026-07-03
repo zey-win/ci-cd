@@ -1,333 +1,246 @@
 name: Build Android Play Release
-run-name: 'Android: ${{ inputs.app_name }} / ${{ inputs.package_name }} / ${{ inputs.build_format }} / ${{ inputs.builder_request_id || github.run_id }}'
+run-name: "Android: ${{ inputs.app_name }} / ${{ inputs.package_name }} / ${{ inputs.build_format }} / ${{ inputs.builder_request_id || github.run_id }}"
+
 on:
   workflow_dispatch:
     inputs:
       builder_request_id:
-        description: 'Builder backend request ID'
+        description: Android Builder request id
         required: false
-        type: string
+        default: ''
       game_repository:
-        description: 'Private game repository (e.g. zey-win/SlotSpot)'
+        description: Private game repository to checkout
         required: true
-        default: zey-win/SlotSpot
-        type: string
+        default: zey-win/plinko
       game_ref:
-        description: 'Branch, tag or commit'
-        required: false
+        description: Game repository branch, tag, or commit
+        required: true
         default: main
-        type: string
       package_name:
-        description: 'Android package name'
+        description: Android package name for this APK
         required: true
-        default: com.playmaxsolutions.slotspot
-        type: string
+        default: ""
       app_name:
-        description: 'Game display name'
+        description: App display name
         required: true
-        default: 'Slots: Slot Machines'
-        type: string
+        default: Plinko
       icon_png_path:
-        description: 'Path to PNG icon URL or in repo Assets'
+        description: Optional PNG icon URL (https://...) or path inside game repository Assets folder
         required: false
-        type: string
+        default: ''
       zeywin_api_key:
-        description: 'ZeyWin API key'
+        description: ZeyWin API key for this package
         required: false
-        type: string
+        default: ''
       version_mode:
-        description: 'auto_next or manual'
-        required: false
+        description: auto_next = easiest; manual = use the two version fields below
+        required: true
         default: auto_next
         type: choice
         options:
           - auto_next
           - manual
       version_name:
-        description: 'Manual version name'
+        description: Manual only. For old rebuilds you may enter 1, for normal releases see builds/index.md.
         required: false
-        type: string
+        default: ''
       version_code:
-        description: 'Manual version code'
+        description: Manual only. Positive integer. For old rebuilds you may enter 1.
         required: false
-        type: string
+        default: ''
       build_format:
-        description: 'apk, aab, or apk_aab'
-        required: false
-        default: apk
+        description: apk, aab, or apk_aab
+        required: true
+        default: apk_aab
         type: choice
         options:
           - apk
           - aab
           - apk_aab
       fast_build:
-        description: 'Fast build mode'
-        required: false
-        default: 'true'
+        description: Use cache and Android ARM64-only fast mode
+        required: true
+        default: 'false'
         type: choice
         options:
-          - 'true'
           - 'false'
+          - 'true'
       signing_profile:
-        description: 'playmax, slotspot, or playsocialgames'
-        required: false
-        default: slotspot
+        description: Android signing profile
+        required: true
+        default: playmax
         type: choice
         options:
           - playmax
           - slotspot
           - playsocialgames
-      publish_to_google_play:
-        description: 'Upload AAB to Google Play'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
-      google_play_track:
-        description: 'Google Play track'
-        required: false
-        default: production
-        type: choice
-        options:
-          - internal
-          - alpha
-          - beta
-          - production
-      google_play_status:
-        description: 'draft or completed'
-        required: false
-        default: draft
-        type: choice
-        options:
-          - draft
-          - completed
-      require_google_play_upload:
-        description: 'Fail if GP upload fails'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
       admob_android_app_id:
-        description: 'AdMob Android app ID'
+        description: AdMob Android app id
         required: false
-        type: string
       admob_android_banner_id:
-        description: 'AdMob banner ID'
+        description: AdMob Android banner unit id
         required: false
-        type: string
       admob_android_interstitial_id:
-        description: 'AdMob interstitial ID'
+        description: AdMob Android interstitial unit id
         required: false
-        type: string
       admob_android_rewarded_id:
-        description: 'AdMob rewarded ID'
+        description: AdMob Android rewarded unit id
         required: false
-        type: string
       admob_android_rewarded_interstitial_id:
-        description: 'AdMob rewarded interstitial ID'
+        description: AdMob Android rewarded interstitial unit id
         required: false
-        type: string
       admob_android_native_id:
-        description: 'AdMob native ID'
+        description: AdMob Android native unit id
         required: false
-        type: string
       admob_android_app_open_id:
-        description: 'AdMob app open ID'
+        description: AdMob Android app open unit id
         required: false
-        type: string
-      firebase_json_base64:
-        description: 'Base64 google-services.json'
-        required: false
-        type: string
   workflow_call:
     inputs:
+      builder_request_id:
+        description: Android Builder request id
+        required: false
+        default: ''
+        type: string
       game_repository:
-        description: Private game repository
+        description: Private game repository to checkout
         required: true
         type: string
       game_ref:
-        description: Branch, tag or commit of the game
-        required: true
+        description: Game repository branch, tag, or commit
+        required: false
+        default: main
         type: string
       package_name:
         description: Android package name
         required: true
         type: string
       app_name:
-        description: Game display name
+        description: App display name
         required: true
         type: string
       icon_png_path:
-        description: Path to PNG icon in Unity repo
+        description: Optional PNG icon URL (https://...) or path inside game repository Assets folder
         required: false
-        type: string
-      builder_request_id:
-        description: Builder backend request ID
-        required: false
+        default: ''
         type: string
       zeywin_api_key:
         description: ZeyWin API key for this package
         required: false
+        default: ''
         type: string
       version_mode:
-        description: Version mode (auto/manual)
-        required: true
+        description: auto_next or manual
+        required: false
+        default: auto_next
         type: string
       version_name:
-        description: Version name
+        description: Manual version name
         required: false
+        default: ''
         type: string
       version_code:
-        description: Version code
+        description: Manual version code
         required: false
+        default: ''
         type: string
       build_format:
-        description: APK test, AAB release or APK+AAB
-        required: true
+        description: apk, aab, or apk_aab
+        required: false
+        default: apk_aab
         type: string
       fast_build:
-        description: Fast build mode
-        required: true
+        description: Use cache and Android ARM64-only fast mode
+        required: false
+        default: 'false'
         type: string
       signing_profile:
-        description: Android signing profile
-        required: true
-        type: string
-      publish_to_google_play:
-        description: Publish to Google Play
+        description: "Android signing profile: playmax, slotspot, or playsocialgames"
         required: false
-        type: string
-      google_play_track:
-        description: Google Play track
-        required: false
-        type: string
-      google_play_status:
-        description: Google Play release status
-        required: false
-        type: string
-      require_google_play_upload:
-        description: Require Google Play upload
-        required: false
+        default: playmax
         type: string
       admob_android_app_id:
-        description: AdMob Android app ID
         required: false
+        default: ''
         type: string
       admob_android_banner_id:
-        description: AdMob banner ID
         required: false
+        default: ''
         type: string
       admob_android_interstitial_id:
-        description: AdMob interstitial ID
         required: false
+        default: ''
         type: string
       admob_android_rewarded_id:
-        description: AdMob rewarded ID
         required: false
+        default: ''
         type: string
       admob_android_rewarded_interstitial_id:
-        description: AdMob rewarded interstitial ID
         required: false
+        default: ''
         type: string
       admob_android_native_id:
-        description: AdMob native ID
         required: false
+        default: ''
         type: string
       admob_android_app_open_id:
-        description: AdMob app open ID
         required: false
-        type: string
-      firebase_json_base64:
-        description: Base64 Google Services JSON
-        required: false
+        default: ''
         type: string
     secrets:
-      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON:
-        description: Google Play service account JSON key
-        required: true
-      ZEYWIN_API_KEY:
-        description: ZeyWin API key
-        required: true
-      ANDROID_KEYSTORE_BASE64:
-        description: Android keystore base64
-        required: true
-      ANDROID_KEYSTORE_PASSWORD:
-        description: Android keystore password
-        required: true
-      ANDROID_KEY_ALIAS:
-        description: Android key alias
-        required: true
-      ANDROID_KEY_PASSWORD:
-        description: Android key password
-        required: true
-      ADMOB_ANDROID_APP_ID:
-        description: AdMob Android app ID
-        required: true
-      ADMOB_ANDROID_BANNER_ID:
-        description: AdMob Android banner ID
-        required: true
-      ADMOB_ANDROID_INTERSTITIAL_ID:
-        description: AdMob Android interstitial ID
-        required: true
-      ADMOB_ANDROID_REWARDED_ID:
-        description: AdMob Android rewarded ID
-        required: true
-      ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID:
-        description: AdMob Android rewarded interstitial ID
-        required: true
-      ADMOB_ANDROID_NATIVE_ID:
-        description: AdMob Android native ID
-        required: true
-      ADMOB_ANDROID_APP_OPEN_ID:
-        description: AdMob Android app open ID
-        required: true
-      SLOTSPOT_SSH_PRIVATE_KEY:
-        description: SSH private key for SlotSpot repo access
-        required: true
       PRIVATE_REPO_TOKEN:
-        description: GitHub token for private repo access
-        required: false
+        required: true
       UNITY_LICENSE:
-        description: Unity license key
         required: true
       UNITY_EMAIL:
-        description: Unity email
         required: true
       UNITY_PASSWORD:
-        description: Unity password
+        required: true
+      ANDROID_KEYSTORE_BASE64:
+        required: true
+      ANDROID_KEYSTORE_PASS:
+        required: true
+      ANDROID_KEYALIAS_NAME:
+        required: true
+      ANDROID_KEYALIAS_PASS:
         required: true
       PLAYSOCIALGAMES_ANDROID_KEYSTORE_BASE64:
-        description: Playsocialgames keystore base64
         required: false
       PLAYSOCIALGAMES_ANDROID_KEYSTORE_PASS:
-        description: Playsocialgames keystore password
         required: false
       PLAYSOCIALGAMES_ANDROID_KEYALIAS_NAME:
-        description: Playsocialgames key alias
         required: false
       PLAYSOCIALGAMES_ANDROID_KEYALIAS_PASS:
-        description: Playsocialgames key password
         required: false
       SLOTSPOT_ANDROID_KEYSTORE_BASE64:
-        description: SlotSpot keystore base64
         required: false
       SLOTSPOT_ANDROID_KEYSTORE_PASS:
-        description: SlotSpot keystore password
         required: false
       SLOTSPOT_ANDROID_KEYALIAS_NAME:
-        description: SlotSpot key alias
         required: false
       SLOTSPOT_ANDROID_KEYALIAS_PASS:
-        description: SlotSpot key password
         required: false
+      ZEYWIN_API_KEY:
+        required: false
+      ADMOB_ANDROID_APP_ID:
+        required: false
+      ADMOB_ANDROID_BANNER_ID:
+        required: false
+      ADMOB_ANDROID_INTERSTITIAL_ID:
+        required: false
+      ADMOB_ANDROID_REWARDED_ID:
+        required: false
+      ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID:
+        required: false
+      ADMOB_ANDROID_NATIVE_ID:
+        required: false
+      ADMOB_ANDROID_APP_OPEN_ID:
+        required: false
+
 concurrency:
-  group: apk-build-${{ github.ref }}-${{ inputs.package_name || 'unknown-package'
-    }}
+  group: apk-build-${{ github.ref }}-${{ inputs.package_name || 'unknown-package' }}
   cancel-in-progress: false
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -335,989 +248,1564 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Validate inputs and secrets
-      shell: bash
-      env:
-        PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-        APP_NAME: "${{ inputs.app_name || 'Slots: Slot Machines' }}"
-        VERSION_NAME: ${{ inputs.version_name }}
-        VERSION_CODE: ${{ inputs.version_code }}
-        GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
-          }}
-      run: "set -euo pipefail\necho \"::add-mask::${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY\
-        \ }}\"\necho \"::add-mask::${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID\
-        \ }}\"\necho \"::add-mask::${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID\
-        \ }}\"\necho \"::add-mask::${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID\
-        \ }}\"\necho \"::add-mask::${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID\
-        \ }}\"\necho \"::add-mask::${{ inputs.admob_android_rewarded_interstitial_id\
-        \ || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}\"\necho \"::add-mask::${{\
-        \ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}\"\n\
-        echo \"::add-mask::${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID\
-        \ }}\"\ntest -n \"$PACKAGE_NAME\" || { echo \"package_name is required.\"\
-        ; exit 1; }\ntest -n \"$APP_NAME\" || { echo \"app_name is required.\"; exit\
-        \ 1; }\ntest -n \"${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}\"\
-        \ || { echo \"zeywin_api_key input or ZEYWIN_API_KEY secret is required.\"\
-        ; exit 1; }\nif [ \"${{ inputs.publish_to_google_play }}\" = \"true\" ]; then\n\
-        \  [[ \"${{ inputs.build_format }}\" == \"aab\" || \"${{ inputs.build_format\
-        \ }}\" == \"apk_aab\" ]] || { echo \"Google Play publishing requires build_format=aab\
-        \ or apk_aab.\"; exit 1; }\n  test -n \"$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON\"\
-        \ || { echo \"Missing GOOGLE_PLAY_SERVICE_ACCOUNT_JSON secret for Google Play\
-        \ publishing.\"; exit 1; }\nfi\n"
-    - name: Checkout private game project (SSH)
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ inputs.game_repository || 'zey-win/SlotSpot' }}
-        ref: ${{ inputs.game_ref || 'main' }}
-        path: game
-        ssh-key: ${{ secrets.SLOTSPOT_SSH_PRIVATE_KEY }}
-        persist-credentials: false
-        fetch-depth: 0
-        lfs: true
-    - name: Fix SDK integration (remove conflicting Assets)
-      shell: bash
-      run: |
-        set -euo pipefail
-        python3 .ci-patches/fix-sdk-integration.py "game/Assets" "game/Packages/manifest.json"
-    - name: Configure SSH for private repos
-      shell: bash
-      env:
-        SLOTSPOT_SSH_PRIVATE_KEY: ${{ secrets.SLOTSPOT_SSH_PRIVATE_KEY }}
-      run: 'set -euo pipefail
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-        mkdir -p ~/.ssh
+      - name: Validate inputs and secrets
+        shell: bash
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          APP_NAME: ${{ inputs.app_name }}
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}"
+          echo "::add-mask::${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}"
+          echo "::add-mask::${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID }}"
+          test -n "$PRIVATE_REPO_TOKEN" || { echo "Missing PRIVATE_REPO_TOKEN secret for private game/SDK checkout."; exit 1; }
+          test -n "$PACKAGE_NAME" || { echo "package_name is required."; exit 1; }
+          test -n "$APP_NAME" || { echo "app_name is required."; exit 1; }
+          test -n "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" || { echo "zeywin_api_key input or ZEYWIN_API_KEY secret is required."; exit 1; }
+          echo "PUBLISH_GOOGLE_PLAY=false" >> "$GITHUB_ENV"
 
-        echo "${SLOTSPOT_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+      - name: Checkout private game project
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.game_repository }}
+          ref: ${{ inputs.game_ref }}
+          path: game
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          persist-credentials: false
+          fetch-depth: 0
+          lfs: false
 
-        chmod 600 ~/.ssh/id_ed25519
+      - name: Download custom icon from static site
+        shell: bash
+        env:
+          ICON_PNG_PATH: ${{ inputs.icon_png_path }}
+        run: |
+          set -euo pipefail
+          
+          # Если icon_png_path начинается с https://, скачиваем иконку
+          if [[ "$ICON_PNG_PATH" == https://* ]]; then
+            echo "🌐 Downloading custom icon from: $ICON_PNG_PATH"
+            mkdir -p game/Assets/DownloadedIcons
+            curl -fsSL "$ICON_PNG_PATH" -o game/Assets/DownloadedIcons/custom-icon.png
+            
+            # Проверяем что файл скачался
+            if [ -f game/Assets/DownloadedIcons/custom-icon.png ]; then
+              file_size=$(stat -c%s "game/Assets/DownloadedIcons/custom-icon.png" 2>/dev/null || stat -f%z "game/Assets/DownloadedIcons/custom-icon.png" 2>/dev/null || echo "0")
+              echo "✅ Icon downloaded successfully ($file_size bytes)"
+              echo "ANDROID_ICON_PNG_PATH=Assets/DownloadedIcons/custom-icon.png" >> "$GITHUB_ENV"
+            else
+              echo "❌ Failed to download icon"
+              exit 1
+            fi
+          elif [ -n "$ICON_PNG_PATH" ]; then
+            # Локальный путь в репозитории - проверяем существование (с экранированием пробелов)
+            if [ -f "game/$ICON_PNG_PATH" ]; then
+              echo "✅ Using icon from game repository: $ICON_PNG_PATH"
+              echo "ANDROID_ICON_PNG_PATH=$ICON_PNG_PATH" >> "$GITHUB_ENV"
+            else
+              echo "⚠️  Icon not found in game repository: $ICON_PNG_PATH"
+              echo "Will use project's default icon"
+            fi
+          else
+            echo "ℹ️  No custom icon specified, using project default"
+          fi
 
-        ssh-keyscan github.com >> ~/.ssh/known_hosts
+      - name: Configure private SDK access
+        shell: bash
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global url."https://x-access-token:${PRIVATE_REPO_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://x-access-token:${PRIVATE_REPO_TOKEN}@github.com/".insteadOf "git@github.com:"
 
-        git config --global url."git@github.com:".insteadOf "https://github.com/"
+      - name: Verify GitHub hosted runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "runner_environment=${{ runner.environment }}"
+          echo "runner_os=${{ runner.os }}"
+          echo "runner_name=${{ runner.name }}"
+          if [ "${{ runner.environment }}" != "github-hosted" ]; then
+            echo "This workflow must run on a GitHub-hosted runner, not on a local self-hosted machine."
+            exit 1
+          fi
 
-        git config --global url."git@github.com:".insteadOf "git://github.com/"'
-    - name: Verify GitHub hosted runner
-      shell: bash
-      run: "set -euo pipefail\necho \"runner_environment=${{ runner.environment }}\"\
-        \necho \"runner_os=${{ runner.os }}\"\necho \"runner_name=${{ runner.name\
-        \ }}\"\nif [ \"${{ runner.environment }}\" != \"github-hosted\" ]; then\n\
-        \  echo \"This workflow must run on a GitHub-hosted runner, not on a local\
-        \ self-hosted machine.\"\n  exit 1\nfi\n"
-    - name: Restore Android keystore
-      shell: bash
-      env:
-        SIGNING_PROFILE: ${{ inputs.signing_profile }}
-        ANDROID_KEYSTORE_BASE64_DEFAULT: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        ANDROID_KEYSTORE_PASS_DEFAULT: ${{ secrets.ANDROID_KEYSTORE_PASS }}
-        ANDROID_KEYALIAS_NAME_DEFAULT: ${{ secrets.ANDROID_KEYALIAS_NAME }}
-        ANDROID_KEYALIAS_PASS_DEFAULT: ${{ secrets.ANDROID_KEYALIAS_PASS }}
-        PLAYSOCIALGAMES_ANDROID_KEYSTORE_BASE64: ${{ secrets.PLAYSOCIALGAMES_ANDROID_KEYSTORE_BASE64
-          }}
-        PLAYSOCIALGAMES_ANDROID_KEYSTORE_PASS: ${{ secrets.PLAYSOCIALGAMES_ANDROID_KEYSTORE_PASS
-          }}
-        PLAYSOCIALGAMES_ANDROID_KEYALIAS_NAME: ${{ secrets.PLAYSOCIALGAMES_ANDROID_KEYALIAS_NAME
-          }}
-        PLAYSOCIALGAMES_ANDROID_KEYALIAS_PASS: ${{ secrets.PLAYSOCIALGAMES_ANDROID_KEYALIAS_PASS
-          }}
-        SLOTSPOT_ANDROID_KEYSTORE_BASE64: ${{ secrets.SLOTSPOT_ANDROID_KEYSTORE_BASE64
-          }}
-        SLOTSPOT_ANDROID_KEYSTORE_PASS: ${{ secrets.SLOTSPOT_ANDROID_KEYSTORE_PASS
-          }}
-        SLOTSPOT_ANDROID_KEYALIAS_NAME: ${{ secrets.SLOTSPOT_ANDROID_KEYALIAS_NAME
-          }}
-        SLOTSPOT_ANDROID_KEYALIAS_PASS: ${{ secrets.SLOTSPOT_ANDROID_KEYALIAS_PASS
-          }}
-      run: "set -euo pipefail\nmkdir -p \"$GITHUB_WORKSPACE/.ci/keystore\"\n\ncase\
-        \ \"$SIGNING_PROFILE\" in\n  playmax|default|'')\n    keystore_base64=\"$ANDROID_KEYSTORE_BASE64_DEFAULT\"\
-        \n    keystore_pass=\"$ANDROID_KEYSTORE_PASS_DEFAULT\"\n    keyalias_name=\"\
-        $ANDROID_KEYALIAS_NAME_DEFAULT\"\n    keyalias_pass=\"$ANDROID_KEYALIAS_PASS_DEFAULT\"\
-        \n    profile_name=\"playmax\"\n    ;;\n  playsocialgames)\n    keystore_base64=\"\
-        $PLAYSOCIALGAMES_ANDROID_KEYSTORE_BASE64\"\n    keystore_pass=\"$PLAYSOCIALGAMES_ANDROID_KEYSTORE_PASS\"\
-        \n    keyalias_name=\"$PLAYSOCIALGAMES_ANDROID_KEYALIAS_NAME\"\n    keyalias_pass=\"\
-        $PLAYSOCIALGAMES_ANDROID_KEYALIAS_PASS\"\n    profile_name=\"playsocialgames\"\
-        \n    ;;\n  slotspot)\n    keystore_base64=\"$SLOTSPOT_ANDROID_KEYSTORE_BASE64\"\
-        \n    keystore_pass=\"$SLOTSPOT_ANDROID_KEYSTORE_PASS\"\n    keyalias_name=\"\
-        $SLOTSPOT_ANDROID_KEYALIAS_NAME\"\n    keyalias_pass=\"$SLOTSPOT_ANDROID_KEYALIAS_PASS\"\
-        \n    profile_name=\"slotspot\"\n    ;;\n  *)\n    echo \"Unknown signing_profile:\
-        \ $SIGNING_PROFILE\"\n    exit 1\n    ;;\nesac\n\ntest -n \"$keystore_base64\"\
-        \ || { echo \"Android keystore secret is empty for signing_profile=$profile_name\"\
-        ; exit 1; }\ntest -n \"$keystore_pass\" || { echo \"Android keystore password\
-        \ is empty for signing_profile=$profile_name\"; exit 1; }\ntest -n \"$keyalias_name\"\
-        \ || { echo \"Android key alias name is empty for signing_profile=$profile_name\"\
-        ; exit 1; }\nkeyalias_pass=\"${keyalias_pass:-$keystore_pass}\"\n\necho \"\
-        $keystore_base64\" | base64 --decode > \"$GITHUB_WORKSPACE/.ci/keystore/user.keystore\"\
-        \ntest -s \"$GITHUB_WORKSPACE/.ci/keystore/user.keystore\" || { echo \"Decoded\
-        \ Android keystore is empty for signing_profile=$profile_name\"; exit 1; }\n\
-        \n{\n  echo \"ANDROID_KEYSTORE_PASS=$keystore_pass\"\n  echo \"ANDROID_KEYALIAS_NAME=$keyalias_name\"\
-        \n  echo \"ANDROID_KEYALIAS_PASS=$keyalias_pass\"\n  echo \"ANDROID_SIGNING_PROFILE=$profile_name\"\
-        \n} >> \"$GITHUB_ENV\"\necho \"Using Android signing profile: $profile_name\"\
-        \n"
-    - name: Write google-services.json
-      shell: bash
-      env:
-        FIREBASE_JSON_BASE64: ${{ inputs.firebase_json_base64 }}
-      run: |
-        set -euo pipefail
-        if [ -z "$FIREBASE_JSON_BASE64" ]; then
-          echo "No firebase_json_base64 provided, skipping"
-          exit 0
-        fi
-        mkdir -p game/Assets/Plugins/Android
-        echo "$FIREBASE_JSON_BASE64" | base64 --decode > "game/Assets/Plugins/Android/google-services.json"
-        echo "Written game/Assets/Plugins/Android/google-services.json ($(wc -c < "game/Assets/Plugins/Android/google-services.json") bytes)"
+      - name: Restore Android keystore
+        shell: bash
+        env:
+          SIGNING_PROFILE: ${{ inputs.signing_profile }}
+          ANDROID_KEYSTORE_BASE64_DEFAULT: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASS_DEFAULT: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          ANDROID_KEYALIAS_NAME_DEFAULT: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+          ANDROID_KEYALIAS_PASS_DEFAULT: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+          PLAYSOCIALGAMES_ANDROID_KEYSTORE_BASE64: ${{ secrets.PLAYSOCIALGAMES_ANDROID_KEYSTORE_BASE64 }}
+          PLAYSOCIALGAMES_ANDROID_KEYSTORE_PASS: ${{ secrets.PLAYSOCIALGAMES_ANDROID_KEYSTORE_PASS }}
+          PLAYSOCIALGAMES_ANDROID_KEYALIAS_NAME: ${{ secrets.PLAYSOCIALGAMES_ANDROID_KEYALIAS_NAME }}
+          PLAYSOCIALGAMES_ANDROID_KEYALIAS_PASS: ${{ secrets.PLAYSOCIALGAMES_ANDROID_KEYALIAS_PASS }}
+          SLOTSPOT_ANDROID_KEYSTORE_BASE64: ${{ secrets.SLOTSPOT_ANDROID_KEYSTORE_BASE64 }}
+          SLOTSPOT_ANDROID_KEYSTORE_PASS: ${{ secrets.SLOTSPOT_ANDROID_KEYSTORE_PASS }}
+          SLOTSPOT_ANDROID_KEYALIAS_NAME: ${{ secrets.SLOTSPOT_ANDROID_KEYALIAS_NAME }}
+          SLOTSPOT_ANDROID_KEYALIAS_PASS: ${{ secrets.SLOTSPOT_ANDROID_KEYALIAS_PASS }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/.ci/keystore"
 
-    - name: Download custom icon from URL
-      shell: bash
-      env:
-        ICON_PNG_PATH: ${{ inputs.icon_png_path }}
-      run: "set -euo pipefail\n\nif [ -z \"$ICON_PNG_PATH\" ]; then\n  echo \"No icon_png_path\
-        \ provided, will use project default icon\"\n  exit 0\nfi\n\n# Check if it's\
-        \ a URL (https://)\nif [[ \"$ICON_PNG_PATH\" == https://* ]]; then\n  echo\
-        \ \"\U0001F4E5 Downloading icon from URL: $ICON_PNG_PATH\"\n  \n  # Create\
-        \ directory for downloaded icons\n  mkdir -p game/Assets/DownloadedIcons\n\
-        \  \n  # Download the icon\n  curl -L --fail --max-time 30 \"$ICON_PNG_PATH\"\
-        \ -o game/Assets/DownloadedIcons/custom-icon.png\n  \n  if [ -f game/Assets/DownloadedIcons/custom-icon.png\
-        \ ]; then\n    file_size=$(stat -c%s game/Assets/DownloadedIcons/custom-icon.png\
-        \ 2>/dev/null || stat -f%z game/Assets/DownloadedIcons/custom-icon.png)\n\
-        \    echo \"✅ Icon downloaded successfully ($file_size bytes)\"\n    echo\
-        \ \"ANDROID_ICON_PNG_PATH=Assets/DownloadedIcons/custom-icon.png\" >> \"$GITHUB_ENV\"\
-        \n  else\n    echo \"❌ Failed to download icon from $ICON_PNG_PATH\"\n   \
-        \ exit 1\n  fi\nelse\n  # It's a repository path - validate it exists\n  if\
-        \ [ -f \"game/$ICON_PNG_PATH\" ]; then\n    echo \"✅ Using icon from repository:\
-        \ $ICON_PNG_PATH\"\n    echo \"ANDROID_ICON_PNG_PATH=$ICON_PNG_PATH\" >> \"\
-        $GITHUB_ENV\"\n  else\n    echo \"❌ Icon not found in repository: $ICON_PNG_PATH\"\
-        \n    exit 1\n  fi\nfi\n"
-    - name: Prepare Android icon override
-      shell: bash
-      env:
-        ICON_PNG_PATH: ${{ inputs.icon_png_path }}
-      run: "set -euo pipefail\nmkdir -p game/Assets/Editor\ncat > game/Assets/Editor/ZeyWinAndroidIconPreprocessor.cs\
-        \ <<'CS'\nusing System;\nusing System.IO;\nusing System.Linq;\nusing System.Reflection;\n\
-        using UnityEditor;\nusing UnityEditor.Build;\nusing UnityEditor.Build.Reporting;\n\
-        using UnityEditor.Android;\nusing UnityEngine;\n\npublic sealed class ZeyWinAndroidIconPreprocessor\
-        \ : IPreprocessBuildWithReport\n{\n    public int callbackOrder => -10000;\n\
-        \n    public void OnPreprocessBuild(BuildReport report)\n    {\n        if\
-        \ (report.summary.platform != BuildTarget.Android)\n            return;\n\n\
-        \        ApplyIcon();\n    }\n\n    private static void ApplyIcon()\n    {\n\
-        \        var iconPath = ReadConfig(\"ANDROID_ICON_PNG_PATH\", \"iconPngPath\"\
-        );\n        if (string.IsNullOrWhiteSpace(iconPath))\n        {\n        \
-        \    Debug.Log(\"[ZeyWinActions] Android icon override is not set; keeping\
-        \ project icon.\");\n            return;\n        }\n\n        iconPath =\
-        \ iconPath.Trim().Replace(\"\\\\\", \"/\").TrimStart('/');\n\n        // Если\
-        \ пришёл URL — скачиваем иконку внутри Unity Editor\n        if (iconPath.StartsWith(\"\
-        https://\", StringComparison.OrdinalIgnoreCase) ||\n            iconPath.StartsWith(\"\
-        http://\", StringComparison.OrdinalIgnoreCase))\n        {\n            Debug.Log(\"\
-        [ZeyWinActions] Downloading icon from URL: \" + iconPath);\n            var\
-        \ localDir = \"Assets/DownloadedIcons\";\n            var localPath = localDir\
-        \ + \"/custom-icon.png\";\n\n            if (!Directory.Exists(localDir))\n\
-        \                Directory.CreateDirectory(localDir);\n\n            try\n\
-        \            {\n                using (var webClient = new System.Net.WebClient())\n\
-        \                {\n                    webClient.Headers.Add(\"User-Agent\"\
-        , \"Unity-Editor/5.0\");\n                    webClient.DownloadFile(iconPath,\
-        \ localPath);\n                }\n\n                if (!File.Exists(localPath))\n\
-        \                    throw new Exception(\"Downloaded file not found\");\n\
-        \n                var fileSize = new FileInfo(localPath).Length;\n       \
-        \         Debug.Log(\"[ZeyWinActions] Icon downloaded successfully (\" + fileSize\
-        \ + \" bytes)\");\n\n                AssetDatabase.ImportAsset(localPath,\
-        \ ImportAssetOptions.ForceUpdate);\n                iconPath = localPath;\n\
-        \            }\n            catch (Exception ex)\n            {\n        \
-        \        throw new Exception(\"[ZeyWinActions] Failed to download icon from\
-        \ \" + iconPath + \": \" + ex.Message);\n            }\n        }\n      \
-        \  else\n        {\n            if (!iconPath.StartsWith(\"Assets/\", StringComparison.Ordinal)\
-        \ || !iconPath.EndsWith(\".png\", StringComparison.OrdinalIgnoreCase))\n \
-        \               throw new Exception(\"[ZeyWinActions] icon_png_path must point\
-        \ to a PNG file under Assets/: \" + iconPath);\n\n            if (!File.Exists(iconPath))\n\
-        \                throw new FileNotFoundException(\"[ZeyWinActions] Selected\
-        \ Android icon was not found in checked-out game repo.\", iconPath);\n   \
-        \     }\n\n        var importer = AssetImporter.GetAtPath(iconPath) as TextureImporter;\n\
-        \        if (importer != null)\n        {\n            importer.textureType\
-        \ = TextureImporterType.Default;\n            importer.textureShape = TextureImporterShape.Texture2D;\n\
-        \            importer.mipmapEnabled = false;\n            importer.alphaIsTransparency\
-        \ = true;\n            importer.SaveAndReimport();\n        }\n\n        AssetDatabase.ImportAsset(iconPath,\
-        \ ImportAssetOptions.ForceUpdate);\n        var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);\n\
-        \        if (icon == null)\n            throw new Exception(\"[ZeyWinActions]\
-        \ Selected Android icon PNG could not be loaded by Unity: \" + iconPath);\n\
-        \n        ApplyPlatformIcons(icon);\n        AssetDatabase.SaveAssets();\n\
-        \        Debug.Log(\"[ZeyWinActions] Android app icon override applied from\
-        \ \" + iconPath);\n    }\n\n    private static void ApplyPlatformIcons(Texture2D\
-        \ icon)\n    {\n        var unityEditor = typeof(PlayerSettings).Assembly;\n\
-        \        var namedBuildTargetType = unityEditor.GetType(\"UnityEditor.Build.NamedBuildTarget\"\
-        );\n        var iconKindType = unityEditor.GetType(\"UnityEditor.AndroidPlatformIconKind\"\
-        );\n        if (namedBuildTargetType == null || iconKindType == null)\n  \
-        \          return;\n\n        var androidTarget = namedBuildTargetType.GetProperty(\"\
-        Android\", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);\n \
-        \       var getIcons = typeof(PlayerSettings).GetMethods(BindingFlags.Public\
-        \ | BindingFlags.Static)\n            .FirstOrDefault(method => method.Name\
-        \ == \"GetPlatformIcons\" && method.GetParameters().Length == 2);\n      \
-        \  var setIcons = typeof(PlayerSettings).GetMethods(BindingFlags.Public |\
-        \ BindingFlags.Static)\n            .FirstOrDefault(method => method.Name\
-        \ == \"SetPlatformIcons\" && method.GetParameters().Length == 3);\n      \
-        \  if (androidTarget == null || getIcons == null || setIcons == null)\n  \
-        \          return;\n\n        foreach (var kindName in new[] { \"Legacy\"\
-        , \"Round\", \"Adaptive\" })\n        {\n            try\n            {\n\
-        \                if (!Enum.IsDefined(iconKindType, kindName))\n          \
-        \          continue;\n\n                var kind = Enum.Parse(iconKindType,\
-        \ kindName);\n                var platformIcons = getIcons.Invoke(null, new[]\
-        \ { androidTarget, kind }) as Array;\n                if (platformIcons ==\
-        \ null)\n                    continue;\n\n                foreach (var platformIcon\
-        \ in platformIcons)\n                {\n                    var setTextures\
-        \ = platformIcon.GetType().GetMethod(\"SetTextures\", new[] { typeof(Texture2D[])\
-        \ });\n                    if (setTextures == null)\n                    \
-        \    continue;\n\n                    setTextures.Invoke(platformIcon, new\
-        \ object[] { kindName == \"Adaptive\" ? new[] { icon, icon } : new[] { icon\
-        \ } });\n                }\n\n                setIcons.Invoke(null, new object[]\
-        \ { androidTarget, kind, platformIcons });\n            }\n            catch\
-        \ (Exception ex)\n            {\n                Debug.LogWarning(\"[ZeyWinActions]\
-        \ Could not apply \" + kindName + \" Android icon slot: \" + ex.Message);\n\
-        \            }\n        }\n    }\n\n    private static string ReadConfig(string\
-        \ envName, string argName)\n    {\n        var value = Environment.GetEnvironmentVariable(envName);\n\
-        \        if (!string.IsNullOrWhiteSpace(value))\n            return value;\n\
-        \n        var args = Environment.GetCommandLineArgs();\n        for (var i\
-        \ = 0; i < args.Length - 1; i++)\n        {\n            if (args[i] == \"\
-        -\" + argName)\n                return args[i + 1];\n        }\n\n       \
-        \ return string.Empty;\n    }\n}\nCS\ncat > game/Assets/Editor/ZeyWinPackageCachePatcher.cs\
-        \ <<'CS'\nusing System;\nusing System.IO;\nusing System.Linq;\nusing UnityEditor;\n\
-        using UnityEditor.Build;\nusing UnityEditor.Build.Reporting;\nusing UnityEngine;\n\
-        \npublic sealed class ZeyWinPackageCachePatcher : IPreprocessBuildWithReport\n\
-        {\n    public int callbackOrder => -10001;\n\n    public void OnPreprocessBuild(BuildReport\
-        \ report)\n    {\n        if (report.summary.platform != BuildTarget.Android)\n\
-        \            return;\n\n        try\n        {\n            PatchPackageCache();\n\
-        \        }\n        catch (Exception ex)\n        {\n            Debug.LogWarning(\"\
-        [ZeyWinActions] PackageCache patcher failed: \" + ex.Message);\n        }\n\
-        \    }\n\n    private static void PatchPackageCache()\n    {\n        var\
-        \ projectRoot = Directory.GetParent(Application.dataPath)?.FullName;\n   \
-        \     if (string.IsNullOrEmpty(projectRoot))\n            return;\n\n    \
-        \    var packageCacheRoot = Path.Combine(projectRoot, \"Library\", \"PackageCache\"\
-        );\n        if (!Directory.Exists(packageCacheRoot))\n        {\n        \
-        \    Debug.Log(\"[ZeyWinActions] PackageCache not found, skipping ZeyWin package\
-        \ patch.\");\n            return;\n        }\n\n          var candidatePaths\
-        \ = new[] {\n            Path.GetFullPath(Path.Combine(projectRoot, \"..\"\
-        , \".tmp-sdk\", \"Editor\", \"ZeyWinAdsAndroidBuilder.cs\")),\n          \
-        \  Path.GetFullPath(Path.Combine(projectRoot, \".tmp-sdk\", \"Editor\", \"\
-        ZeyWinAdsAndroidBuilder.cs\")),\n            Path.GetFullPath(Path.Combine(projectRoot,\
-        \ \"..\", \"..\", \".tmp-sdk\", \"Editor\", \"ZeyWinAdsAndroidBuilder.cs\"\
-        ))\n          };\n\n          string fixedSourcePath = candidatePaths.FirstOrDefault(p\
-        \ => File.Exists(p));\n          bool hasFixedSource = !string.IsNullOrEmpty(fixedSourcePath);\n\
-        \n          var builderFiles = Directory.GetFiles(packageCacheRoot, \"ZeyWinAdsAndroidBuilder.cs\"\
-        , SearchOption.AllDirectories);\n          foreach (var targetFile in builderFiles)\n\
-        \          {\n            if (!targetFile.Contains(\"com.zeywin.ads@\"))\n\
-        \              continue;\n\n            if (hasFixedSource)\n            {\n\
-        \              File.Copy(fixedSourcePath, targetFile, overwrite: true);\n\
-        \              Debug.Log(\"[ZeyWinActions] Replaced ZeyWinAdsAndroidBuilder.cs\
-        \ from fixed .tmp-sdk source.\");\n              continue;\n            }\n\
-        \n            PatchBuilderScript(targetFile);\n          }\n    }\n\n    private\
-        \ static void PatchBuilderScript(string targetFile)\n    {\n        var text\
-        \ = File.ReadAllText(targetFile);\n        var original = text;\n\n      \
-        \  text = System.Text.RegularExpressions.Regex.Replace(\n            text,\n\
-        \            @\"(\\s+PlayerSettings\\.SetApplicationIdentifier\\(BuildTargetGroup\\\
-        .Android,\\s*packageId\\);)\\s+\\n\\s+PlayerSettings\\.applicationIdentifier\\\
-        s*=\\s*packageId;\",\n            \"$1\",\n            System.Text.RegularExpressions.RegexOptions.None);\n\
-        \n        if (text.Contains(\"PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android,\
-        \ packageId);\") &&\n            !text.Contains(\"Android package name set\
-        \ to:\"))\n        {\n            text = text.Replace(\n                \"\
-        PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, packageId);\"\
-        ,\n                \"PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android,\
-        \ packageId);\\n                Debug.Log(\\\"[ZeyWinAds] Android package\
-        \ name set to: \\\" + packageId + \\\" for BuildTargetGroup.Android\\\");\"\
-        );\n        }\n\n        if (text != original)\n        {\n            File.WriteAllText(targetFile,\
-        \ text);\n            Debug.Log($\"[ZeyWinActions] Patched {Path.GetFileName(targetFile)}\
-        \ in PackageCache.\");\n        }\n        else\n        {\n            Debug.Log($\"\
-        [ZeyWinActions] No patch needed for {Path.GetFileName(targetFile)}.\");\n\
-        \        }\n    }\n}\nCS\n"
-    - name: Prepare Unity compatibility patches
-      shell: bash
-      run: "set -euo pipefail\nmkdir -p game/Assets/Editor\ncat > game/Assets/Editor/ZeyWinCompatPatcher.cs\
-         <<'CS'\nusing System;\nusing System.IO;\n\
-         using UnityEditor;\nusing UnityEditor.Build;\nusing UnityEditor.Build.Reporting;\n\
-         using UnityEngine;\n\npublic sealed class ZeyWinCompatPatcher : IPreprocessBuildWithReport\n\
-         {\n    public int callbackOrder => -10002;\n\n    public void OnPreprocessBuild(BuildReport\
-         \ report)\n    {\n        if (report.summary.platform != BuildTarget.Android)\n\
-         \            return;\n\n        try\n        {\n            PatchUnityCompatibility();\n\
-         \        }\n        catch (Exception ex)\n        {\n            Debug.LogWarning(\"\
-         [ZeyWinActions] Compatibility patcher failed: \" + ex.Message);\n        }\n\
-         \    }\n\n    private static void PatchUnityCompatibility()\n    {\n        var\
-         \ projectRoot = Directory.GetParent(Application.dataPath)?.FullName;\n    \
-         \    if (string.IsNullOrEmpty(projectRoot))\n            return;\n\n       \
-         \ var cacheRoot = Path.Combine(projectRoot, \"Library\", \"PackageCache\");\n\
-         \        if (!Directory.Exists(cacheRoot))\n        {\n            Debug.Log(\"\
-         [ZeyWinActions] PackageCache not found, skipping compatibility patch.\");\n\
-         \            return;\n        }\n\n        PatchURPConverter(cacheRoot);\n \
-         \       PatchUnityNotifications(cacheRoot);\n        PatchSentryStaleFiles(cacheRoot);\n\
-         \    }\n\n    private static void PatchURPConverter(string cacheRoot)\n   \
-         \ {\n        var files = Directory.GetFiles(cacheRoot, \"U2DToURPPixelPerfectConverter.cs\"\
-         , SearchOption.AllDirectories);\n        foreach (var file in files)\n    \
-         \    {\n            File.Delete(file);\n            var meta = file + \".meta\"\
-         ;\n            if (File.Exists(meta))\n                File.Delete(meta);\n \
-         \           Debug.Log(\"[ZeyWinActions] Removed stale URP converter: \" + Path.GetFileName(file));\n\
-         \        }\n    }\n\n    private\
-         \ static void PatchUnityNotifications(string cacheRoot)\n    {\n        var\
-         \ files = Directory.GetFiles(cacheRoot, \"GameLocalNotifications.cs\", SearchOption.AllDirectories);\n\
-         \        foreach (var file in files)\n        {\n            var text = File.ReadAllText(file);\n\
-         \            var original = text;\n            text = text.Replace(\"using\
-         \ Unity.Notifications;\", \"// using Unity.Notifications;\");\n           \
-         \ if (text != original)\n            {\n                File.WriteAllText(file,\
-         \ text);\n                Debug.Log(\"[ZeyWinActions] Patched GameLocalNotifications:\
-         \ \" + Path.GetFileName(file));\n            }\n        }\n    }\n\n    private\
-         \ static void PatchSentryStaleFiles(string cacheRoot)\n    {\n        var files\
-         \ = Directory.GetFiles(cacheRoot, \"SentryCliConfiguration.cs\", SearchOption.AllDirectories);\n\
-         \        foreach (var file in files)\n        {\n            if (file.Contains(\"\
-         PackageCache\"))\n            {\n                File.Delete(file);\n      \
-         \          var meta = file + \".meta\";\n                if (File.Exists(meta))\
-         \ File.Delete(meta);\n                Debug.Log(\"[ZeyWinActions] Removed stale\
-         \ SentryCliConfiguration: \" + Path.GetFileName(file));\n            }\n   \
-         \     }\n    }\n}\nCS\n"
-    - name: Resolve APK version
-      id: resolve_version
-      shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-        PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-        VERSION_MODE: ${{ inputs.version_mode || 'auto_next' }}
-        VERSION_NAME_INPUT: ${{ inputs.version_name }}
-        VERSION_CODE_INPUT: ${{ inputs.version_code }}
-      run: "set -euo pipefail\n\nmax_code=0\nlatest_file=\"builds/$PACKAGE_NAME/latest-build.txt\"\
-        \nif [ -f \"$latest_file\" ]; then\n  code=\"$(sed -n 's/^version_code=//p'\
-        \ \"$latest_file\" | tail -n 1)\"\n  if [[ \"$code\" =~ ^[0-9]+$ ]] && [ \"\
-        $code\" -gt \"$max_code\" ]; then\n    max_code=\"$code\"\n  fi\nfi\n\nwhile\
-        \ IFS= read -r dir; do\n  code=\"${dir##*/v}\"\n  if [[ \"$code\" =~ ^[0-9]+$\
-        \ ]] && [ \"$code\" -gt \"$max_code\" ]; then\n    max_code=\"$code\"\n  fi\n\
-        done < <(find \"builds/$PACKAGE_NAME\" -maxdepth 1 -type d -name 'v[0-9]*'\
-        \ 2>/dev/null || true)\n\nwhile IFS= read -r code; do\n  if [[ \"$code\" =~\
-        \ ^[0-9]+$ ]] && [ \"$code\" -gt \"$max_code\" ]; then\n    max_code=\"$code\"\
-        \n  fi\ndone < <(gh release list --repo \"$GITHUB_REPOSITORY\" --limit 100\
-        \ --json name --jq '.[].name' 2>/dev/null | sed -n \"s/^APK $PACKAGE_NAME\
-        \ v\\\\([0-9][0-9]*\\\\)$/\\\\1/p\" || true)\n\nif [ \"$VERSION_MODE\" = \"\
-        manual\" ]; then\n  test -n \"$VERSION_NAME_INPUT\" || { echo \"version_name\
-        \ is required when version_mode=manual. Example: 1.0.$((max_code + 1))\";\
-        \ exit 1; }\n  test -n \"$VERSION_CODE_INPUT\" || { echo \"version_code is\
-        \ required when version_mode=manual. Previous highest code is $max_code, so\
-        \ use $((max_code + 1)) or higher.\"; exit 1; }\nfi\n\nif [ \"$VERSION_MODE\"\
-        \ = \"manual\" ]; then\n  version_code=\"$VERSION_CODE_INPUT\"\nelse\n  version_code=$((max_code\
-        \ + 1))\nfi\n\nif ! [[ \"$version_code\" =~ ^[0-9]+$ ]]; then\n  echo \"version_code\
-        \ must be numeric, got: $version_code\"\n  exit 1\nfi\n\nif [ \"$version_code\"\
-        \ -lt 1 ]; then\n  echo \"version_code must be a positive integer, got: $version_code\"\
-        \n  exit 1\nfi\n\nif [ \"$VERSION_MODE\" = \"manual\" ]; then\n  version_name=\"\
-        $VERSION_NAME_INPUT\"\nelse\n  version_name=\"1.0.$version_code\"\nfi\n\n\
-        echo \"version_code=$version_code\" >> \"$GITHUB_OUTPUT\"\necho \"version_name=$version_name\"\
-        \ >> \"$GITHUB_OUTPUT\"\necho \"apk_output_path=$GITHUB_WORKSPACE/build/android/APK_${PACKAGE_NAME}_v${version_code}.apk\"\
-        \ >> \"$GITHUB_OUTPUT\"\necho \"aab_output_path=$GITHUB_WORKSPACE/build/android/AAB_${PACKAGE_NAME}_v${version_code}.aab\"\
-        \ >> \"$GITHUB_OUTPUT\"\n\n{\n  echo \"### Resolved APK version\"\n  echo\
-        \ \"- Package: \\`$PACKAGE_NAME\\`\"\n  echo \"- Mode: \\`$VERSION_MODE\\\
-        `\"\n  echo \"- Previous highest version code: \\`$max_code\\`\"\n  echo \"\
-        - Next manual version name/code: \\`1.0.$((max_code + 1))\\` / \\`$((max_code\
-        \ + 1))\\`\"\n  echo \"- Version name: \\`$version_name\\`\"\n  echo \"- Version\
-        \ code: \\`$version_code\\`\"\n  if [ \"$VERSION_MODE\" = \"manual\" ] &&\
-        \ [ \"$version_code\" -le \"$max_code\" ]; then\n    echo \"- Note: this is\
-        \ an old-version rebuild, so it will not replace the latest-build pointer.\"\
-        \n  fi\n} >> \"$GITHUB_STEP_SUMMARY\"\n"
-    - name: Free disk space
-      timeout-minutes: 8
-      shell: bash
-      run: 'set -euxo pipefail
+          case "$SIGNING_PROFILE" in
+            playmax|default|'')
+              keystore_base64="$ANDROID_KEYSTORE_BASE64_DEFAULT"
+              keystore_pass="$ANDROID_KEYSTORE_PASS_DEFAULT"
+              keyalias_name="$ANDROID_KEYALIAS_NAME_DEFAULT"
+              keyalias_pass="$ANDROID_KEYALIAS_PASS_DEFAULT"
+              profile_name="playmax"
+              ;;
+            playsocialgames)
+              keystore_base64="$PLAYSOCIALGAMES_ANDROID_KEYSTORE_BASE64"
+              keystore_pass="$PLAYSOCIALGAMES_ANDROID_KEYSTORE_PASS"
+              keyalias_name="$PLAYSOCIALGAMES_ANDROID_KEYALIAS_NAME"
+              keyalias_pass="$PLAYSOCIALGAMES_ANDROID_KEYALIAS_PASS"
+              profile_name="playsocialgames"
+              ;;
+            slotspot)
+              keystore_base64="$SLOTSPOT_ANDROID_KEYSTORE_BASE64"
+              keystore_pass="$SLOTSPOT_ANDROID_KEYSTORE_PASS"
+              keyalias_name="$SLOTSPOT_ANDROID_KEYALIAS_NAME"
+              keyalias_pass="$SLOTSPOT_ANDROID_KEYALIAS_PASS"
+              profile_name="slotspot"
+              ;;
+            *)
+              echo "Unknown signing_profile: $SIGNING_PROFILE"
+              exit 1
+              ;;
+          esac
 
-        echo "----- disk before cleanup -----"
+          test -n "$keystore_base64" || { echo "Android keystore secret is empty for signing_profile=$profile_name"; exit 1; }
+          test -n "$keystore_pass" || { echo "Android keystore password is empty for signing_profile=$profile_name"; exit 1; }
+          test -n "$keyalias_name" || { echo "Android key alias name is empty for signing_profile=$profile_name"; exit 1; }
+          keyalias_pass="${keyalias_pass:-$keystore_pass}"
 
-        df -h
+          echo "$keystore_base64" | base64 --decode > "$GITHUB_WORKSPACE/.ci/keystore/user.keystore"
+          test -s "$GITHUB_WORKSPACE/.ci/keystore/user.keystore" || { echo "Decoded Android keystore is empty for signing_profile=$profile_name"; exit 1; }
 
+          {
+            echo "ANDROID_KEYSTORE_PASS=$keystore_pass"
+            echo "ANDROID_KEYALIAS_NAME=$keyalias_name"
+            echo "ANDROID_KEYALIAS_PASS=$keyalias_pass"
+            echo "ANDROID_SIGNING_PROFILE=$profile_name"
+          } >> "$GITHUB_ENV"
+          echo "Using Android signing profile: $profile_name"
 
-        # Remove heavy pre-installed tools
+      - name: Download custom icon from URL
+        shell: bash
+        env:
+          ICON_PNG_PATH: ${{ inputs.icon_png_path }}
+        run: |
+          set -euo pipefail
+          
+          if [ -z "$ICON_PNG_PATH" ]; then
+            echo "No icon_png_path provided, will use project default icon"
+            exit 0
+          fi
+          
+          # Check if it's a URL (https://)
+          if [[ "$ICON_PNG_PATH" == https://* ]]; then
+            echo "📥 Downloading icon from URL: $ICON_PNG_PATH"
+            
+            # Create directory for downloaded icons
+            mkdir -p game/Assets/DownloadedIcons
+            
+            # Download the icon
+            curl -L --fail --max-time 30 "$ICON_PNG_PATH" -o game/Assets/DownloadedIcons/custom-icon.png
+            
+            if [ -f game/Assets/DownloadedIcons/custom-icon.png ]; then
+              file_size=$(stat -c%s game/Assets/DownloadedIcons/custom-icon.png 2>/dev/null || stat -f%z game/Assets/DownloadedIcons/custom-icon.png)
+              echo "✅ Icon downloaded successfully ($file_size bytes)"
+              echo "ANDROID_ICON_PNG_PATH=Assets/DownloadedIcons/custom-icon.png" >> "$GITHUB_ENV"
+            else
+              echo "❌ Failed to download icon from $ICON_PNG_PATH"
+              exit 1
+            fi
+          else
+            # It's a repository path - validate it exists (с экранированием пробелов)
+            if [ -f "game/$ICON_PNG_PATH" ]; then
+              echo "✅ Using icon from repository: $ICON_PNG_PATH"
+              echo "ANDROID_ICON_PNG_PATH=$ICON_PNG_PATH" >> "$GITHUB_ENV"
+            else
+              echo "❌ Icon not found in repository: $ICON_PNG_PATH"
+              exit 1
+            fi
+          fi
 
-        sudo rm -rf /usr/share/dotnet
+      - name: Prepare Android icon override
+        shell: bash
+        env:
+          ICON_PNG_PATH: ${{ inputs.icon_png_path }}
+        run: |
+          set -euo pipefail
+          mkdir -p game/Assets/Editor
+          cat > game/Assets/Editor/ZeyWinAndroidIconPreprocessor.cs <<'CS'
+          using System;
+          using System.IO;
+          using System.Linq;
+          using System.Reflection;
+          using UnityEditor;
+          using UnityEditor.Build;
+          using UnityEditor.Build.Reporting;
+          using UnityEditor.Android;
+          using UnityEngine;
 
-        sudo rm -rf /usr/local/share/boost
+          public sealed class ZeyWinAndroidIconPreprocessor : IPreprocessBuildWithReport
+          {
+              public int callbackOrder => -10000;
 
-        sudo rm -rf /usr/local/share/powershell
+              public void OnPreprocessBuild(BuildReport report)
+              {
+                  if (report.summary.platform != BuildTarget.Android)
+                      return;
 
-        sudo rm -rf /usr/share/swift
+                  ApplyIcon();
+              }
 
-        sudo rm -rf /opt/ghc
+              private static void ApplyIcon()
+              {
+                  var iconPath = ReadConfig("ANDROID_ICON_PNG_PATH", "iconPngPath");
+                  if (string.IsNullOrWhiteSpace(iconPath))
+                  {
+                      Debug.Log("[ZeyWinActions] Android icon override is not set; keeping project icon.");
+                      return;
+                  }
 
-        sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+                  iconPath = iconPath.Trim().Replace("\\", "/").TrimStart('/');
 
-        sudo rm -rf /opt/hostedtoolcache
+                  // Если пришёл URL — скачиваем иконку внутри Unity Editor
+                  if (iconPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                      iconPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                  {
+                      Debug.Log("[ZeyWinActions] Downloading icon from URL: " + iconPath);
+                      var localDir = "Assets/DownloadedIcons";
+                      var localPath = localDir + "/custom-icon.png";
 
-        sudo rm -rf /usr/local/lib/android
+                      if (!Directory.Exists(localDir))
+                          Directory.CreateDirectory(localDir);
 
-        sudo rm -rf /usr/local/share/chromium
+                      try
+                      {
+                          using (var webClient = new System.Net.WebClient())
+                          {
+                              webClient.Headers.Add("User-Agent", "Unity-Editor/5.0");
+                              webClient.DownloadFile(iconPath, localPath);
+                          }
 
-        sudo rm -rf /usr/share/postgresql
+                          if (!File.Exists(localPath))
+                              throw new Exception("Downloaded file not found");
 
-        sudo rm -rf /usr/share/miniconda
+                          var fileSize = new FileInfo(localPath).Length;
+                          Debug.Log("[ZeyWinActions] Icon downloaded successfully (" + fileSize + " bytes)");
 
-        sudo rm -rf /usr/share/az_*
+                          AssetDatabase.ImportAsset(localPath, ImportAssetOptions.ForceUpdate);
+                          iconPath = localPath;
+                      }
+                      catch (Exception ex)
+                      {
+                          throw new Exception("[ZeyWinActions] Failed to download icon from " + iconPath + ": " + ex.Message);
+                      }
+                  }
+                  else
+                  {
+                      // Локальный путь — проверяем что он под Assets/
+                      if (!iconPath.StartsWith("Assets/", StringComparison.Ordinal) || !iconPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                          throw new Exception("[ZeyWinActions] icon_png_path must point to a PNG file under Assets/: " + iconPath);
 
-        sudo rm -rf /usr/share/azcopy
+                      if (!File.Exists(iconPath))
+                          throw new FileNotFoundException("[ZeyWinActions] Selected Android icon was not found in checked-out game repo.", iconPath);
+                  }
 
-        sudo rm -rf /usr/share/java
+                  var importer = AssetImporter.GetAtPath(iconPath) as TextureImporter;
+                  if (importer != null)
+                  {
+                      importer.textureType = TextureImporterType.Default;
+                      importer.textureShape = TextureImporterShape.Texture2D;
+                      importer.mipmapEnabled = false;
+                      importer.alphaIsTransparency = true;
+                      importer.SaveAndReimport();
+                  }
 
-        sudo rm -rf /usr/share/R
+                  AssetDatabase.ImportAsset(iconPath, ImportAssetOptions.ForceUpdate);
+                  var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
+                  if (icon == null)
+                      throw new Exception("[ZeyWinActions] Selected Android icon PNG could not be loaded by Unity: " + iconPath);
 
-        sudo rm -rf /usr/share/ruby
+                  ApplyPlatformIcons(icon);
+                  AssetDatabase.SaveAssets();
+                  Debug.Log("[ZeyWinActions] Android app icon override applied from " + iconPath);
+              }
 
-        sudo rm -rf /usr/share/rust
+              private static void ApplyPlatformIcons(Texture2D icon)
+              {
+                  var unityEditor = typeof(PlayerSettings).Assembly;
+                  var namedBuildTargetType = unityEditor.GetType("UnityEditor.Build.NamedBuildTarget");
+                  var iconKindType = unityEditor.GetType("UnityEditor.AndroidPlatformIconKind");
+                  if (namedBuildTargetType == null || iconKindType == null)
+                      return;
 
-        sudo rm -rf /usr/share/sbt
+                  var androidTarget = namedBuildTargetType.GetProperty("Android", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
+                  var getIcons = typeof(PlayerSettings).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                      .FirstOrDefault(method => method.Name == "GetPlatformIcons" && method.GetParameters().Length == 2);
+                  var setIcons = typeof(PlayerSettings).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                      .FirstOrDefault(method => method.Name == "SetPlatformIcons" && method.GetParameters().Length == 3);
+                  if (androidTarget == null || getIcons == null || setIcons == null)
+                      return;
 
-        sudo rm -rf /usr/share/php
+                  foreach (var kindName in new[] { "Legacy", "Round", "Adaptive" })
+                  {
+                      try
+                      {
+                          if (!Enum.IsDefined(iconKindType, kindName))
+                              continue;
 
-        sudo rm -rf /usr/share/perl
+                          var kind = Enum.Parse(iconKindType, kindName);
+                          var platformIcons = getIcons.Invoke(null, new[] { androidTarget, kind }) as Array;
+                          if (platformIcons == null)
+                              continue;
 
-        sudo rm -rf /usr/share/maven
+                          foreach (var platformIcon in platformIcons)
+                          {
+                              var setTextures = platformIcon.GetType().GetMethod("SetTextures", new[] { typeof(Texture2D[]) });
+                              if (setTextures == null)
+                                  continue;
 
-        sudo rm -rf /usr/share/gradle
+                              if (kindName == "Adaptive")
+                              {
+                                  // Adaptive icon: index 0 = foreground (our icon), index 1 = background (null = transparent, no overlay)
+                                  // Previously both slots were set to our icon causing a double-render/overlay effect
+                                  setTextures.Invoke(platformIcon, new object[] { new Texture2D[] { icon, null } });
+                              }
+                              else
+                              {
+                                  setTextures.Invoke(platformIcon, new object[] { new[] { icon } });
+                              }
+                          }
 
-        sudo rm -rf /usr/share/go
+                          setIcons.Invoke(null, new object[] { androidTarget, kind, platformIcons });
+                      }
+                      catch (Exception ex)
+                      {
+                          Debug.LogWarning("[ZeyWinActions] Could not apply " + kindName + " Android icon slot: " + ex.Message);
+                      }
+                  }
 
-        sudo rm -rf /usr/share/cabal
+                  // Also override the default Unity PlayerSettings icon directly
+                  // to prevent the Unity default icon from appearing as a fallback
+                  try
+                  {
+                      PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Android, new Texture2D[] { icon });
+                  }
+                  catch (Exception ex)
+                  {
+                      Debug.LogWarning("[ZeyWinActions] Could not set legacy PlayerSettings icon: " + ex.Message);
+                  }
+              }
 
-        sudo rm -rf /usr/share/erlang
+              private static string ReadConfig(string envName, string argName)
+              {
+                  var value = Environment.GetEnvironmentVariable(envName);
+                  if (!string.IsNullOrWhiteSpace(value))
+                      return value;
 
-        sudo rm -rf /usr/share/leiningen
+                  var args = Environment.GetCommandLineArgs();
+                  for (var i = 0; i < args.Length - 1; i++)
+                  {
+                      if (args[i] == "-" + argName)
+                          return args[i + 1];
+                  }
 
-        sudo rm -rf /usr/share/elasticsearch
+                  return string.Empty;
+              }
+          }
 
-        sudo rm -rf /usr/local/share/vcpkg
+          public sealed class ZeyWinAndroidGradleFinalizer : IPostGenerateGradleAndroidProject
+          {
+              public int callbackOrder => 300000;
 
-        sudo rm -rf /opt/actions
+              public void OnPostGenerateGradleAndroidProject(string path)
+              {
+                  PatchLegacyResourceNamespace(path);
+                  PatchLauncherLabelOverride(path);
+              }
 
-        sudo apt-get clean
+              private static void PatchLegacyResourceNamespace(string path)
+              {
+                  var gradle = Path.Combine(path, "ZeyWinLegacyRes.androidlib", "build.gradle");
+                  if (!File.Exists(gradle))
+                      return;
 
-        sudo apt-get autoremove -y
+                  var text = File.ReadAllText(gradle);
+                  if (!text.Contains("namespace "))
+                  {
+                      if (text.Contains("android {"))
+                          text = text.Replace("android {", "android {\n    compileSdk 34\n    namespace 'com.zeywin.legacyres'");
+                      else
+                          text += "\nandroid {\n    compileSdk 34\n    namespace 'com.zeywin.legacyres'\n}\n";
+                      File.WriteAllText(gradle, text);
+                  }
+                  else if (!text.Contains("compileSdk"))
+                  {
+                      text = text.Replace("namespace", "compileSdk 34\n    namespace");
+                      File.WriteAllText(gradle, text);
+                  }
 
+                  UnityEngine.Debug.Log("[ZeyWinActions] Legacy Android resource namespace verified: " + gradle);
+              }
 
-        # Free up Docker space before pulling the Unity image
+              private static void PatchLauncherLabelOverride(string path)
+              {
+                  var launcherManifest = Path.GetFullPath(Path.Combine(path, "../launcher/src/main/AndroidManifest.xml"));
+                  if (!File.Exists(launcherManifest))
+                      return;
 
-        docker system prune -a -f --volumes 2>/dev/null || true
+                  var text = File.ReadAllText(launcherManifest);
+                  if (!text.Contains("xmlns:tools="))
+                      text = text.Replace("<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"", "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" xmlns:tools=\"http://schemas.android.com/tools\"");
 
+                  var applicationIndex = text.IndexOf("<application", System.StringComparison.Ordinal);
+                  if (applicationIndex >= 0 && !text.Contains("tools:replace=\"android:label\""))
+                  {
+                      var closeIndex = text.IndexOf('>', applicationIndex);
+                      if (closeIndex > applicationIndex)
+                          text = text.Insert(closeIndex, " tools:replace=\"android:label\"");
+                  }
 
-        echo "----- disk after cleanup -----"
+                  File.WriteAllText(launcherManifest, text);
+                  UnityEngine.Debug.Log("[ZeyWinActions] Launcher manifest label override verified: " + launcherManifest);
+              }
+          }
+          CS
+          
+          # Note: ANDROID_ICON_PNG_PATH is set by previous step "Download custom icon from URL"
+          # This preprocessor script will read it from environment
 
-        df -h
+      - name: Resolve APK version
+        id: resolve_version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          VERSION_MODE: ${{ inputs.version_mode }}
+          VERSION_NAME_INPUT: ${{ inputs.version_name }}
+          VERSION_CODE_INPUT: ${{ inputs.version_code }}
+        run: |
+          set -euo pipefail
 
-        '
-    - name: Disable Git LFS for game repository
-      shell: bash
-      run: "set -euo pipefail\necho \"Disabling Git LFS to avoid Curl error 42...\"\
-        \n\n# Создаем .lfsconfig в игровом репозитории\ncat > game/.lfsconfig <<'EOF'\n\
-        [lfs]\n\tfetchinclude =\n\tfetchexclude = *\nEOF\n\n# Удаляем .gitattributes\
-        \ если есть\nif [ -f game/.gitattributes ]; then\n  rm -f game/.gitattributes\n\
-        \  echo \"Removed game/.gitattributes\"\nfi\n\necho \"✅ Git LFS disabled for\
-        \ game repository\"\n"
-    - name: Normalize legacy Android resources
-      shell: bash
-      run: "set -euo pipefail\nlegacy_res=\"game/Assets/Plugins/Android/res\"\nandroidlib=\"\
-        game/Assets/Plugins/Android/ZeyWinLegacyRes.androidlib\"\nif [ -d \"$legacy_res\"\
-        \ ]; then\n  echo \"Moving obsolete Android resources into Android Library:\
-        \ $androidlib\"\n  mkdir -p \"$androidlib/src/main\"\n  rm -rf \"$androidlib/src/main/res\"\
-        \n  mv \"$legacy_res\" \"$androidlib/src/main/res\"\n  cat > \"$androidlib/AndroidManifest.xml\"\
-        \ <<'XML'\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\
-        \ package=\"com.zeywin.legacyres\" />\nXML\n  cat > \"$androidlib/build.gradle\"\
-        \ <<'GRADLE'\nplugins {\n    id 'com.android.library'\n}\n\nandroid {\n  \
-        \  compileSdk 34\n    namespace 'com.zeywin.legacyres'\n}\nGRADLE\n  find\
-        \ \"$androidlib\" -maxdepth 4 -type f | sort\nelse\n  echo \"No legacy Assets/Plugins/Android/res\
-        \ directory found.\"\nfi\n"
-    - name: Prepare Firebase SDK
-      shell: bash
-      run: "set -euo pipefail\nif ! grep -R --include='*.cs' -E 'using Firebase|Firebase\\\
-        .' game/Assets >/dev/null 2>&1; then\n  echo \"No Firebase C# references found;\
-        \ skipping Firebase SDK preparation.\"\n  exit 0\nfi\n\nif [ -d game/Assets/Firebase\
-        \ ]; then\n  echo \"Assets/Firebase already exists; keeping game Firebase\
-        \ SDK files.\"\n  exit 0\nfi\n\necho \"Firebase C# references found; installing\
-        \ Firebase Unity SDK 13.0.0.\"\nwork=\"$RUNNER_TEMP/firebase-unity-sdk\"\n\
-        rm -rf \"$work\"\nmkdir -p \"$work\"\ncurl -L --retry 3 --retry-delay 5 --connect-timeout\
-        \ 30 \\\n  -o \"$work/firebase_unity_sdk_13.0.0.zip\" \\\n  https://dl.google.com/firebase/sdk/unity/firebase_unity_sdk_13.0.0.zip\n\
-        unzip -q \"$work/firebase_unity_sdk_13.0.0.zip\" \\\n  '*FirebaseAnalytics*.unitypackage'\
-        \ \\\n  '*FirebaseRemoteConfig*.unitypackage' \\\n  '*FirebaseMessaging*.unitypackage'\
-        \ \\\n  -d \"$work/packages\"\nfind \"$work/packages\" -name '*.unitypackage'\
-        \ -print | sort\n\npython3 <<'PY'\nimport os\nimport pathlib\nimport shutil\n\
-        import tarfile\nimport tempfile\n\nroot = pathlib.Path('game')\npackage_dir\
-        \ = pathlib.Path(os.environ['RUNNER_TEMP']) / 'firebase-unity-sdk' / 'packages'\n\
-        packages = []\nfor needle in ('FirebaseAnalytics', 'FirebaseRemoteConfig',\
-        \ 'FirebaseMessaging'):\n    matches = sorted(package_dir.rglob(f'*{needle}*.unitypackage'))\n\
-        \    if not matches:\n        raise FileNotFoundError(f'Firebase Unity package\
-        \ not found in SDK zip: {needle}')\n    packages.append(matches[0])\n\nfor\
-        \ package in packages:\n    print(f'Extracting {package.name}')\n    with\
-        \ tempfile.TemporaryDirectory() as td:\n        temp = pathlib.Path(td)\n\
-        \        with tarfile.open(package, 'r:gz') as tar:\n            tar.extractall(temp)\n\
-        \        for entry in temp.iterdir():\n            pathname = entry / 'pathname'\n\
-        \            asset = entry / 'asset'\n            meta = entry / 'asset.meta'\n\
-        \            if not pathname.exists() or not asset.exists():\n           \
-        \     continue\n            rel = pathname.read_text(encoding='utf-8').strip()\n\
-        \            if not rel.startswith('Assets/'):\n                continue\n\
-        \            out = root / rel\n            out.parent.mkdir(parents=True,\
-        \ exist_ok=True)\n            shutil.copyfile(asset, out)\n            if\
-        \ meta.exists():\n                shutil.copyfile(meta, pathlib.Path(str(out)\
-        \ + '.meta'))\n\nprint('Firebase Unity SDK files prepared.')\nPY\n\nfind game/Assets/Firebase\
-        \ -maxdepth 3 -type f | sed -n '1,80p'\n"
-    - name: Normalize legacy Android resources after SDK prep
-      shell: bash
-      run: "set -euo pipefail\nlegacy_res=\"game/Assets/Plugins/Android/res\"\nandroidlib=\"\
-        game/Assets/Plugins/Android/ZeyWinLegacyRes.androidlib\"\nif [ -d \"$legacy_res\"\
-        \ ]; then\n  echo \"Moving obsolete Android resources into Android Library\
-        \ after SDK prep: $androidlib\"\n  mkdir -p \"$androidlib/src/main\"\n  rm\
-        \ -rf \"$androidlib/src/main/res\"\n  mv \"$legacy_res\" \"$androidlib/src/main/res\"\
-        \n  cat > \"$androidlib/AndroidManifest.xml\" <<'XML'\n<manifest xmlns:android=\"\
-        http://schemas.android.com/apk/res/android\" package=\"com.zeywin.legacyres\"\
-        \ />\nXML\n  cat > \"$androidlib/build.gradle\" <<'GRADLE'\nplugins {\n  \
-        \  id 'com.android.library'\n}\n\nandroid {\n    compileSdk 34\n    namespace\
-        \ 'com.zeywin.legacyres'\n}\nGRADLE\n  find \"$androidlib\" -maxdepth 4 -type\
-        \ f | sort\nelse\n  echo \"No legacy Assets/Plugins/Android/res directory\
-        \ found after SDK prep.\"\nfi\n"
-    - name: Install Unity Android legacy resource preprocessor
-      shell: bash
-      run: "set -euo pipefail\nmkdir -p game/Assets/Editor\ncat > game/Assets/Editor/ZeyWinAndroidLegacyResourcePreprocessor.cs\
-        \ <<'CS'\nusing System.IO;\nusing UnityEditor;\nusing UnityEditor.Build;\n\
-        using UnityEditor.Build.Reporting;\n\npublic sealed class ZeyWinAndroidLegacyResourcePreprocessor\
-        \ : IPreprocessBuildWithReport\n{\n    public int callbackOrder => 200000;\n\
-        \n    public void OnPreprocessBuild(BuildReport report)\n    {\n        if\
-        \ (report.summary.platform != BuildTarget.Android)\n            return;\n\n\
-        \        var legacy = \"Assets/Plugins/Android/res\";\n        if (!Directory.Exists(legacy))\n\
-        \        {\n            UnityEngine.Debug.Log(\"[ZeyWinActions] No obsolete\
-        \ Android resources in Assets/Plugins/Android/res during Unity prebuild.\"\
-        );\n            return;\n        }\n\n        var androidLib = \"Assets/Plugins/Android/ZeyWinLegacyRes.androidlib\"\
-        ;\n        var target = Path.Combine(androidLib, \"src/main/res\");\n    \
-        \    if (Directory.Exists(target))\n            Directory.Delete(target, true);\n\
-        \n        Directory.CreateDirectory(Path.GetDirectoryName(target));\n    \
-        \    Directory.Move(legacy, target);\n        File.WriteAllText(Path.Combine(androidLib,\
-        \ \"AndroidManifest.xml\"), \"<manifest xmlns:android=\\\"http://schemas.android.com/apk/res/android\\\
-        \" package=\\\"com.zeywin.legacyres\\\" />\");\n        File.WriteAllText(Path.Combine(androidLib,\
-        \ \"build.gradle\"), \"plugins {\\n    id 'com.android.library'\\n}\\n\\nandroid\
-        \ {\\n    compileSdk 34\\n    namespace 'com.zeywin.legacyres'\\n}\\n\");\n\
-        \n        FileUtil.DeleteFileOrDirectory(legacy);\n        FileUtil.DeleteFileOrDirectory(legacy\
-        \ + \".meta\");\n        if (Directory.Exists(legacy))\n            Directory.Delete(legacy,\
-        \ true);\n        if (File.Exists(legacy + \".meta\"))\n            File.Delete(legacy\
-        \ + \".meta\");\n\n        AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);\n\
-        \        if (Directory.Exists(legacy))\n            throw new System.Exception(\"\
-        [ZeyWinActions] Obsolete Android resources folder still exists after cleanup:\
-        \ \" + legacy);\n\n        UnityEngine.Debug.Log(\"[ZeyWinActions] Moved obsolete\
-        \ Android resources into Android Library and removed legacy folder during\
-        \ Unity prebuild: \" + androidLib);\n    }\n}\nCS\n"
-    - name: Build APK
-      uses: game-ci/unity-builder@v4
-      timeout-minutes: 105
-      env:
-        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
-        ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
-        ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-        ANDROID_PRODUCT_NAME: "${{ inputs.app_name || 'Slots: Slot Machines' }}"
-        ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
-        ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
-        ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
-        ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID
-          }}
-        ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID
-          }}
-        ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id ||
-          secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
-        ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID
-          }}
-        ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID: ${{ inputs.admob_android_rewarded_interstitial_id
-          || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}
-        ADMOB_ANDROID_NATIVE_ID: ${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID
-          }}
-        ADMOB_ANDROID_APP_OPEN_ID: ${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID
-          }}
-        APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
-        AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
-      with:
-        unityVersion: 6000.5.1f1
-        targetPlatform: Android
-        projectPath: game
-        versioning: None
-        buildMethod: ${{ (inputs.build_format || 'apk') == 'aab' && 'BuildGithubActionsApk.BuildAndroidAppBundle'
-          || 'BuildGithubActionsApk.BuildAndroid' }}
-        customParameters: -logFile - -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path
-          }}" -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
-          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidProductName "${{ inputs.app_name || 'SlotSpot' }}" -androidVersionName "${{
-          steps.resolve_version.outputs.version_name }}" -androidVersionCode "${{
-          steps.resolve_version.outputs.version_code }}" -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
-          -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" -admobAndroidAppId
-          "${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}" -admobAndroidBannerId
-          "${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
-          -admobAndroidInterstitialId "${{ inputs.admob_android_interstitial_id ||
-          secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}" -admobAndroidRewardedId "${{ inputs.admob_android_rewarded_id
-          || secrets.ADMOB_ANDROID_REWARDED_ID }}" -admobAndroidRewardedInterstitialId
-          "${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID
-          }}" -admobAndroidNativeId "${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID
-          }}" -admobAndroidAppOpenId "${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID
-          }}"
-    - name: Build AAB for APK+AAB
-      if: ${{ inputs.build_format == 'apk_aab' }}
-      uses: game-ci/unity-builder@v4
-      timeout-minutes: 105
-      env:
-        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
-        ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
-        ANDROID_PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-        ANDROID_PRODUCT_NAME: "${{ inputs.app_name || 'Slots: Slot Machines' }}"
-        ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
-        ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
-        ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
-        ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID
-          }}
-        ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID
-          }}
-        ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id ||
-          secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
-        ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID
-          }}
-        ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID: ${{ inputs.admob_android_rewarded_interstitial_id
-          || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}
-        ADMOB_ANDROID_NATIVE_ID: ${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID
-          }}
-        ADMOB_ANDROID_APP_OPEN_ID: ${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID
-          }}
-        APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
-        AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
-      with:
-        unityVersion: 6000.5.1f1
-        targetPlatform: Android
-        projectPath: game
-        versioning: None
-        buildMethod: BuildGithubActionsApk.BuildAndroidAppBundle
-        customParameters: -logFile - -apkOutputPath "${{ steps.resolve_version.outputs.apk_output_path
-          }}" -aabOutputPath "${{ steps.resolve_version.outputs.aab_output_path }}"
-          -androidPackageName "${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}" -androidProductName "${{ inputs.app_name || 'SlotSpot' }}" -androidVersionName "${{
-          steps.resolve_version.outputs.version_name }}" -androidVersionCode "${{
-          steps.resolve_version.outputs.version_code }}" -androidKeystorePath "/github/workspace/.ci/keystore/user.keystore"
-          -zeywinApiKey "${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}" -admobAndroidAppId
-          "${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}" -admobAndroidBannerId
-          "${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}"
-          -admobAndroidInterstitialId "${{ inputs.admob_android_interstitial_id ||
-          secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}" -admobAndroidRewardedId "${{ inputs.admob_android_rewarded_id
-          || secrets.ADMOB_ANDROID_REWARDED_ID }}" -admobAndroidRewardedInterstitialId
-          "${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID
-          }}" -admobAndroidNativeId "${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID
-          }}" -admobAndroidAppOpenId "${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID
-          }}"
-    - name: Upload Unity build log on failure
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: unity-build-log
-        path: 'build/unity-build.log
+          max_code=0
+          latest_file="builds/$PACKAGE_NAME/latest-build.txt"
+          if [ -f "$latest_file" ]; then
+            code="$(sed -n 's/^version_code=//p' "$latest_file" | tail -n 1)"
+            if [[ "$code" =~ ^[0-9]+$ ]] && [ "$code" -gt "$max_code" ]; then
+              max_code="$code"
+            fi
+          fi
 
-          game/build/unity-build.log
+          while IFS= read -r dir; do
+            code="${dir##*/v}"
+            if [[ "$code" =~ ^[0-9]+$ ]] && [ "$code" -gt "$max_code" ]; then
+              max_code="$code"
+            fi
+          done < <(find "builds/$PACKAGE_NAME" -maxdepth 1 -type d -name 'v[0-9]*' 2>/dev/null || true)
 
+          while IFS= read -r code; do
+            if [[ "$code" =~ ^[0-9]+$ ]] && [ "$code" -gt "$max_code" ]; then
+              max_code="$code"
+            fi
+          done < <(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json name --jq '.[].name' 2>/dev/null | sed -n "s/^APK $PACKAGE_NAME v\\([0-9][0-9]*\\)$/\\1/p" || true)
+
+          if [ "$VERSION_MODE" = "manual" ]; then
+            test -n "$VERSION_NAME_INPUT" || { echo "version_name is required when version_mode=manual. Example: 1.0.$((max_code + 1))"; exit 1; }
+            test -n "$VERSION_CODE_INPUT" || { echo "version_code is required when version_mode=manual. Previous highest code is $max_code, so use $((max_code + 1)) or higher."; exit 1; }
+          fi
+
+          if [ "$VERSION_MODE" = "manual" ]; then
+            version_code="$VERSION_CODE_INPUT"
+          else
+            version_code=$((max_code + 1))
+          fi
+
+          if ! [[ "$version_code" =~ ^[0-9]+$ ]]; then
+            echo "version_code must be numeric, got: $version_code"
+            exit 1
+          fi
+
+          if [ "$version_code" -lt 1 ]; then
+            echo "version_code must be a positive integer, got: $version_code"
+            exit 1
+          fi
+
+          if [ "$VERSION_MODE" = "manual" ]; then
+            version_name="$VERSION_NAME_INPUT"
+          else
+            version_name="1.0.$version_code"
+          fi
+
+          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "apk_output_path=$GITHUB_WORKSPACE/build/android/APK_${PACKAGE_NAME}_v${version_code}.apk" >> "$GITHUB_OUTPUT"
+          echo "aab_output_path=$GITHUB_WORKSPACE/build/android/AAB_${PACKAGE_NAME}_v${version_code}.aab" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Resolved APK version"
+            echo "- Package: \`$PACKAGE_NAME\`"
+            echo "- Mode: \`$VERSION_MODE\`"
+            echo "- Previous highest version code: \`$max_code\`"
+            echo "- Next manual version name/code: \`1.0.$((max_code + 1))\` / \`$((max_code + 1))\`"
+            echo "- Version name: \`$version_name\`"
+            echo "- Version code: \`$version_code\`"
+            if [ "$VERSION_MODE" = "manual" ] && [ "$version_code" -le "$max_code" ]; then
+              echo "- Note: this is an old-version rebuild, so it will not replace the latest-build pointer."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Free disk space
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo "----- disk before cleanup -----"
+          df -h
+
+          # Remove heavy pre-installed tools
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/share/postgresql
+          sudo rm -rf /usr/share/miniconda
+          sudo rm -rf /usr/share/az_*
+          sudo rm -rf /usr/share/azcopy
+          sudo rm -rf /usr/share/java
+          sudo rm -rf /usr/share/R
+          sudo rm -rf /usr/share/ruby
+          sudo rm -rf /usr/share/rust
+          sudo rm -rf /usr/share/sbt
+          sudo rm -rf /usr/share/php
+          sudo rm -rf /usr/share/perl
+          sudo rm -rf /usr/share/maven
+          sudo rm -rf /usr/share/gradle
+          sudo rm -rf /usr/share/go
+          sudo rm -rf /usr/share/cabal
+          sudo rm -rf /usr/share/erlang
+          sudo rm -rf /usr/share/leiningen
+          sudo rm -rf /usr/share/elasticsearch
+          sudo rm -rf /usr/local/share/vcpkg
+          sudo rm -rf /opt/actions
+          sudo apt-get clean
+          sudo apt-get autoremove -y
+
+          # Free up Docker space before pulling the Unity image
+          docker system prune -a -f --volumes 2>/dev/null || true
+
+          echo "----- disk after cleanup -----"
+          df -h
+
+      - name: Disable Git LFS for game repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Disabling Git LFS to avoid Curl error 42..."
+          
+          # Создаем .lfsconfig в игровом репозитории
+          cat > game/.lfsconfig <<'EOF'
+          [lfs]
+          	fetchinclude =
+          	fetchexclude = *
+          EOF
+          
+          # Удаляем .gitattributes если есть
+          if [ -f game/.gitattributes ]; then
+            rm -f game/.gitattributes
+            echo "Removed game/.gitattributes"
+          fi
+          
+          echo "✅ Git LFS disabled for game repository"
+
+      - name: Normalize legacy Android resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          legacy_res="game/Assets/Plugins/Android/res"
+          androidlib="game/Assets/Plugins/Android/ZeyWinLegacyRes.androidlib"
+          if [ -d "$legacy_res" ]; then
+            echo "Moving obsolete Android resources into Android Library: $androidlib"
+            mkdir -p "$androidlib/src/main"
+            rm -rf "$androidlib/src/main/res"
+            mv "$legacy_res" "$androidlib/src/main/res"
+            cat > "$androidlib/AndroidManifest.xml" <<'XML'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.zeywin.legacyres" />
+          XML
+            cat > "$androidlib/build.gradle" <<'GRADLE'
+          plugins {
+              id 'com.android.library'
+          }
+
+          android {
+              compileSdk 34
+              namespace 'com.zeywin.legacyres'
+          }
+          GRADLE
+            find "$androidlib" -maxdepth 4 -type f | sort
+          else
+            echo "No legacy Assets/Plugins/Android/res directory found."
+          fi
+
+      - name: Prepare Firebase SDK
+        shell: bash
+        env:
+          FIREBASE_UNITY_VERSION: "13.6.0"
+        run: |
+          set -euo pipefail
+          if ! grep -R --include='*.cs' -E 'using Firebase|Firebase\.' game/Assets >/dev/null 2>&1; then
+            echo "No Firebase C# references found; skipping Firebase SDK preparation."
+            exit 0
+          fi
+
+          if [ -d game/Assets/Firebase ]; then
+            echo "Assets/Firebase already exists; keeping game Firebase SDK files."
+            exit 0
+          fi
+
+          echo "Firebase C# references found; installing Firebase Unity SDK ${FIREBASE_UNITY_VERSION} via .tgz."
+          mkdir -p .ci/firebase/packages
+          python3 <<'PY'
+          import os, pathlib, shutil, subprocess, tarfile
+          root = pathlib.Path("game").resolve()
+          packages_dir = pathlib.Path(".ci/firebase/packages")
+          firebase_version = os.environ["FIREBASE_UNITY_VERSION"]
+          package_specs = [
+              ("com.google.external-dependency-manager", "1.2.186"),
+              ("com.google.firebase.app", firebase_version),
+              ("com.google.firebase.analytics", firebase_version),
+              ("com.google.firebase.remote-config", firebase_version),
+              ("com.google.firebase.messaging", firebase_version),
+          ]
+          def safe_target(pathname):
+              target = (root / pathname).resolve()
+              if root not in target.parents and target != root:
+                  raise ValueError(f"Refusing to extract outside game repo: {pathname}")
+              return target
+          def download_tgz(package_name, version):
+              package_file = packages_dir / f"{package_name}-{version}.tgz"
+              if package_file.is_file(): return package_file
+              url = f"https://dl.google.com/games/registry/unity/{package_name}/{package_name}-{version}.tgz"
+              subprocess.run(["curl", "-L", "--fail", "--retry", "3", "--retry-delay", "5", "-o", str(package_file), url], check=True)
+              return package_file
+          def extract_tgz(package_path):
+              copied = 0
+              with tarfile.open(package_path, "r:gz") as package:
+                  for member in package.getmembers():
+                      if not member.isfile(): continue
+                      name = member.name
+                      if not name.startswith("package/"): continue
+                      relative = name[len("package/"):]
+                      if not relative: continue
+                      if not (relative.startswith("Firebase/") or relative.startswith("ExternalDependencyManager/") or
+                              relative.startswith("Editor Default Resources/") or relative.startswith("Plugins/")):
+                          continue
+                      source = package.extractfile(member)
+                      if source is None: continue
+                      target = safe_target("Assets/" + relative)
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      with target.open("wb") as out: shutil.copyfileobj(source, out)
+                      copied += 1
+              return copied
+          copied = 0
+          for package_name, version in package_specs:
+              print(f"Downloading/extracting {package_name} {version}...")
+              copied += extract_tgz(download_tgz(package_name, version))
+          print(f"Firebase Unity SDK extracted into game Assets ({copied} assets).")
+          required = [
+              "Assets/ExternalDependencyManager",
+              "Assets/Firebase/Editor",
+              "Assets/Firebase/Plugins",
+          ]
+          missing = [p for p in required if not (root / p).is_dir()]
+          if missing:
+              raise SystemExit("Firebase SDK extraction incomplete: " + ", ".join(missing))
+          PY
+
+          if grep -R --include='*.cs' -E 'using Firebase|Firebase\.' game/Assets >/dev/null 2>&1; then
+            find game/Assets/Firebase -maxdepth 3 -type f | sed -n '1,80p'
+            echo "Firebase SDK prepared successfully."
+          else
+            echo "No Firebase C# references found; Firebase SDK extraction was not needed."
+          fi
+
+      - name: Fix FirebaseBootstrap.cs for SDK 13.x compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          fb="game/Assets/Scripts/FirebaseBootstrap.cs"
+          if [ ! -f "$fb" ]; then
+            echo "FirebaseBootstrap.cs not found, skipping."
+            exit 0
+          fi
+          echo "Patching FirebaseBootstrap.cs for SDK 13.x DependencyStatus namespace..."
+          # Add using Firebase.Extensions if not present
+          if ! grep -q 'using Firebase.Extensions;' "$fb"; then
+            cp "$fb" "$fb.bak" && awk 'NR==1{print "using Firebase.Extensions;"}1' "$fb.bak" > "$fb" && echo "Added using Firebase.Extensions;"
+          fi
+          echo "FirebaseBootstrap.cs patched."
+
+      - name: Normalize legacy Android resources after SDK prep
+        shell: bash
+        run: |
+          set -euo pipefail
+          legacy_res="game/Assets/Plugins/Android/res"
+          androidlib="game/Assets/Plugins/Android/ZeyWinLegacyRes.androidlib"
+          if [ -d "$legacy_res" ]; then
+            echo "Moving obsolete Android resources into Android Library after SDK prep: $androidlib"
+            mkdir -p "$androidlib/src/main"
+            rm -rf "$androidlib/src/main/res"
+            mv "$legacy_res" "$androidlib/src/main/res"
+            cat > "$androidlib/AndroidManifest.xml" <<'XML'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.zeywin.legacyres" />
+          XML
+            cat > "$androidlib/build.gradle" <<'GRADLE'
+          plugins {
+              id 'com.android.library'
+          }
+
+          android {
+              compileSdk 34
+              namespace 'com.zeywin.legacyres'
+          }
+          GRADLE
+            find "$androidlib" -maxdepth 4 -type f | sort
+          else
+            echo "No legacy Assets/Plugins/Android/res directory found after SDK prep."
+          fi
+
+      - name: Install Unity Android legacy resource preprocessor
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p game/Assets/Editor
+          cat > game/Assets/Editor/ZeyWinAndroidLegacyResourcePreprocessor.cs <<'CS'
+          using System.IO;
+          using UnityEditor;
+          using UnityEditor.Build;
+          using UnityEditor.Build.Reporting;
+
+          public sealed class ZeyWinAndroidLegacyResourcePreprocessor : IPreprocessBuildWithReport
+          {
+              public int callbackOrder => 200000;
+
+              public void OnPreprocessBuild(BuildReport report)
+              {
+                  if (report.summary.platform != BuildTarget.Android)
+                      return;
+
+                  var legacy = "Assets/Plugins/Android/res";
+                  if (!Directory.Exists(legacy))
+                  {
+                      UnityEngine.Debug.Log("[ZeyWinActions] No obsolete Android resources in Assets/Plugins/Android/res during Unity prebuild.");
+                      return;
+                  }
+
+                  var androidLib = "Assets/Plugins/Android/ZeyWinLegacyRes.androidlib";
+                  var target = Path.Combine(androidLib, "src/main/res");
+                  if (Directory.Exists(target))
+                      Directory.Delete(target, true);
+
+                  Directory.CreateDirectory(Path.GetDirectoryName(target));
+                  Directory.Move(legacy, target);
+                  File.WriteAllText(Path.Combine(androidLib, "AndroidManifest.xml"), "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\" package=\"com.zeywin.legacyres\" />");
+                  File.WriteAllText(Path.Combine(androidLib, "build.gradle"), "plugins {\n    id 'com.android.library'\n}\n\nandroid {\n    compileSdk 34\n    namespace 'com.zeywin.legacyres'\n}\n");
+
+                  FileUtil.DeleteFileOrDirectory(legacy);
+                  FileUtil.DeleteFileOrDirectory(legacy + ".meta");
+                  if (Directory.Exists(legacy))
+                      Directory.Delete(legacy, true);
+                  if (File.Exists(legacy + ".meta"))
+                      File.Delete(legacy + ".meta");
+
+                  AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+                  if (Directory.Exists(legacy))
+                      throw new System.Exception("[ZeyWinActions] Obsolete Android resources folder still exists after cleanup: " + legacy);
+
+                  UnityEngine.Debug.Log("[ZeyWinActions] Moved obsolete Android resources into Android Library and removed legacy folder during Unity prebuild: " + androidLib);
+              }
+          }
+          CS
+
+      - name: Universal SDK compatibility patch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SCRIPT=".ci-patches/fix-sdk-integration.py"
+          if [ ! -f "$SCRIPT" ]; then
+            echo "⚠️  $SCRIPT not found on disk – recovering..."
+            mkdir -p .ci-patches
+            git show HEAD:.ci-patches/fix-sdk-integration.py > "$SCRIPT" 2>/dev/null && echo "✅ Recovered from git" || {
+              echo "Trying GitHub API as fallback..."
+              curl -fsSL -H "Authorization: token ${{ github.token }}" \
+                "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/.ci-patches/fix-sdk-integration.py" \
+                > "$SCRIPT" && echo "✅ Recovered via GitHub API" || {
+                echo "❌ Cannot recover script – using built-in inline fallback"
+                cat > "$SCRIPT" << 'EOF'
+          #!/usr/bin/env python3
+          import sys, pathlib, shutil, json, re, textwrap
+          def main():
+              if len(sys.argv) < 3: print("Usage: ... <Assets> <manifest>"); sys.exit(1)
+              assets = pathlib.Path(sys.argv[1]); manifest_path = pathlib.Path(sys.argv[2])
+              if not assets.exists(): print(f"❌ Assets not found: {assets}"); sys.exit(1)
+              if not manifest_path.exists(): print(f"❌ manifest.json not found: {manifest_path}"); sys.exit(1)
+              remove_gma_editor_stubs(assets); add_upm_packages(manifest_path); remove_conflicting_asset_sdks(assets, manifest_path)
+              remove_obsolete_packages(manifest_path); fix_urp_pixelperfect(assets, manifest_path)
+              remove_sdk_examples(assets); fix_dll_metas(assets); fix_dotween_modules(assets)
+              fix_tmp_fonts(assets); clear_cached_files(assets)
+          def remove_gma_editor_stubs(a):
+              d = a / "GoogleMobileAds" / "Editor"
+              if d.exists(): shutil.rmtree(d); print("  ✅ Removed GoogleMobileAds/Editor"); (pathlib.Path(str(d)+".meta")).unlink(missing_ok=True)
+           def add_upm_packages(mp):
+               m = json.loads(mp.read_text(encoding="utf-8"))
+               regs = m.setdefault("scopedRegistries",[])
+               if not any(r.get("url")=="https://package.openupm.com" for r in regs):
+                   regs.append({"name":"OpenUPM","url":"https://package.openupm.com","scopes":["com.google.ads.mobile","com.google.external-dependency-manager"]})
+                   print("  ✅ Added OpenUPM scoped registry")
+               deps = m.setdefault("dependencies",{})
+               for p,v in {"com.google.ads.mobile":"11.2.0","com.google.external-dependency-manager":"1.2.187","com.unity.textmeshpro":"3.0.9"}.items():
+                   if p not in deps: deps[p]=v; print(f"  ✅ Added UPM {p}@{v}")
+               mp.write_text(json.dumps(m,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+           def remove_obsolete_packages(mp):
+               content = mp.read_text(encoding="utf-8")
+               obsolete = ["com.unity.2d.pixel-perfect","com.unity.2d.aseprite","com.unity.2d.tilemap.extras","com.unity.modules.adaptiveperformance","com.unity.modules.vectorgraphics"]
+               modified = False
+               for pkg in obsolete:
+                   if f'"{pkg}"' in content:
+                       content = re.sub(rf'^\s*"{pkg}"\s*:\s*"[^"]+",?\s*$\n?', '', content, flags=re.MULTILINE)
+                       print(f"  ✅ Removed obsolete package {pkg}")
+                       modified = True
+               if modified:
+                   mp.write_text(content, encoding="utf-8")
+           def fix_urp_pixelperfect(a, mp):
+               content = mp.read_text(encoding="utf-8")
+               pkg = "com.unity.2d.pixel-perfect"
+               if f'"{pkg}"' in content:
+                   content = re.sub(rf'^\s*"{pkg}"\s*:\s*"[^"]+",?\s*$\n?', '', content, flags=re.MULTILINE)
+                   mp.write_text(content, encoding="utf-8")
+                   print(f"  ✅ Removed {pkg} from manifest (incompatible with Unity 6)")
+           REMOVE_IF_UPM=[("com.google.ads.mobile","GoogleMobileAds"),("com.google.external-dependency-manager","ExternalDependencyManager")]
+          def remove_conflicting_asset_sdks(a,mp):
+              try: deps=json.loads(mp.read_text(encoding="utf-8")).get("dependencies",{})
+              except: deps={}
+              for pkg,folder in REMOVE_IF_UPM:
+                  if pkg in deps and (d:=a/folder).exists(): shutil.rmtree(d); print(f"  ✅ Removed Assets/{folder}")
+          EXAMPLE_DIRS=["FacebookSDK/Examples","Facebook/Examples","IronSource/Demo","AppLovin/Demo","MaxSdk/Demos","GoogleMobileAds/Editor"]
+          def remove_sdk_examples(a):
+              for r in EXAMPLE_DIRS:
+                  if (d:=a/r).exists(): shutil.rmtree(d); print(f"  ✅ Removed Assets/{r}")
+          def fix_dll_metas(a):
+              ANY_META=textwrap.dedent("""\
+              fileFormatVersion: 2
+              guid: {guid}
+              PluginImporter:
+                externalObjects: {}
+                serializedVersion: 2
+                iconMap: {}
+                executionOrder: {}
+                defineConstraints: []
+                isPreloaded: 0
+                isOverridable: 0
+                isExplicitlyReferenced: 0
+                validateReferences: 1
+                platformData:
+                - first: {'':Any}
+                  second: {enabled:1,settings:{Exclude Android:0,Exclude Editor:0,Exclude Linux64:1,Exclude OSXUniversal:1,Exclude Win:1,Exclude Win64:1,Exclude iOS:1}}
+                - first: {Any: Editor}
+                  second: {enabled:1,settings:{CPU:AnyCPU,DefaultValueInitialized:true,OS:Any}}
+                userData:
+                assetBundleName:
+                assetBundleVariant:
+              """)
+              fixed=0
+              for meta in a.rglob("*.dll.meta"):
+                  try: text=meta.read_text(encoding="utf-8",errors="replace")
+                  except: continue
+                  if "DefaultImporter" not in text: continue
+                  g=re.search(r'guid: ([a-f0-9]+)',text); guid=g.group(1) if g else "0"*32
+                  meta.write_text(ANY_META.format(guid=guid),encoding="utf-8"); fixed+=1
+              if fixed: print(f"  ✅ Fixed {fixed} .dll.meta files")
+          def fix_dotween_modules(a):
+              removed=0
+              for md in a.rglob("DOTween/Modules"):
+                  if not md.is_dir(): continue
+                  for asmdef in md.rglob("*.asmdef"):
+                      asmdef.unlink(); (pathlib.Path(str(asmdef)+".meta")).unlink(missing_ok=True); removed+=1
+              if removed: print(f"  ✅ Removed {removed} asmdef in DOTween/Modules")
+          def fix_tmp_fonts(a):
+              fixed=0
+              for af in a.rglob("*.asset"):
+                  try: c=af.read_text(encoding="utf-8",errors="replace")
+                  except: continue
+                  if "m_Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04" not in c: continue
+                  if "TextMeshPro/Distance Field" in c or "TextMeshPro/Bitmap" in c:
+                      c=re.sub(r'm_Shader: \{fileID: \d+, guid: [a-f0-9]+, type: \d+\}','m_Shader: {fileID: 4800000, guid: 1e3b057af24249748ff873be7fafee47, type: 3}',c)
+                      af.write_text(c,encoding="utf-8"); fixed+=1
+              if fixed: print(f"  ✅ Fixed {fixed} TMP Font Assets")
+          def clear_cached_files(a):
+              pr=a.parent; cleared=0
+              for cd in [pr/"Library/Artifacts",pr/"Library/ScriptAssemblies",pr/"Library/PackageCache",pr/"Temp"]:
+                  if cd.exists(): shutil.rmtree(cd); cleared+=1; print(f"  ✅ Cleared {cd.name}")
+              if not cleared: print("  ℹ️  No cache directories found")
+          if __name__=="__main__": main()
+          EOF
+                echo "✅ Created inline fallback script"
+              }
+            }
+          fi
+          echo "Running comprehensive SDK integration fixer..."
+          python3 "$SCRIPT" "game/Assets" "game/Packages/manifest.json"
+
+      - name: Remove TextMesh Pro Examples (Unity 6 compatibility)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Removing TextMesh Pro Examples & Extras to avoid Unity 6 CS0029 errors..."
+          # Remove from game Assets (various possible paths)
+          for tmp_dir in \
+            "game/Assets/TextMesh Pro/Examples & Extras" \
+            "game/Assets/TextMesh Pro/Examples" \
+            "game/Assets/TextMeshPro/Examples & Extras" \
+            "game/Assets/TextMeshPro/Examples"; do
+            if [ -d "$tmp_dir" ]; then
+              rm -rf "$tmp_dir"
+              echo "  Removed: $tmp_dir"
+            fi
+          done
+          # Also remove .meta files
+          for tmp_meta in \
+            "game/Assets/TextMesh Pro/Examples & Extras.meta" \
+            "game/Assets/TextMesh Pro/Examples.meta" \
+            "game/Assets/TextMeshPro/Examples & Extras.meta" \
+            "game/Assets/TextMeshPro/Examples.meta"; do
+            if [ -f "$tmp_meta" ]; then
+              rm -f "$tmp_meta"
+              echo "  Removed meta: $tmp_meta"
+            fi
+          done
+          # Remove TMP examples from UPM package cache if present
+          find game/Library/PackageCache -path "*/com.unity.textmeshpro*/Samples~" -type d -exec rm -rf {} + 2>/dev/null || true
+          find game/Library/PackageCache -path "*/com.unity.textmeshpro*/Examples" -type d -exec rm -rf {} + 2>/dev/null || true
+           echo "✅ TextMesh Pro Examples cleanup complete"
+
+      - name: Clear PackageCache after fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Clearing Unity PackageCache to force fresh package resolution..."
+          rm -rf game/Library/PackageCache
+          echo "PackageCache cleared"
+
+      - name: Patch GoogleMobileAdsSettings.asset for UPM compatibility
+        shell: bash
+        env:
+          ADMOB_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ADMOB_APP_ID" ]; then
+            echo "No AdMob app ID, skipping settings patch."
+            exit 0
+          fi
+          python3 <<'PY'
+          import json, os, pathlib, re
+          game = pathlib.Path("game")
+          admob_id = os.environ["ADMOB_APP_ID"]
+          for asset in game.rglob("GoogleMobileAdsSettings.asset"):
+              text = asset.read_text(encoding="utf-8", errors="replace")
+              if "GradleExtensionsImport" in text or re.search(r'ApplicationId:\s*""', text):
+                  text = re.sub(r'(ApplicationId:\s*)"[^"]*"', rf'\1"{admob_id}"', text)
+                  asset.write_text(text, encoding="utf-8")
+                  print(f"✅ Patched AdMob App ID in {asset.relative_to(game)}")
+                  break
+          else:
+              manifest = game / "Packages/manifest.json"
+              if manifest.exists():
+                  m = json.loads(manifest.read_text(encoding="utf-8"))
+                  deps = m.get("dependencies", {})
+                  if "com.google.ads.mobile" in deps:
+                      print("ℹ️  GMA is UPM-managed; settings will be generated on first Unity import")
+                  else:
+                      print("⚠️  GoogleMobileAdsSettings.asset not found and GMA not in manifest")
+              else:
+                  print("⚠️  GoogleMobileAdsSettings.asset not found")
+          PY
+
+      - name: Inject AdMob app ID into AndroidManifest.xml
+        shell: bash
+        env:
+          ADMOB_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+        run: |
+          set -euo pipefail
+          ADMOB_APP_ID="${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}"
+          python3 <<'PY'
+          import os, pathlib, re
+          game = pathlib.Path("game")
+          admob_id = os.environ.get("ADMOB_APP_ID", "").strip()
+          if not admob_id:
+              print("No AdMob App ID provided, skipping.")
+              exit(0)
+          target_manifest = game / "Assets/Plugins/Android/AndroidManifest.xml"
+          if not target_manifest.exists():
+              target_manifest.parent.mkdir(parents=True, exist_ok=True)
+              target_manifest.write_text(f"""<?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.unity3d.player"
+              xmlns:tools="http://schemas.android.com/tools">
+            <application>
+              <meta-data
+                  android:name="com.google.android.gms.ads.APPLICATION_ID"
+                  android:value="{admob_id}"/>
+            </application>
+          </manifest>
+          """)
+              print(f"✅ Created AndroidManifest.xml with AdMob App ID")
+          else:
+              text = target_manifest.read_text(encoding="utf-8")
+              if "com.google.android.gms.ads.APPLICATION_ID" in text:
+                  text = re.sub(
+                      r'android:value="[^"]*"',
+                      f'android:value="{admob_id}"',
+                      text
+                  )
+                  target_manifest.write_text(text, encoding="utf-8")
+                  print(f"✅ Updated AdMob App ID in existing AndroidManifest.xml")
+              else:
+                  text = text.replace("</application>",
+                      f'    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="{admob_id}"/>\n  </application>')
+                  target_manifest.write_text(text, encoding="utf-8")
+                  print(f"✅ Injected AdMob App ID into AndroidManifest.xml")
+          PY
+
+      - name: Apply Unity Builder API deprecation fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT=".ci-patches/fix-unity-builder-api.py"
+          if [ ! -f "$SCRIPT" ]; then
+            echo "⚠️  $SCRIPT not found – recovering from git..."
+            mkdir -p .ci-patches
+            git show HEAD:.ci-patches/fix-unity-builder-api.py > "$SCRIPT" 2>/dev/null || true
+          fi
+          echo "Applying Unity Builder API deprecation fixes..."
+          if [ -f "$SCRIPT" ]; then
+            if python3 "$SCRIPT" "game"; then
+              echo "✅ Unity Builder API fixes applied successfully"
+            else
+              echo "⚠️  Unity Builder API patch failed - continuing with unfixed behavior"
+              echo "This is expected if the package cache hasn't been populated yet"
+              echo "The build may still succeed if there are no deprecated API issues"
+            fi
+          else
+            echo "⚠️  $SCRIPT not available - skipping"
+          fi
+
+      - name: Apply BuildResult.Unknown bug fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCRIPT=".ci-patches/apply-buildresult-unknown-fix.py"
+          if [ ! -f "$SCRIPT" ]; then
+            echo "⚠️  $SCRIPT not found – recovering from git..."
+            mkdir -p .ci-patches
+            git show HEAD:.ci-patches/apply-buildresult-unknown-fix.py > "$SCRIPT" 2>/dev/null || true
+          fi
+          echo "Applying BuildResult.Unknown bug fix (exit code 103 → 101)..."
+          if [ -f "$SCRIPT" ]; then
+            if python3 "$SCRIPT" "game"; then
+              echo "✅ BuildResult.Unknown fix applied successfully"
+              echo "Fix includes:"
+              echo "  - Exit code changed from 103 to 101"
+              echo "  - Exception handling with full logging"
+              echo "  - BuildReport analysis for error extraction"
+              echo "  - Unity version detection and mismatch warning"
+            else
+              echo "⚠️  BuildResult.Unknown fix not applied - package cache may not be ready yet"
+              echo "This is expected if the package hasn't been cached"
+              echo "The fix will be applied after Unity resolves packages"
+            fi
+          else
+            echo "⚠️  $SCRIPT not available - skipping"
+          fi
+
+      - name: Fix Android build issues
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Applying Android build fixes for Firebase/Kotlin DEX compatibility..."
+
+          # 1) Remove duplicate Google Mobile Ads plugin (causes plugin collision)
+          rm -f game/Assets/Plugins/Android/googlemobileads-unity.aar
+          rm -f game/Assets/Plugins/Android/googlemobileads-unity.aar.meta
+
+          # 2) Fix DEX transform error: Firebase/Kotlin 2.x compiled with Java 11+
+          #    Unity OpenJDK bundled with Gradle 7.5 needs explicit Java 11 compat
+          GRADLE_PROPS="game/Assets/Plugins/Android/gradleTemplate.properties"
+          BASE_GRADLE="game/Assets/Plugins/Android/baseProjectTemplate.gradle"
+
+          # Patch gradleTemplate.properties if it exists
+          if [ -f "$GRADLE_PROPS" ]; then
+            # Force large heap and stack for D8 dexing of heavy coroutine/firebase libraries
+            sed -i "/^org.gradle.jvmargs/d" "$GRADLE_PROPS" || true
+            echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1g -Xss8m" >> "$GRADLE_PROPS"
+          fi
+
+          # Patch baseProjectTemplate.gradle: set Gradle / AGP to support Java 11
+          if [ -f "$BASE_GRADLE" ]; then
+            # Update Android Gradle Plugin to 7.4.2 which supports Java 11 desugaring
+            sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:7.4.2/" "$BASE_GRADLE" || true
+            # Upgrade Kotlin plugin to 1.9.22 to match stdlib version
+            sed -i "s/org.jetbrains.kotlin:kotlin-gradle-plugin:[0-9.]*/org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22/" "$BASE_GRADLE" || true
+            # Force upgrade R8/D8 compiler to fix StackOverflowError during dexing of coroutines
+            if ! grep -q "com.android.tools:r8" "$BASE_GRADLE"; then
+              sed -i '/dependencies {/a \        classpath("com.android.tools:r8:8.3.37")' "$BASE_GRADLE" || true
+            fi
+          fi
+
+          # --- Fix Double Launcher Icon Bug ---
+          python3 -c '
+          import os
+          manifest = "game/Assets/Plugins/Android/AndroidManifest.xml"
+          if os.path.exists(manifest):
+              with open(manifest, "r") as f:
+                  text = f.read()
+              if "com.google.firebase.MessagingUnityPlayerActivity" in text and "android.intent.category.LAUNCHER" in text:
+                  if "tools:node=\"remove\"" not in text and "com.unity3d.player.UnityPlayerActivity" not in text:
+                      print("Applying Double-Icon Fix: Removing default UnityPlayerActivity")
+                      if "xmlns:tools" not in text:
+                          text = text.replace("<manifest ", "<manifest xmlns:tools=\"http://schemas.android.com/tools\" ")
+                      text = text.replace("</application>", "  <activity android:name=\"com.unity3d.player.UnityPlayerActivity\" tools:node=\"remove\" />\n  </application>")
+                      with open(manifest, "w") as f:
+                          f.write(text)
           '
-        if-no-files-found: ignore
-    - name: Verify Android build output
-      shell: bash
-      env:
-        BUILD_FORMAT: ${{ inputs.build_format || 'apk' }}
-        APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
-        AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
-      run: "set -euo pipefail\nsudo chown -R \"$USER:$USER\" build Builds game/build\
-        \ game/Builds game/Library/Bee/Android 2>/dev/null || true\nmkdir -p \"$(dirname\
-        \ \"$APK_OUTPUT_PATH\")\" \"$(dirname \"$AAB_OUTPUT_PATH\")\"\n\nverify_one()\
-        \ {\n  local output_path=\"$1\"\n  local ext=\"$2\"\n\n  if [ ! -f \"$output_path\"\
-        \ ]; then\n    echo \"Android $ext was not created at expected path: $output_path\"\
-        \n    echo \"Searching for .$ext files in Unity output folders...\"\n    found_output=\"\
-        $(find build/android Builds game/build game/Builds game/Library/Bee/Android\
-        \ -type f -name \"*.$ext\" -print 2>/dev/null | head -n 1 || true)\"\n   \
-        \ if [ -n \"$found_output\" ]; then\n      echo \"Found .$ext at $found_output\"\
-        \n      cp \"$found_output\" \"$output_path\"\n    fi\n  fi\n\n  if [ ! -f\
-        \ \"$output_path\" ]; then\n    echo \"Android $ext was not created and no\
-        \ fallback .$ext was found.\"\n    echo \"----- android package files -----\"\
-        \n    find . -type f \\( -name '*.apk' -o -name '*.aab' \\) -print || true\n\
-        \    echo \"----- build files -----\"\n    find build Builds game/build game/Builds\
-        \ game/Library/Bee/Android -maxdepth 8 -type f -print 2>/dev/null || true\n\
-        \    echo \"----- important Unity log lines from console log -----\"\n   \
-        \ if [ -f build/unity-build.log ]; then\n      grep -E \"ZeyWinActions|Build\
-        \ result|error CS|Script Compilation Error|Exception|Android build failed\"\
-        \ build/unity-build.log || true\n    elif [ -f game/build/unity-build.log\
-        \ ]; then\n      grep -E \"ZeyWinActions|Build result|error CS|Script Compilation\
-        \ Error|Exception|Android build failed\" game/build/unity-build.log || true\n\
-        \    else\n      echo \"Unity log file was not written because Unity logs\
-        \ are streamed to the GitHub Actions console.\"\n    fi\n    exit 1\n  fi\n\
-        \n  ls -lh \"$output_path\"\n}\n\nif [ \"$BUILD_FORMAT\" = \"aab\" ]; then\n\
-        \  verify_one \"$AAB_OUTPUT_PATH\" \"aab\"\nelif [ \"$BUILD_FORMAT\" = \"\
-        apk_aab\" ]; then\n  verify_one \"$APK_OUTPUT_PATH\" \"apk\"\n  verify_one\
-        \ \"$AAB_OUTPUT_PATH\" \"aab\"\nelse\n  verify_one \"$APK_OUTPUT_PATH\" \"\
-        apk\"\nfi\n"
-    - name: Install ImageMagick for icon processing
-      if: ${{ inputs.icon_png_path != '' && ((inputs.build_format || 'apk') == 'apk' || (inputs.build_format || 'apk') == 'apk_aab') }}
-      shell: bash
-      run: |
-        sudo apt-get update && sudo apt-get install -y imagemagick
-    - name: Replace launcher icon with original quality (apktool)
-      if: ${{ inputs.icon_png_path != '' && ((inputs.build_format || 'apk') == 'apk' || (inputs.build_format || 'apk') == 'apk_aab') }}
-      shell: bash
-      env:
-        APK_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
-      run: |
-        set -euo pipefail
 
-        # Locate the high-quality icon file
-        ICON_PATH_INPUT="${{ inputs.icon_png_path }}"
-        if [[ "$ICON_PATH_INPUT" == https://* ]]; then
-          ICON_FILE="${{ github.workspace }}/game/Assets/DownloadedIcons/custom-icon.png"
-        else
-          ICON_FILE="${{ github.workspace }}/game/$ICON_PATH_INPUT"
-        fi
-        if [ ! -f "$ICON_FILE" ]; then
-          echo "Icon file not found: $ICON_FILE — skipping icon replacement"
-          exit 0
-        fi
-        echo "Using icon: $ICON_FILE"
-        file "$ICON_FILE"
-        identify "$ICON_FILE"
+          # Patch mainTemplate.gradle: ensure Java 11 source/target compatibility
+          MAIN_GRADLE="game/Assets/Plugins/Android/mainTemplate.gradle"
+          if [ -f "$MAIN_GRADLE" ]; then
+            # Add compileOptions for Java 11 if not present
+            if ! grep -q "JavaVersion.VERSION_11" "$MAIN_GRADLE"; then
+              sed -i '/compileOptions/,/}/s/sourceCompatibility JavaVersion.VERSION_.*/sourceCompatibility JavaVersion.VERSION_11/' "$MAIN_GRADLE" || true
+              sed -i '/compileOptions/,/}/s/targetCompatibility JavaVersion.VERSION_.*/targetCompatibility JavaVersion.VERSION_11/' "$MAIN_GRADLE" || true
+            fi
+            # Downgrade kotlinx-coroutines to 1.8.1 to avoid StackOverflowError in D8 from AGP 7.x
+            if ! grep -q "kotlinx-coroutines-core:1.8.1" "$MAIN_GRADLE"; then
+              echo 'configurations.all { resolutionStrategy.force "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1", "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1", "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1" }' >> "$MAIN_GRADLE"
+            fi
+          fi
 
-        test -f "$APK_PATH" || { echo "APK not found at $APK_PATH"; exit 1; }
-        ORIG_APK_SIZE=$(stat -c%s "$APK_PATH")
-        echo "APK size: $ORIG_APK_SIZE bytes"
+          echo "Android build fixes applied!"
 
-        # Install apktool
-        if ! command -v apktool &>/dev/null; then
-          APKTOOL_JAR=/tmp/apktool/apktool.jar
-          mkdir -p /tmp/apktool
-          curl -sL -o "$APKTOOL_JAR" "https://github.com/iBotPeaches/Apktool/releases/download/v2.9.3/apktool_2.9.3.jar"
-          cat > /tmp/apktool/apktool << 'SCRIPT'
-        #!/bin/bash
-        java -jar "$(dirname "$0")/apktool.jar" "$@"
-        SCRIPT
-          chmod +x /tmp/apktool/apktool
-          export PATH="/tmp/apktool:$PATH"
-        fi
-        echo "apktool ready: $(apktool --version 2>&1)"
+      - name: Disable Spine post-processor (NullReferenceException workaround)
+        shell: bash
+        run: |
+          set -euo pipefail
+          spine_file="game/Assets/Spine/Editor/spine-unity/Editor/Utility/SpineEditorUtilities.cs"
+          if [ -f "$spine_file" ]; then
+            sed -i 's/void OnPostprocessAllAssets/void __OnPostprocessAllAssets/g' "$spine_file"
+            echo "✅ Disabled Spine OnPostprocessAllAssets to prevent NullReferenceException"
+          else
+            echo "SpineEditorUtilities.cs not found, no fix needed"
+          fi
 
-        WORKDIR=$(mktemp -d)
-        echo "Decoding APK with apktool..."
-        apktool d -f -o "$WORKDIR/decoded" "$APK_PATH" 2>&1
+      - name: Clear PackageCache after fixes
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Clearing Unity PackageCache to force fresh package resolution..."
+          rm -rf game/Library/PackageCache
+          echo "PackageCache cleared"
 
-        # Find all PNGs that are likely launcher icons
-        ICON_PNGS=$(find "$WORKDIR/decoded/res" -path "*/mipmap*" -name "*.png" -type f 2>/dev/null || true)
-        if [ -z "$ICON_PNGS" ]; then
-          ICON_PNGS=$(find "$WORKDIR/decoded/res" -name "*.png" -type f 2>/dev/null || true)
-        fi
-        REPLACED=0
-        for png in $ICON_PNGS; do
-          dims=$(identify -format '%wx%h' "$png" 2>/dev/null || true)
-          [ -z "$dims" ] && continue
-          convert "$ICON_FILE" -resize "$dims!" -alpha set "$png"
-          echo "  Replaced: $(basename "$png")  $dims"
-          REPLACED=$((REPLACED + 1))
-        done
+      - name: Build custom parameters
+        id: build_custom_params
+        shell: bash
+        env:
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
+          ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID: ${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_NATIVE_ID: ${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}
+          ADMOB_ANDROID_APP_OPEN_ID: ${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID }}
+          APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          APP_NAME: ${{ inputs.app_name }}
+          VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
+          VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+        run: |
+          set -euo pipefail
+          
+          params="-logFile - -apkOutputPath \"$APK_OUTPUT_PATH\" -aabOutputPath \"$AAB_OUTPUT_PATH\""
+          params="$params -androidPackageName \"$PACKAGE_NAME\" -androidVersionName \"$VERSION_NAME\" -androidVersionCode \"$VERSION_CODE\""
+          params="$params -zeywinApiKey \"$ZEYWIN_API_KEY\""
+          
+          # Only add AdMob params if they have values
+          [ -n "$ADMOB_ANDROID_APP_ID" ] && params="$params -admobAndroidAppId \"$ADMOB_ANDROID_APP_ID\""
+          [ -n "$ADMOB_ANDROID_BANNER_ID" ] && params="$params -admobAndroidBannerId \"$ADMOB_ANDROID_BANNER_ID\""
+          [ -n "$ADMOB_ANDROID_INTERSTITIAL_ID" ] && params="$params -admobAndroidInterstitialId \"$ADMOB_ANDROID_INTERSTITIAL_ID\""
+          [ -n "$ADMOB_ANDROID_REWARDED_ID" ] && params="$params -admobAndroidRewardedId \"$ADMOB_ANDROID_REWARDED_ID\""
+          [ -n "$ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID" ] && params="$params -admobAndroidRewardedInterstitialId \"$ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID\""
+          [ -n "$ADMOB_ANDROID_NATIVE_ID" ] && params="$params -admobAndroidNativeId \"$ADMOB_ANDROID_NATIVE_ID\""
+          [ -n "$ADMOB_ANDROID_APP_OPEN_ID" ] && params="$params -admobAndroidAppOpenId \"$ADMOB_ANDROID_APP_OPEN_ID\""
+          
+          echo "custom_params=$params" >> "$GITHUB_OUTPUT"
 
-        if [ "$REPLACED" -eq 0 ]; then
-          echo "No icon PNGs found in APK — skipping rebuild"
-          exit 0
-        fi
+      - name: Build APK
+        uses: game-ci/unity-builder@v4
+        timeout-minutes: 105
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
+          ANDROID_PACKAGE_NAME: ${{ inputs.package_name }}
+          ANDROID_PRODUCT_NAME: ${{ inputs.app_name }}
+          ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
+          ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
+          ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID: ${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_NATIVE_ID: ${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}
+          ADMOB_ANDROID_APP_OPEN_ID: ${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID }}
+          APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+        with:
+          unityVersion: 6000.0.71f1
+          targetPlatform: Android
+          projectPath: game
+          versioning: None
+          buildMethod: ${{ inputs.build_format == 'aab' && 'BuildGithubActionsApk.BuildAndroidAppBundle' || 'BuildGithubActionsApk.BuildAndroid' }}
+          customParameters: ${{ steps.build_custom_params.outputs.custom_params }}
 
-        echo "Rebuilding APK with apktool..."
-        apktool b -o /tmp/patched.apk "$WORKDIR/decoded" 2>&1
+      - name: Build AAB for APK+AAB
+        if: ${{ inputs.build_format == 'apk_aab' }}
+        uses: game-ci/unity-builder@v4
+        timeout-minutes: 105
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          GIT_PRIVATE_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
+          ANDROID_PACKAGE_NAME: ${{ inputs.package_name }}
+          ANDROID_PRODUCT_NAME: ${{ inputs.app_name }}
+          ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
+          ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
+          ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID: ${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_NATIVE_ID: ${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}
+          ADMOB_ANDROID_APP_OPEN_ID: ${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID }}
+          APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+        with:
+          unityVersion: 6000.0.71f1
+          targetPlatform: Android
+          projectPath: game
+          versioning: None
+          buildMethod: BuildGithubActionsApk.BuildAndroidAppBundle
+          customParameters: ${{ steps.build_custom_params.outputs.custom_params }}
 
-        mv /tmp/patched.apk "$APK_PATH"
-        NEW_APK_SIZE=$(stat -c%s "$APK_PATH")
-        echo "Icon replacement complete — $REPLACED icon(s) replaced, APK size: $NEW_APK_SIZE bytes (was: $ORIG_APK_SIZE)"
+      - name: Upload Unity build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-build-log
+          path: |
+            build/unity-build.log
+            game/build/unity-build.log
+          if-no-files-found: ignore
 
-    - name: Sign Android APK
-      if: ${{ (inputs.build_format || 'apk') == 'apk' || (inputs.build_format || 'apk') == 'apk_aab' }}
-      shell: bash
-      env:
-        APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
-      run: "set -euo pipefail\ntest -f \"$APK_OUTPUT_PATH\" || { echo \"APK not found for signing: $APK_OUTPUT_PATH\"; exit 1; }\ntest -n \"$ANDROID_KEYSTORE_PASS\" || { echo \"ANDROID_KEYSTORE_PASS is empty.\"; exit 1; }\nalias_name=\"${ANDROID_KEYALIAS_NAME:-social casino}\"\nalias_pass=\"${ANDROID_KEYALIAS_PASS:-$ANDROID_KEYSTORE_PASS}\"\njarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore \"$GITHUB_WORKSPACE/.ci/keystore/user.keystore\" -storepass \"$ANDROID_KEYSTORE_PASS\" -keypass \"$alias_pass\" \"$APK_OUTPUT_PATH\" \"$alias_name\"\njarsigner -verify -verbose -certs \"$APK_OUTPUT_PATH\" | tee /tmp/apk-signature-verify.txt\nif grep -q \"jar is unsigned\" /tmp/apk-signature-verify.txt; then echo \"APK is still unsigned after jarsigner.\"; exit 1; fi\n"
-    - name: Sign Android App Bundle
-      if: ${{ (inputs.build_format || 'apk') == 'aab' || (inputs.build_format || 'apk') == 'apk_aab' }}
-      shell: bash
-      env:
-        AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
-      run: "set -euo pipefail\ntest -f \"$AAB_OUTPUT_PATH\" || { echo \"AAB not found\
-        \ before signing: $AAB_OUTPUT_PATH\"; exit 1; }\ntest -n \"$ANDROID_KEYSTORE_PASS\"\
-        \ || { echo \"ANDROID_KEYSTORE_PASS secret is empty.\"; exit 1; }\n\nalias_name=\"\
-        ${ANDROID_KEYALIAS_NAME:-social casino}\"\nalias_pass=\"${ANDROID_KEYALIAS_PASS:-$ANDROID_KEYSTORE_PASS}\"\
-        \nunsigned_path=\"/tmp/$(basename \"${AAB_OUTPUT_PATH%.aab}\")-unsigned.aab\"\
-        \ncp \"$AAB_OUTPUT_PATH\" \"$unsigned_path\"\n\njarsigner \\\n  -sigalg SHA256withRSA\
-        \ \\\n  -digestalg SHA-256 \\\n  -keystore \"$GITHUB_WORKSPACE/.ci/keystore/user.keystore\"\
-        \ \\\n  -storepass \"$ANDROID_KEYSTORE_PASS\" \\\n  -keypass \"$alias_pass\"\
-        \ \\\n  \"$AAB_OUTPUT_PATH\" \\\n  \"$alias_name\"\n\njarsigner -verify -verbose\
-        \ -certs \"$AAB_OUTPUT_PATH\" | tee /tmp/aab-signature-verify.txt\nif grep\
-        \ -q \"jar is unsigned\" /tmp/aab-signature-verify.txt; then\n  echo \"AAB\
-        \ is still unsigned after jarsigner.\"\n  exit 1\nfi\n"
-    - name: Prepare Google Play release notes
-      if: ${{ inputs.publish_to_google_play == 'true' }}
-      shell: bash
-      env:
-        VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
-      run: 'set -euo pipefail
+      - name: Verify Android build output
+        shell: bash
+        env:
+          BUILD_FORMAT: ${{ inputs.build_format }}
+          APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+        run: |
+          set -euo pipefail
+          sudo chown -R "$USER:$USER" build Builds game/build game/Builds game/Library/Bee/Android 2>/dev/null || true
+          mkdir -p "$(dirname "$APK_OUTPUT_PATH")" "$(dirname "$AAB_OUTPUT_PATH")"
 
-        mkdir -p whatsnew
+          verify_one() {
+            local output_path="$1"
+            local ext="$2"
 
-        printf ''Bug fixes and SDK updates for version %s.\n'' "$VERSION_NAME" > whatsnew/whatsnew-en-US
+            if [ ! -f "$output_path" ]; then
+              echo "Android $ext was not created at expected path: $output_path"
+              echo "Searching for .$ext files in Unity output folders..."
+              found_output="$(find build/android Builds game/build game/Builds game/Library/Bee/Android -type f -name "*.$ext" -print 2>/dev/null | head -n 1 || true)"
+              if [ -n "$found_output" ]; then
+                echo "Found .$ext at $found_output"
+                cp "$found_output" "$output_path"
+              fi
+            fi
 
-        '
-    - name: Check Google Play API access
-      id: google_play_access
-      if: ${{ inputs.publish_to_google_play == 'true' }}
-      continue-on-error: true
-      working-directory: google-play-connect
-      env:
-        PACKAGE_NAME: ${{ inputs.package_name }}
-        GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
-          }}
-      run: node scripts/check-play-access.mjs
-    - name: Upload AAB to Google Play
-      if: ${{ inputs.publish_to_google_play == 'true' && steps.google_play_access.outcome
-        == 'success' }}
-      uses: r0adkll/upload-google-play@v1
-      with:
-        serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
-          }}
-        packageName: ${{ inputs.package_name }}
-        releaseFiles: ${{ steps.resolve_version.outputs.aab_output_path }}
-        track: ${{ inputs.google_play_track }}
-        status: ${{ inputs.google_play_status }}
-        releaseName: ${{ steps.resolve_version.outputs.version_name }}
-        whatsNewDirectory: whatsnew
-    - name: Upload Android package
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ inputs.build_format == 'apk_aab' && 'APK_AAB' || (inputs.build_format
-          == 'aab' && 'AAB' || 'APK') }}_${{ inputs.package_name }}_v${{ steps.resolve_version.outputs.version_code
-          }}
-        path: 'build/android/*.apk
+            if [ ! -f "$output_path" ]; then
+              echo "Android $ext was not created and no fallback .$ext was found."
+              echo "----- android package files -----"
+              find . -type f \( -name '*.apk' -o -name '*.aab' \) -print || true
+              echo "----- build files -----"
+              find build Builds game/build game/Builds game/Library/Bee/Android -maxdepth 8 -type f -print 2>/dev/null || true
+              echo "----- important Unity log lines from console log -----"
+              if [ -f build/unity-build.log ]; then
+                grep -E "ZeyWinActions|Build result|error CS|Script Compilation Error|Exception|Android build failed" build/unity-build.log || true
+              elif [ -f game/build/unity-build.log ]; then
+                grep -E "ZeyWinActions|Build result|error CS|Script Compilation Error|Exception|Android build failed" game/build/unity-build.log || true
+              else
+                echo "Unity log file was not written because Unity logs are streamed to the GitHub Actions console."
+              fi
+              exit 1
+            fi
 
-          build/android/*.aab
+            ls -lh "$output_path"
+          }
 
-          '
-        if-no-files-found: error
-    - name: Publish Android package release and metadata
-      shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-        BUILD_FORMAT: ${{ inputs.build_format || 'apk' }}
-        PACKAGE_NAME: ${{ inputs.package_name || 'com.playmaxsolutions.slotspot' }}
-        VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
-        VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
-        APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
-        AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
-        PUBLISH_TO_GOOGLE_PLAY: ${{ inputs.publish_to_google_play }}
-        GOOGLE_PLAY_TRACK: ${{ inputs.google_play_track }}
-        GOOGLE_PLAY_STATUS: ${{ inputs.google_play_status }}
-        GOOGLE_PLAY_API_ACCESS: ${{ steps.google_play_access.outcome || 'skipped'
-          }}
-        REQUIRE_GOOGLE_PLAY_UPLOAD: ${{ inputs.require_google_play_upload }}
-      run: "set -euo pipefail\npackage_paths=()\nif [ \"$BUILD_FORMAT\" = \"aab\"\
-        \ ]; then\n  package_paths+=(\"$AAB_OUTPUT_PATH\")\nelif [ \"$BUILD_FORMAT\"\
-        \ = \"apk_aab\" ]; then\n  package_paths+=(\"$APK_OUTPUT_PATH\" \"$AAB_OUTPUT_PATH\"\
-        )\nelse\n  package_paths+=(\"$APK_OUTPUT_PATH\")\nfi\n\nfor package_path in\
-        \ \"${package_paths[@]}\"; do\n  if [ ! -f \"$package_path\" ]; then\n   \
-        \ echo \"Expected Android package is missing before release publish: $package_path\"\
-        \n    exit 1\n  fi\ndone\n\nversion_dir=\"builds/$PACKAGE_NAME/v$VERSION_CODE\"\
-        \nlatest_dir=\"builds/$PACKAGE_NAME\"\nmkdir -p \"$version_dir\" \"$latest_dir\"\
-        \nrelease_tag=\"android-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}\"\nrelease_url=\"\
-        https://github.com/$GITHUB_REPOSITORY/releases/tag/$release_tag\"\nrelease_assets=()\n\
-        for package_path in \"${package_paths[@]}\"; do\n  package_name=\"$(basename\
-        \ \"$package_path\")\"\n  release_assets+=(\"$package_path#$package_name\"\
-        )\ndone\n\ngh release create \"$release_tag\" \"${release_assets[@]}\" \\\n\
-        \  --repo \"$GITHUB_REPOSITORY\" \\\n  --title \"${BUILD_FORMAT^^} $PACKAGE_NAME\
-        \ v$VERSION_CODE\" \\\n  --notes \"${BUILD_FORMAT^^} built by GitHub Actions\
-        \ run $GITHUB_RUN_NUMBER attempt $GITHUB_RUN_ATTEMPT.\"\n\ngit fetch origin\
-        \ \"$GITHUB_REF_NAME\"\ngit reset --hard \"origin/$GITHUB_REF_NAME\"\nmkdir\
-        \ -p \"$version_dir\" \"$latest_dir\"\npackage_repo_paths=()\napk_asset=\"\
-        \"\napk_path=\"\"\naab_asset=\"\"\naab_path=\"\"\n\nfor package_path in \"\
-        ${package_paths[@]}\"; do\n  package_name=\"$(basename \"$package_path\")\"\
-        \n  package_ext=\"${package_name##*.}\"\n  package_size=\"$(wc -c < \"$package_path\"\
-        )\"\n  if [ \"$package_size\" -lt 90000000 ]; then\n    cp \"$package_path\"\
-        \ \"$version_dir/$package_name\"\n    package_repo_path=\"$version_dir/$package_name\"\
-        \n  else\n    package_repo_path=\"$version_dir/$package_name.url\"\n    printf\
-        \ '%s\\n' \"$release_url\" > \"$package_repo_path\"\n  fi\n  shasum -a 256\
-        \ \"$package_path\" | sed \"s#  .*#  $package_name#\" > \"$version_dir/$package_name.sha256\"\
-        \n  package_repo_paths+=(\"$package_repo_path\" \"$version_dir/$package_name.sha256\"\
-        )\n\n  if [ \"$package_ext\" = \"apk\" ]; then\n    apk_asset=\"$package_name\"\
-        \n    apk_path=\"$package_repo_path\"\n  elif [ \"$package_ext\" = \"aab\"\
-        \ ]; then\n    aab_asset=\"$package_name\"\n    aab_path=\"$package_repo_path\"\
-        \n  fi\ndone\n\npackage_repo_path=\"${apk_path:-$aab_path}\"\n\n{\n  echo\
-        \ \"run_id=$GITHUB_RUN_ID\"\n  echo \"run_number=$GITHUB_RUN_NUMBER\"\n  echo\
-        \ \"run_attempt=$GITHUB_RUN_ATTEMPT\"\n  echo \"commit_sha=$GITHUB_SHA\"\n\
-        \  echo \"ref=$GITHUB_REF_NAME\"\n  echo \"package_name=$PACKAGE_NAME\"\n\
-        \  echo \"version_name=$VERSION_NAME\"\n  echo \"version_code=$VERSION_CODE\"\
-        \n  echo \"build_format=$BUILD_FORMAT\"\n  echo \"apk_artifact=${BUILD_FORMAT^^}_${PACKAGE_NAME}_v${VERSION_CODE}\"\
-        \n  echo \"apk_release=$release_url\"\n  if [ -n \"$apk_asset\" ]; then\n\
-        \    echo \"apk_asset=$apk_asset\"\n    echo \"apk_path=$apk_path\"\n  fi\n\
-        \  if [ -n \"$aab_asset\" ]; then\n    echo \"aab_asset=$aab_asset\"\n   \
-        \ echo \"aab_path=$aab_path\"\n  fi\n  echo \"package_repo_path=$package_repo_path\"\
-        \n  echo \"built_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')\"\n  echo \"run_url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"\
-        \n  if [ \"$PUBLISH_TO_GOOGLE_PLAY\" = \"true\" ]; then\n    echo \"google_play_track=$GOOGLE_PLAY_TRACK\"\
-        \n    echo \"google_play_status=$GOOGLE_PLAY_STATUS\"\n    echo \"google_play_api_access=$GOOGLE_PLAY_API_ACCESS\"\
-        \n    echo \"require_google_play_upload=$REQUIRE_GOOGLE_PLAY_UPLOAD\"\n  \
-        \  if [ \"$GOOGLE_PLAY_API_ACCESS\" = \"success\" ]; then\n      echo \"google_play_upload=api\"\
-        \n    else\n      echo \"google_play_upload=ui_fallback_required\"\n    fi\n\
-        \  fi\n} > \"$version_dir/build.txt\"\n\nif [ \"$PUBLISH_TO_GOOGLE_PLAY\"\
-        \ = \"true\" ] && [ \"$GOOGLE_PLAY_API_ACCESS\" != \"success\" ]; then\n \
-        \ {\n    echo \"# Google Play UI Upload Fallback\"\n    echo\n    echo \"\
-        The AAB was built successfully, but Google Play API access was not available\
-        \ for the service account.\"\n    echo \"Upload this package through the Google\
-        \ Play Console web interface from a logged-in browser.\"\n    echo\n    echo\
-        \ \"| Field | Value |\"\n    echo \"| --- | --- |\"\n    echo \"| Package\
-        \ | \\`$PACKAGE_NAME\\` |\"\n    echo \"| Version name | \\`$VERSION_NAME\\\
-        ` |\"\n    echo \"| Version code | \\`$VERSION_CODE\\` |\"\n    echo \"| Track\
-        \ | \\`$GOOGLE_PLAY_TRACK\\` |\"\n    echo \"| Release status | \\`$GOOGLE_PLAY_STATUS\\\
-        ` |\"\n    echo \"| File | \\`$package_repo_path\\` |\"\n    echo \"| GitHub\
-        \ release | $release_url |\"\n    echo\n    echo \"## Steps\"\n    echo\n\
-        \    echo \"1. Open the app in Google Play Console.\"\n    echo \"2. Open\
-        \ the release track: \\`$GOOGLE_PLAY_TRACK\\`.\"\n    echo \"3. Create a new\
-        \ release or edit the draft release.\"\n    echo \"4. Upload the AAB from\
-        \ this build.\"\n    echo \"5. Use release name \\`$VERSION_NAME\\` and release\
-        \ notes from \\`whatsnew/whatsnew-en-US\\`.\"\n    echo \"6. Save, review,\
-        \ and send the release according to the selected status.\"\n    echo\n   \
-        \ echo \"Service account that still needs Play Console permissions:\"\n  \
-        \  echo\n    echo \"\\`zeywin-play-publisher@zeywin-connect.iam.gserviceaccount.com\\\
-        `\"\n  } > \"$version_dir/google-play-ui-upload.md\"\nfi\n\ncurrent_latest_code=\"\
-        $(sed -n 's/^version_code=//p' \"$latest_dir/latest-build.txt\" 2>/dev/null\
-        \ | tail -n 1 || true)\"\nif ! [[ \"$current_latest_code\" =~ ^[0-9]+$ ]];\
-        \ then\n  current_latest_code=0\nfi\n\nlatest_files=(\"$version_dir/build.txt\"\
-        )\nif [ -f \"$version_dir/google-play-ui-upload.md\" ]; then\n  latest_files+=(\"\
-        $version_dir/google-play-ui-upload.md\")\nfi\nif [ \"$VERSION_CODE\" -ge \"\
-        $current_latest_code\" ]; then\n  cp \"$version_dir/build.txt\" \"$latest_dir/latest-build.txt\"\
-        \n  latest_files+=(\"$latest_dir/latest-build.txt\")\nelse\n  echo \"Built\
-        \ old version code $VERSION_CODE. Keeping latest-build.txt at version code\
-        \ $current_latest_code.\"\nfi\n\n{\n  echo \"# Latest APK Builds\"\n  echo\n\
-        \  echo \"Use this table before workflow runs. For a new release, use the\
-        \ next manual values. For an old-version rebuild, enter the old version manually.\"\
-        \n  echo\n  echo \"| Package | Latest version name | Latest version code |\
-        \ Next manual version name | Next manual version code | APK |\"\n  echo \"\
-        | --- | --- | ---: | --- | ---: | --- |\"\n  while IFS= read -r latest_file;\
-        \ do\n    pkg=\"$(sed -n 's/^package_name=//p' \"$latest_file\" | tail -n\
-        \ 1)\"\n    name=\"$(sed -n 's/^version_name=//p' \"$latest_file\" | tail\
-        \ -n 1)\"\n    code=\"$(sed -n 's/^version_code=//p' \"$latest_file\" | tail\
-        \ -n 1)\"\n    path=\"$(sed -n 's/^package_repo_path=//p' \"$latest_file\"\
-        \ | tail -n 1)\"\n    if [ -z \"$path\" ]; then\n      path=\"$(sed -n 's/^apk_path=//p'\
-        \ \"$latest_file\" | tail -n 1)\"\n    fi\n    if [[ \"$code\" =~ ^[0-9]+$\
-        \ ]]; then\n      next_code=$((code + 1))\n    else\n      next_code=1\n \
-        \   fi\n    echo \"| \\`$pkg\\` | \\`$name\\` | \\`$code\\` | \\`1.0.$next_code\\\
-        ` | \\`$next_code\\` | [$path]($path) |\"\n  done < <(find builds -mindepth\
-        \ 2 -maxdepth 2 -name latest-build.txt -type f | sort)\n} > builds/index.md\n\
-        \ngit config user.name \"github-actions[bot]\"\ngit config user.email \"41898282+github-actions[bot]@users.noreply.github.com\"\
-        \ngit add -f \"${package_repo_paths[@]}\" \"${latest_files[@]}\" builds/index.md\n\
-        \nif git diff --cached --quiet; then\n  echo \"APK metadata in repository\
-        \ is already up to date: builds/latest-build.txt\"\n  exit 0\nfi\n\ngit commit\
-        \ -m \"Record Android package from GitHub Actions run $GITHUB_RUN_NUMBER\"\
-        \nif ! git pull --rebase --autostash origin \"$GITHUB_REF_NAME\"; then\n \
-        \ echo \"Metadata rebase failed after APK release upload. APK is already available\
-        \ in the release: $release_url\"\n  exit 0\nfi\n\nif ! git push origin \"\
-        HEAD:$GITHUB_REF_NAME\"; then\n  echo \"Metadata push failed after APK release\
-        \ upload. APK is already available in the release: $release_url\"\n  exit\
-        \ 0\nfi\n"
-    - name: Require Google Play upload
-      if: ${{ inputs.publish_to_google_play == 'true' && inputs.require_google_play_upload
-        == 'true' && steps.google_play_access.outcome != 'success' }}
-      shell: bash
-      run: 'echo "Google Play upload was requested, but API access failed. The AAB
-        was built and saved, but it was not uploaded to Google Play."
+          if [ "$BUILD_FORMAT" = "aab" ]; then
+            verify_one "$AAB_OUTPUT_PATH" "aab"
+          elif [ "$BUILD_FORMAT" = "apk_aab" ]; then
+            verify_one "$APK_OUTPUT_PATH" "apk"
+            verify_one "$AAB_OUTPUT_PATH" "aab"
+          else
+            verify_one "$APK_OUTPUT_PATH" "apk"
+          fi
 
-        echo "Grant the service account Play Console release permissions, then rerun
-        with build_format=aab and publish_to_google_play=true."
+      - name: Sign Android App Bundle
+        if: ${{ inputs.build_format == 'aab' || inputs.build_format == 'apk_aab' }}
+        shell: bash
+        env:
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+        run: |
+          set -euo pipefail
+          test -f "$AAB_OUTPUT_PATH" || { echo "AAB not found before signing: $AAB_OUTPUT_PATH"; exit 1; }
+          test -n "$ANDROID_KEYSTORE_PASS" || { echo "ANDROID_KEYSTORE_PASS secret is empty."; exit 1; }
 
-        exit 1
+          alias_name="${ANDROID_KEYALIAS_NAME:-social casino}"
+          alias_pass="${ANDROID_KEYALIAS_PASS:-$ANDROID_KEYSTORE_PASS}"
+          unsigned_path="/tmp/$(basename "${AAB_OUTPUT_PATH%.aab}")-unsigned.aab"
+          cp "$AAB_OUTPUT_PATH" "$unsigned_path"
 
-        '
+          jarsigner \
+            -sigalg SHA256withRSA \
+            -digestalg SHA-256 \
+            -keystore "$GITHUB_WORKSPACE/.ci/keystore/user.keystore" \
+            -storepass "$ANDROID_KEYSTORE_PASS" \
+            -keypass "$alias_pass" \
+            "$AAB_OUTPUT_PATH" \
+            "$alias_name"
+
+          jarsigner -verify -verbose -certs "$AAB_OUTPUT_PATH" | tee /tmp/aab-signature-verify.txt
+          if grep -q "jar is unsigned" /tmp/aab-signature-verify.txt; then
+            echo "AAB is still unsigned after jarsigner."
+            exit 1
+          fi
+
+      - name: Upload Android package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.build_format == 'apk_aab' && 'APK_AAB' || (inputs.build_format == 'aab' && 'AAB' || 'APK') }}_${{ inputs.package_name }}_v${{ steps.resolve_version.outputs.version_code }}
+          path: |
+            build/android/*.apk
+            build/android/*.aab
+          if-no-files-found: error
+
+      - name: Publish Android package release and metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_FORMAT: ${{ inputs.build_format }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
+          VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+          APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+
+        run: |
+          set -euo pipefail
+          package_paths=()
+          if [ "$BUILD_FORMAT" = "aab" ]; then
+            package_paths+=("$AAB_OUTPUT_PATH")
+          elif [ "$BUILD_FORMAT" = "apk_aab" ]; then
+            package_paths+=("$APK_OUTPUT_PATH" "$AAB_OUTPUT_PATH")
+          else
+            package_paths+=("$APK_OUTPUT_PATH")
+          fi
+
+          for package_path in "${package_paths[@]}"; do
+            if [ ! -f "$package_path" ]; then
+              echo "Expected Android package is missing before release publish: $package_path"
+              exit 1
+            fi
+          done
+
+          version_dir="builds/$PACKAGE_NAME/v$VERSION_CODE"
+          latest_dir="builds/$PACKAGE_NAME"
+          mkdir -p "$version_dir" "$latest_dir"
+          release_tag="android-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          release_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$release_tag"
+          release_assets=()
+          for package_path in "${package_paths[@]}"; do
+            package_name="$(basename "$package_path")"
+            release_assets+=("$package_path#$package_name")
+          done
+
+          gh release create "$release_tag" "${release_assets[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "${BUILD_FORMAT^^} $PACKAGE_NAME v$VERSION_CODE" \
+            --notes "${BUILD_FORMAT^^} built by GitHub Actions run $GITHUB_RUN_NUMBER attempt $GITHUB_RUN_ATTEMPT."
+
+          git fetch origin "$GITHUB_REF_NAME"
+          git reset --hard "origin/$GITHUB_REF_NAME"
+          mkdir -p "$version_dir" "$latest_dir"
+          package_repo_paths=()
+          apk_asset=""
+          apk_path=""
+          aab_asset=""
+          aab_path=""
+
+          for package_path in "${package_paths[@]}"; do
+            package_name="$(basename "$package_path")"
+            package_ext="${package_name##*.}"
+            package_size="$(wc -c < "$package_path")"
+            if [ "$package_size" -lt 90000000 ]; then
+              cp "$package_path" "$version_dir/$package_name"
+              package_repo_path="$version_dir/$package_name"
+            else
+              package_repo_path="$version_dir/$package_name.url"
+              printf '%s\n' "$release_url" > "$package_repo_path"
+            fi
+            shasum -a 256 "$package_path" | sed "s#  .*#  $package_name#" > "$version_dir/$package_name.sha256"
+            package_repo_paths+=("$package_repo_path" "$version_dir/$package_name.sha256")
+
+            if [ "$package_ext" = "apk" ]; then
+              apk_asset="$package_name"
+              apk_path="$package_repo_path"
+            elif [ "$package_ext" = "aab" ]; then
+              aab_asset="$package_name"
+              aab_path="$package_repo_path"
+            fi
+          done
+
+          package_repo_path="${apk_path:-$aab_path}"
+
+          {
+            echo "run_id=$GITHUB_RUN_ID"
+            echo "run_number=$GITHUB_RUN_NUMBER"
+            echo "run_attempt=$GITHUB_RUN_ATTEMPT"
+            echo "commit_sha=$GITHUB_SHA"
+            echo "ref=$GITHUB_REF_NAME"
+            echo "package_name=$PACKAGE_NAME"
+            echo "version_name=$VERSION_NAME"
+            echo "version_code=$VERSION_CODE"
+            echo "build_format=$BUILD_FORMAT"
+            echo "apk_artifact=${BUILD_FORMAT^^}_${PACKAGE_NAME}_v${VERSION_CODE}"
+            echo "apk_release=$release_url"
+            if [ -n "$apk_asset" ]; then
+              echo "apk_asset=$apk_asset"
+              echo "apk_path=$apk_path"
+            fi
+            if [ -n "$aab_asset" ]; then
+              echo "aab_asset=$aab_asset"
+              echo "aab_path=$aab_path"
+            fi
+            echo "package_repo_path=$package_repo_path"
+            echo "built_at_utc=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo "run_url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > "$version_dir/build.txt"
+
+          current_latest_code="$(sed -n 's/^version_code=//p' "$latest_dir/latest-build.txt" 2>/dev/null | tail -n 1 || true)"
+          if ! [[ "$current_latest_code" =~ ^[0-9]+$ ]]; then
+            current_latest_code=0
+          fi
+
+          latest_files=("$version_dir/build.txt")
+          if [ -f "$version_dir/google-play-ui-upload.md" ]; then
+            latest_files+=("$version_dir/google-play-ui-upload.md")
+          fi
+          if [ "$VERSION_CODE" -ge "$current_latest_code" ]; then
+            cp "$version_dir/build.txt" "$latest_dir/latest-build.txt"
+            latest_files+=("$latest_dir/latest-build.txt")
+          else
+            echo "Built old version code $VERSION_CODE. Keeping latest-build.txt at version code $current_latest_code."
+          fi
+
+          {
+            echo "# Latest APK Builds"
+            echo
+            echo "Use this table before workflow runs. For a new release, use the next manual values. For an old-version rebuild, enter the old version manually."
+            echo
+            echo "| Package | Latest version name | Latest version code | Next manual version name | Next manual version code | APK |"
+            echo "| --- | --- | ---: | --- | ---: | --- |"
+            while IFS= read -r latest_file; do
+              pkg="$(sed -n 's/^package_name=//p' "$latest_file" | tail -n 1)"
+              name="$(sed -n 's/^version_name=//p' "$latest_file" | tail -n 1)"
+              code="$(sed -n 's/^version_code=//p' "$latest_file" | tail -n 1)"
+              path="$(sed -n 's/^package_repo_path=//p' "$latest_file" | tail -n 1)"
+              if [ -z "$path" ]; then
+                path="$(sed -n 's/^apk_path=//p' "$latest_file" | tail -n 1)"
+              fi
+              if [[ "$code" =~ ^[0-9]+$ ]]; then
+                next_code=$((code + 1))
+              else
+                next_code=1
+              fi
+              echo "| \`$pkg\` | \`$name\` | \`$code\` | \`1.0.$next_code\` | \`$next_code\` | [$path]($path) |"
+            done < <(find builds -mindepth 2 -maxdepth 2 -name latest-build.txt -type f | sort)
+          } > builds/index.md
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "${package_repo_paths[@]}" "${latest_files[@]}" builds/index.md
+
+          if git diff --cached --quiet; then
+            echo "APK metadata in repository is already up to date: builds/latest-build.txt"
+            exit 0
+          fi
+
+          git commit -m "Record Android package from GitHub Actions run $GITHUB_RUN_NUMBER"
+          if ! git pull --rebase --autostash origin "$GITHUB_REF_NAME"; then
+            echo "Metadata rebase failed after APK release upload. APK is already available in the release: $release_url"
+            exit 0
+          fi
+
+          if ! git push origin "HEAD:$GITHUB_REF_NAME"; then
+            echo "Metadata push failed after APK release upload. APK is already available in the release: $release_url"
+            exit 0
+          fi
+
+
