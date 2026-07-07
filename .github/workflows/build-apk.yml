@@ -719,9 +719,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PACKAGE_NAME: ${{ inputs.package_name }}
+          BUILD_FORMAT: ${{ inputs.build_format }}
           VERSION_MODE: ${{ inputs.version_mode }}
           VERSION_NAME_INPUT: ${{ inputs.version_name }}
           VERSION_CODE_INPUT: ${{ inputs.version_code }}
+          AAB_VERSION_NAME_INPUT: ${{ inputs.aab_version_name }}
+          AAB_VERSION_CODE_INPUT: ${{ inputs.aab_version_code }}
         run: |
           set -euo pipefail
 
@@ -747,47 +750,54 @@ jobs:
             fi
           done < <(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json name --jq '.[].name' 2>/dev/null | sed -n "s/^APK $PACKAGE_NAME v\\([0-9][0-9]*\\)$/\\1/p" || true)
 
-          if [ "$VERSION_MODE" = "manual" ]; then
-            test -n "$VERSION_NAME_INPUT" || { echo "version_name is required when version_mode=manual. Example: 1.0.$((max_code + 1))"; exit 1; }
-            test -n "$VERSION_CODE_INPUT" || { echo "version_code is required when version_mode=manual. Previous highest code is $max_code, so use $((max_code + 1)) or higher."; exit 1; }
-          fi
+          apk_version_code=1
+          apk_version_name=1
 
           if [ "$VERSION_MODE" = "manual" ]; then
-            version_code="$VERSION_CODE_INPUT"
+            aab_version_name="${AAB_VERSION_NAME_INPUT:-$VERSION_NAME_INPUT}"
+            aab_version_code="${AAB_VERSION_CODE_INPUT:-$VERSION_CODE_INPUT}"
+            test -n "$aab_version_name" || { echo "aab_version_name is required when version_mode=manual."; exit 1; }
+            test -n "$aab_version_code" || { echo "aab_version_code is required when version_mode=manual."; exit 1; }
           else
-            version_code=$((max_code + 1))
+            aab_version_code="${AAB_VERSION_CODE_INPUT:-$((max_code + 1))}"
+            aab_version_name="${AAB_VERSION_NAME_INPUT:-1.0.$aab_version_code}"
           fi
 
-          if ! [[ "$version_code" =~ ^[0-9]+$ ]]; then
-            echo "version_code must be numeric, got: $version_code"
+          if ! [[ "$aab_version_code" =~ ^[0-9]+$ ]]; then
+            echo "aab_version_code must be numeric, got: $aab_version_code"
             exit 1
           fi
 
-          if [ "$version_code" -lt 1 ]; then
-            echo "version_code must be a positive integer, got: $version_code"
+          if [ "$aab_version_code" -lt 1 ]; then
+            echo "aab_version_code must be a positive integer, got: $aab_version_code"
             exit 1
           fi
 
-          if [ "$VERSION_MODE" = "manual" ]; then
-            version_name="$VERSION_NAME_INPUT"
-          else
-            version_name="1.0.$version_code"
+          release_version_code="$aab_version_code"
+          release_version_name="$aab_version_name"
+          if [ "$BUILD_FORMAT" = "apk" ]; then
+            release_version_code="$apk_version_code"
+            release_version_name="$apk_version_name"
           fi
 
-          echo "version_code=$version_code" >> "$GITHUB_OUTPUT"
-          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
-          echo "apk_output_path=$GITHUB_WORKSPACE/build/android/APK_${PACKAGE_NAME}_v${version_code}.apk" >> "$GITHUB_OUTPUT"
-          echo "aab_output_path=$GITHUB_WORKSPACE/build/android/AAB_${PACKAGE_NAME}_v${version_code}.aab" >> "$GITHUB_OUTPUT"
+          echo "apk_version_code=$apk_version_code" >> "$GITHUB_OUTPUT"
+          echo "apk_version_name=$apk_version_name" >> "$GITHUB_OUTPUT"
+          echo "aab_version_code=$aab_version_code" >> "$GITHUB_OUTPUT"
+          echo "aab_version_name=$aab_version_name" >> "$GITHUB_OUTPUT"
+          echo "release_version_code=$release_version_code" >> "$GITHUB_OUTPUT"
+          echo "release_version_name=$release_version_name" >> "$GITHUB_OUTPUT"
+          echo "apk_output_path=$GITHUB_WORKSPACE/build/android/APK_${PACKAGE_NAME}_v${apk_version_code}.apk" >> "$GITHUB_OUTPUT"
+          echo "aab_output_path=$GITHUB_WORKSPACE/build/android/AAB_${PACKAGE_NAME}_v${aab_version_code}.aab" >> "$GITHUB_OUTPUT"
 
           {
             echo "### Resolved APK version"
             echo "- Package: \`$PACKAGE_NAME\`"
             echo "- Mode: \`$VERSION_MODE\`"
             echo "- Previous highest version code: \`$max_code\`"
-            echo "- Next manual version name/code: \`1.0.$((max_code + 1))\` / \`$((max_code + 1))\`"
-            echo "- Version name: \`$version_name\`"
-            echo "- Version code: \`$version_code\`"
-            if [ "$VERSION_MODE" = "manual" ] && [ "$version_code" -le "$max_code" ]; then
+            echo "- APK version name/code: \`$apk_version_name\` / \`$apk_version_code\`"
+            echo "- AAB version name/code: \`$aab_version_name\` / \`$aab_version_code\`"
+            echo "- Release version name/code: \`$release_version_name\` / \`$release_version_code\`"
+            if [ "$VERSION_MODE" = "manual" ] && [ "$aab_version_code" -le "$max_code" ]; then
               echo "- Note: this is an old-version rebuild, so it will not replace the latest-build pointer."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
@@ -1437,8 +1447,8 @@ jobs:
           AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
           PACKAGE_NAME: ${{ inputs.package_name }}
           APP_NAME: ${{ inputs.app_name }}
-          VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
-          VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+          VERSION_NAME: ${{ inputs.build_format == 'aab' && steps.resolve_version.outputs.aab_version_name || steps.resolve_version.outputs.apk_version_name }}
+          VERSION_CODE: ${{ inputs.build_format == 'aab' && steps.resolve_version.outputs.aab_version_code || steps.resolve_version.outputs.apk_version_code }}
         run: |
           set -euo pipefail
           
@@ -1457,6 +1467,41 @@ jobs:
           
           echo "custom_params=$params" >> "$GITHUB_OUTPUT"
 
+      - name: Build custom parameters for AAB
+        id: build_custom_params_aab
+        shell: bash
+        env:
+          ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
+          ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
+          ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
+          ADMOB_ANDROID_INTERSTITIAL_ID: ${{ inputs.admob_android_interstitial_id || secrets.ADMOB_ANDROID_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_REWARDED_ID: ${{ inputs.admob_android_rewarded_id || secrets.ADMOB_ANDROID_REWARDED_ID }}
+          ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID: ${{ inputs.admob_android_rewarded_interstitial_id || secrets.ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID }}
+          ADMOB_ANDROID_NATIVE_ID: ${{ inputs.admob_android_native_id || secrets.ADMOB_ANDROID_NATIVE_ID }}
+          ADMOB_ANDROID_APP_OPEN_ID: ${{ inputs.admob_android_app_open_id || secrets.ADMOB_ANDROID_APP_OPEN_ID }}
+          APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
+          AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
+          PACKAGE_NAME: ${{ inputs.package_name }}
+          APP_NAME: ${{ inputs.app_name }}
+          VERSION_NAME: ${{ steps.resolve_version.outputs.aab_version_name }}
+          VERSION_CODE: ${{ steps.resolve_version.outputs.aab_version_code }}
+        run: |
+          set -euo pipefail
+
+          params="-logFile - -apkOutputPath \"$APK_OUTPUT_PATH\" -aabOutputPath \"$AAB_OUTPUT_PATH\""
+          params="$params -androidPackageName \"$PACKAGE_NAME\" -androidVersionName \"$VERSION_NAME\" -androidVersionCode \"$VERSION_CODE\""
+          params="$params -zeywinApiKey \"$ZEYWIN_API_KEY\""
+
+          [ -n "$ADMOB_ANDROID_APP_ID" ] && params="$params -admobAndroidAppId \"$ADMOB_ANDROID_APP_ID\""
+          [ -n "$ADMOB_ANDROID_BANNER_ID" ] && params="$params -admobAndroidBannerId \"$ADMOB_ANDROID_BANNER_ID\""
+          [ -n "$ADMOB_ANDROID_INTERSTITIAL_ID" ] && params="$params -admobAndroidInterstitialId \"$ADMOB_ANDROID_INTERSTITIAL_ID\""
+          [ -n "$ADMOB_ANDROID_REWARDED_ID" ] && params="$params -admobAndroidRewardedId \"$ADMOB_ANDROID_REWARDED_ID\""
+          [ -n "$ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID" ] && params="$params -admobAndroidRewardedInterstitialId \"$ADMOB_ANDROID_REWARDED_INTERSTITIAL_ID\""
+          [ -n "$ADMOB_ANDROID_NATIVE_ID" ] && params="$params -admobAndroidNativeId \"$ADMOB_ANDROID_NATIVE_ID\""
+          [ -n "$ADMOB_ANDROID_APP_OPEN_ID" ] && params="$params -admobAndroidAppOpenId \"$ADMOB_ANDROID_APP_OPEN_ID\""
+
+          echo "custom_params=$params" >> "$GITHUB_OUTPUT"
+
       - name: Build APK
         uses: game-ci/unity-builder@v4
         timeout-minutes: 105
@@ -1468,8 +1513,8 @@ jobs:
           ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
           ANDROID_PACKAGE_NAME: ${{ inputs.package_name }}
           ANDROID_PRODUCT_NAME: ${{ inputs.app_name }}
-          ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
-          ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+          ANDROID_VERSION_NAME: ${{ inputs.build_format == 'aab' && steps.resolve_version.outputs.aab_version_name || steps.resolve_version.outputs.apk_version_name }}
+          ANDROID_VERSION_CODE: ${{ inputs.build_format == 'aab' && steps.resolve_version.outputs.aab_version_code || steps.resolve_version.outputs.apk_version_code }}
           ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
           ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
           ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
@@ -1500,8 +1545,8 @@ jobs:
           ANDROID_KEYSTORE_PATH: /github/workspace/.ci/keystore/user.keystore
           ANDROID_PACKAGE_NAME: ${{ inputs.package_name }}
           ANDROID_PRODUCT_NAME: ${{ inputs.app_name }}
-          ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
-          ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+          ANDROID_VERSION_NAME: ${{ steps.resolve_version.outputs.aab_version_name }}
+          ANDROID_VERSION_CODE: ${{ steps.resolve_version.outputs.aab_version_code }}
           ZEYWIN_API_KEY: ${{ inputs.zeywin_api_key || secrets.ZEYWIN_API_KEY }}
           ADMOB_ANDROID_APP_ID: ${{ inputs.admob_android_app_id || secrets.ADMOB_ANDROID_APP_ID }}
           ADMOB_ANDROID_BANNER_ID: ${{ inputs.admob_android_banner_id || secrets.ADMOB_ANDROID_BANNER_ID }}
@@ -1518,7 +1563,7 @@ jobs:
           projectPath: game
           versioning: None
           buildMethod: BuildGithubActionsApk.BuildAndroidAppBundle
-          customParameters: ${{ steps.build_custom_params.outputs.custom_params }}
+          customParameters: ${{ steps.build_custom_params_aab.outputs.custom_params }}
 
       - name: Upload Unity build log on failure
         if: failure()
@@ -1617,7 +1662,7 @@ jobs:
       - name: Upload Android package
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.build_format == 'apk_aab' && 'APK_AAB' || (inputs.build_format == 'aab' && 'AAB' || 'APK') }}_${{ inputs.package_name }}_v${{ steps.resolve_version.outputs.version_code }}
+          name: ${{ inputs.build_format == 'apk_aab' && 'APK_AAB' || (inputs.build_format == 'aab' && 'AAB' || 'APK') }}_${{ inputs.package_name }}_v${{ inputs.build_format == 'apk' && steps.resolve_version.outputs.apk_version_code || steps.resolve_version.outputs.aab_version_code }}
           path: |
             build/android/*.apk
             build/android/*.aab
@@ -1629,8 +1674,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BUILD_FORMAT: ${{ inputs.build_format }}
           PACKAGE_NAME: ${{ inputs.package_name }}
-          VERSION_NAME: ${{ steps.resolve_version.outputs.version_name }}
-          VERSION_CODE: ${{ steps.resolve_version.outputs.version_code }}
+          VERSION_NAME: ${{ inputs.build_format == 'apk' && steps.resolve_version.outputs.apk_version_name || steps.resolve_version.outputs.aab_version_name }}
+          VERSION_CODE: ${{ inputs.build_format == 'apk' && steps.resolve_version.outputs.apk_version_code || steps.resolve_version.outputs.aab_version_code }}
           APK_OUTPUT_PATH: ${{ steps.resolve_version.outputs.apk_output_path }}
           AAB_OUTPUT_PATH: ${{ steps.resolve_version.outputs.aab_output_path }}
 
@@ -1786,5 +1831,3 @@ jobs:
             echo "Metadata push failed after APK release upload. APK is already available in the release: $release_url"
             exit 0
           fi
-
-
